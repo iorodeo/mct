@@ -1,6 +1,6 @@
 from fabric.api import *
 
-env.user = 'albert' 
+env.user = 'albert'
 env.hosts = ['felis', 'tabby']
 env.path = '/home/albert'
 env.key_filename = '/home/wbd/.ssh/test_key'
