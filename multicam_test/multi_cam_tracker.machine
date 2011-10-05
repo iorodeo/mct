@@ -1,4 +1,4 @@
 <launch>
-  <machine name="c1" address="felis" user="albert" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" default="true" />
+  <machine name="c1" address="felis" user="albert" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" />
   <machine name="c2" address="tabby" user="albert" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" />
 </launch>
