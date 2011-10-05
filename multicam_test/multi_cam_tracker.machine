@@ -1,0 +1,4 @@
+<launch>
+  <machine name="c1" address="felis" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" default="true" />
+  <machine name="c2" address="tabby" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" />
+</launch>
