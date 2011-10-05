@@ -33,4 +33,36 @@
     </node>
   </group>
 
+  <!-- Camera 5 -->
+  <group ns="camera5" >
+    <node pkg="camera1394" type="camera1394_node" name="camera1394_node" machine="c2">
+      <rosparam file="camera_common.yaml"/>
+      <rosparam file="camera5.yaml"/>
+    </node>
+  </group>
+
+  <!-- Camera 6 -->
+  <group ns="camera6" >
+    <node pkg="camera1394" type="camera1394_node" name="camera1394_node" machine="c2">
+      <rosparam file="camera_common.yaml"/>
+      <rosparam file="camera6.yaml"/>
+    </node>
+  </group>
+
+  <!-- Camera 7 -->
+  <group ns="camera7" >
+    <node pkg="camera1394" type="camera1394_node" name="camera1394_node" machine="c2">
+      <rosparam file="camera_common.yaml"/>
+      <rosparam file="camera7.yaml"/>
+    </node>
+  </group>
+
+  <!-- Camera 8 -->
+  <group ns="camera8" >
+    <node pkg="camera1394" type="camera1394_node" name="camera1394_node" machine="c2">
+      <rosparam file="camera_common.yaml"/>
+      <rosparam file="camera8.yaml"/>
+    </node>
+  </group>
+
 </launch>
