@@ -1,4 +1,5 @@
 from fabric.api import *
+import os.path
 
 env.user = 'albert'
 env.hosts = ['felis', 'tabby']
