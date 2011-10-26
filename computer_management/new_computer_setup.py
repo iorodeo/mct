@@ -8,7 +8,7 @@ env.hosts = []
 def setup_ssh_keys():
     global env
     if len(env.hosts) == 0:
-        host_string = prompt('Enter hostname(s):')
+        host_string = prompt('Enter hostname(s) of new computer(s) and make sure they are on and connected:')
         env.hosts = host_string.split(',')
     ssh_directory = '~/.ssh/'
     print 'Public ssh keys found in ' + ssh_directory + ' :'
@@ -22,6 +22,11 @@ def setup_ssh_keys():
     for host in env.hosts:
         for key in keys:
             local('ssh-copy-id -i ' + key + ' ' + env.user + '@' + host)
+
+    master_host_string = prompt('Enter hostname of ROS master and make sure it is on and connected:')
+    with settings(host_string=master_host_string):
+        for host in env.hosts:
+            run('ssh-copy-id -i id_rsa ' + env.user + '@' + host)
 
 def setup_ros():
     for host in env.hosts:
