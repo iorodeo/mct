@@ -1,0 +1,12 @@
+<launch>
+  <include file="multi_cam_tracker.machine" />
+
+  <!-- Camera 1 -->
+  <group ns="camera1" >
+    <node pkg="camera1394" type="camera1394_node" name="camera1394_node" machine="c1">
+      <rosparam file="camera_common.yaml"/>
+      <rosparam file="camera1.yaml"/>
+    </node>
+  </group>
+
+</launch>
