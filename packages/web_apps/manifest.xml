@@ -1,0 +1,16 @@
+<package>
+  <description brief="web_apps">
+
+     web_apps
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/web_apps</url>
+  <depend package="rospy"/>
+  <depend package="tracker_camera_tools"/>
+
+</package>
+
+

@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block body %}
+<div id=container_group>
+{% for camera, port in cameras_and_ports %}
+    <div class="img">
+        <a href="{{url_for('camera', camera=camera)}}">
+            <img src="http://{{hostname}}:{{port}}/stream?topic=/{{camera}}/camera/image_raw_throttle?height=240?width=320">
+        </a>
+        <div class="desc">{{camera}} </div>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}
+
