@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block body %}
+<div id=container_single>
+    <div class="img">
+        <img class="display" src="http://{{hostname}}:{{port}}/stream?topic=/{{camera}}/camera/image_raw_throttle">
+        <div class="desc">
+            {{camera}}
+        </div>
+    </div>
+</div>
+{% endblock %}
