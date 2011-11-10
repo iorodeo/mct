@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block body %}
+<div id=container_group>
+    <h2 class="color"> Published ROS Topics  </h2>
+    <a href="{{url_for('index')}}"> index </a>
+    </br>
+    </br>
+    <table class="center">
+        {% for topic in topic_list %}
+        <tr>
+            <td> {{topic}} </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+{% endblock %}

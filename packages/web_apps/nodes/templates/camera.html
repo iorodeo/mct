@@ -2,10 +2,20 @@
 {% block body %}
 <div id=container_single>
     <div class="img">
-        <img class="display" src="http://{{hostname}}:{{port}}/stream?topic=/{{camera}}/camera/image_raw_throttle">
+        <img class="display" src="http://{{host}}:{{port}}/stream?topic=/{{camera}}/camera/image_raw_throttle">
         <div class="desc">
             {{camera}}
         </div>
     </div>
+    <a href="{{url_for('index')}}"> index </a>
+    </br>
+    <a href="{{url_for('allcameras')}}"> all cameras </a>
+    </br>
+    {% for camera_name in camera_list %}
+        {% if not camera_name == camera %}
+            <a href="{{url_for('camera', camera=camera_name)}}"> {{camera_name}} </a>
+            </br>
+        {% endif %}
+    {% endfor %}
 </div>
 {% endblock %}

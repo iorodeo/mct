@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block body %}
+<div id=container_group>
+
+    <!-- System information -->
+    <h2 class="color"> System Information </h2>
+    <table class="center">
+    {% for k,v in system_info.iteritems() %}
+        <tr>
+            <td class="center"> {{k}} </td> <td> {{v}}  </td>
+        </tr>
+    {% endfor %}
+    </table>
+
+    <!-- Camera list display -->
+    <h2 class="color"> Camera List: </h2>
+    <a href="{{url_for('allcameras')}}"> all cameras </a>
+    </br>
+    {% for camera in camera_list %}
+        <a href="{{url_for('camera', camera=camera)}}"> {{camera}} </a>
+        </br>
+    {% endfor %}
+
+    <!-- Published Topics -->
+    <h2 class="color"> ROS Topics </h2>
+    <a href="{{url_for('topics')}}"> all topics </a>
+    </br>
+    <a href="{{url_for('camera_topics')}}"> by camera </a>
+    </br>
+
+</div>
+{% endblock %}

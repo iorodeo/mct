@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block body %}
+<div id=container_group>
+    <h2 class="color"> ROS Topics by Camera  </h2>
+    <a href="{{url_for('index')}}"> index </a>
+    </br>
+    </br>
+    <form action="{{ url_for('camera_topics') }}" method=post name="cameraSelect">
+        <select name="camera" >
+            {% for camera_name in camera_list %}
+                {% if camera_name == selected_camera %}
+                    <option selected="selected" value="{{camera_name}}"> {{camera_name}} </option>
+                {% else %}
+                    <option value="{{camera_name}}"> {{camera_name}} </option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        <input type=submit name=button value="Submit">
+    </form>
+    </br>
+    <table class="center">
+        {% for topic in camera_topic_list %}
+        <tr>
+            <td> {{topic}} </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

@@ -18,9 +18,14 @@ div#container_single
 }
 
 
-h1.blue
+h1.color
 {
-    color:blue;
+    color:#339999;
+}
+
+h2.color
+{
+    color:#339999;
 }
 
 div.header 
@@ -46,7 +51,7 @@ div.img img
   border: 0px solid #ffffff;
 }
 
-div.img {border: 2px solid #0000ff;}
+div.img {border: 2px solid #339999;}
 
 div.desc
 {
@@ -61,6 +66,20 @@ img.displayed
     display: block;
     margin-left: auto;
     margin-right: auto;
+}
+
+table.center
+{
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+td.center
+{
+    margin: 20px;
+    padding: 1px;
+    padding-right: 20px;
 }
 
 
