@@ -2,6 +2,7 @@ from __future__ import division
 import roslib
 roslib.load_manifest('camera_simulation')
 import rospy
+import copy
 
 import cad.finite_solid_objects as fso
 import cad.csg_objects as csg
@@ -24,22 +25,24 @@ PARAMETERS = {
 
 class Camera(object):
     def __init__(self,name='camera1',projection='perspective',angle=65,location=[0,0,100],look_at=[0,0,0],image_size=[640,480]):
-        self.name = name
-        self.projection = projection
-        self.angle = angle
-        self.location = location
-        self.look_at = look_at
-        self.image_size = image_size
+        self.info = {}
+        self.info['name'] = name
+        self.info['projection'] = projection
+        self.info['angle'] = angle
+        self.info['location'] = location
+        self.info['look_at'] = look_at
+        self.info['image_size'] = image_size
+        self.info['image_name'] = name + '.png'
 
     def set_parameters(self,obj):
-        obj.set_object_parameter('camera_projection',self.projection)
-        obj.set_object_parameter('camera_angle',self.angle)
-        obj.set_object_parameter('camera_location',self.location)
-        obj.set_object_parameter('camera_look_at',self.look_at)
-        obj.set_object_parameter('image_size',self.image_size)
+        obj.set_object_parameter('camera_projection',self.info['projection'])
+        obj.set_object_parameter('camera_angle',self.info['angle'])
+        obj.set_object_parameter('camera_location',self.info['location'])
+        obj.set_object_parameter('camera_look_at',self.info['look_at'])
+        obj.set_object_parameter('image_size',self.info['image_size'])
 
-    def get_image_name(self):
-        return self.name + '.png'
+    def get_info(self):
+        return copy.copy(self.info)
 
 
 class TestRig(csg.Union):
@@ -55,11 +58,17 @@ class TestRig(csg.Union):
     def get_parameters(self):
         return copy.deepcopy(self.parameters)
 
+    def get_camera_info(self,camera_number):
+        camera_list_index = camera_number - 1
+        camera = self.camera_list[camera_list_index]
+        return camera.get_info()
+
     def render_camera(self,camera_number):
         camera_list_index = camera_number - 1
         camera = self.camera_list[camera_list_index]
         camera.set_parameters(self)
-        self.export(camera.get_image_name())
+        info = camera.get_info()
+        self.export(info['image_name'])
 
     def render_all_cameras(self):
         for camera_list_index in range(len(self.camera_list)):

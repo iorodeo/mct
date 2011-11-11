@@ -12,6 +12,8 @@
   <depend package="opencv2"/>
   <depend package="cad"/>
   <depend package="cad_library"/>
+  <depend package="sensor_msgs"/>
+  <depend package="cv_bridge"/>
 
 </package>
 
