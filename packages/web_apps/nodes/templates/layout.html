@@ -1,9 +1,18 @@
 <!doctype html>
-<title> Rat Tracker 3000+ </title>
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css') }}?v=123"></link>
-<div class="header">
-    <h1 class="color"> Rat Tracker 3000+ </h1>
-</div>
-{% block body %}{% endblock %}
+<html lang="en">
+    <head>
+        {% block head %}
+        <title> Rat Tracker 3000+ </title>
+        <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css') }}?v=123"></link>
+        {% endblock %}
+    </head>
+    <body>
+        {% block body %}
+        <div class="header">
+            <h1 class="color"> Rat Tracker 3000+ </h1>
+        </div>
+        {% endblock %}
+    </body>
+</html>
 
 
