@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
+{{ super() }}
 <div id=container_group>
 {% for camera, port in cameras_and_ports %}
     <div class="img">

@@ -1,0 +1,28 @@
+<head>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
+    <script type="text/javascript" src="/static/js/sijax/sijax_comet.js"></script>
+    <script type="text/javascript">
+        {{ g.sijax.get_js()|safe }}
+    </script>
+</head>
+<body>
+    <h1>
+        <center> SIJAX Test </center> 
+    </h1>
+
+    <center>
+        <div id="seq"> &nbsp; </div>
+        <br/>
+        <button id="btnStart">Start</button>
+    </center>
+    
+    <script type="text/javascript">
+    $('#btnStart').bind('click', function () {
+        $('#seq').html('&nbsp');
+        sjxComet.request('do_work', [0.01]);
+    });
+    </script>
+
+</body>
+

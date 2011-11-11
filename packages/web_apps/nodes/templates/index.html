@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
+{{ super() }}
 <div id=container_group>
 
     <!-- System information -->
@@ -15,18 +16,24 @@
     <!-- Camera list display -->
     <h2 class="color"> Camera List: </h2>
     <a href="{{url_for('allcameras')}}"> all cameras </a>
-    </br>
+    <br/>
     {% for camera in camera_list %}
         <a href="{{url_for('camera', camera=camera)}}"> {{camera}} </a>
-        </br>
+        <br/>
     {% endfor %}
 
     <!-- Published Topics -->
     <h2 class="color"> ROS Topics </h2>
     <a href="{{url_for('topics')}}"> all topics </a>
-    </br>
+    <br/>
     <a href="{{url_for('camera_topics')}}"> by camera </a>
-    </br>
+    <br/>
+
+    <!-- Javascript -->
+    <h2> Javascript </h2>
+    <a href="{{url_for('sijax_test')}}"> SIJAX test </a>
+    <br/>
+    <a href="{{url_for('sijax_comet')}}">SIJAX comet </a>
 
 </div>
 {% endblock %}
