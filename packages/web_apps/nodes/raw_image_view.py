@@ -1,15 +1,22 @@
 #!/usr/bin/env python
-import os
-import sys
+
+# Tornado web server imports
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+
+# Flask web framework imports
 import flask
 import flaskext.sijax
 
-#path = os.path.join('.', os.path.dirname(__file__), '../')
-#sys.path.append(path)
-
+#  ROS imports
 import roslib
 roslib.load_manifest('web_apps')
 import rospy
+
+# Other imports
+import os
+import sys
 import redis
 import atexit
 import tracker_camera_tools
@@ -63,6 +70,7 @@ def index():
             'Internal IP:': internal_ip,
             'External iface:': external_iface,
             'Internal iface:':  internal_iface,
+            'Server:' : state_db.get('server'),
             }
 
     kwargs = {
@@ -168,18 +176,15 @@ def comet_do_work_handler(obj_response, sleep_time):
         width = '%spx' % (i * 80)
         obj_response.css('#progress', 'width', width)
         obj_response.html('#progress', width)
-        # Yielding tells Sijax to flush the data to the browser.
-        # This only works for Streaming functions (Comet or Upload)
-        # and would not work for normal Sijax functions
         yield obj_response
         if i != 5:
+            # The sleep here kills tornado and I think makes the example only work 
+            # in a single instance of the builtin sever.  
             time.sleep(sleep_time)
 
 @flaskext.sijax.route(app, "/sijax_comet")
 def sijax_comet():
     if flask.g.sijax.is_sijax_request:
-        # The request looks like a valid Sijax request
-        # Let's register the handlers and tell Sijax to process it
         flask.g.sijax.register_comet_callback('do_work', comet_do_work_handler)
         return flask.g.sijax.process_request()
     return flask.render_template('comet.html')
@@ -200,7 +205,7 @@ def exit_func():
     if use_streamer:
         streamer.stop()
     for k in state_db.keys('*'):
-        db.delete(k)
+        state_db.delete(k)
 
 atexit.register(exit_func)
 
@@ -209,22 +214,27 @@ atexit.register(exit_func)
 if __name__ == '__main__':
 
     try:
-        arg = sys.argv[1].lower()
-        if arg == 'true':
-            debug_flag = True
-        else:
-            debug_flag = False
+        server = sys.argv[1].lower()
     except IndexError:
-        debug_flag = True
+        server = 'debug' 
 
-    if debug_flag:
-        print 'starting in debug mode'
+    if server=='debug':
+        state_db.set('server','builtin -- debug mode')
+        print 'starting builtin server -- debug mode'
         app.debug = True
         app.run()
-    else:
-        print 'starting in normal mode'
+    elif server=='standard':
+        state_db.set('server', 'builtin - standard mode')
+        print 'starting builtin server -- standard mode'
         app.run(host='0.0.0.0')
-
+    elif server == 'tornado':
+        print 'starting tornado server'
+        state_db.set('server', 'tornado')
+        http_server = HTTPServer(WSGIContainer(app))
+        http_server.listen(5000)
+        IOLoop.instance().start()
+    else:
+        print 'unknow server option -- goodbye'
 
 
 
