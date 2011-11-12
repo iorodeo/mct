@@ -1,21 +1,44 @@
 #!/usr/bin/env python
-import roslib
-roslib.load_manifest('web_apps')
-import rospy
 import os
 import sys
 import flask
+import flaskext.sijax
+
+#path = os.path.join('.', os.path.dirname(__file__), '../')
+#sys.path.append(path)
+
+import roslib
+roslib.load_manifest('web_apps')
+import rospy
 import redis
 import atexit
 import tracker_camera_tools
 import netifaces
+import time
+import random
+from sensor_msgs.msg import CameraInfo
+import cPickle as pickle
 
 use_streamer = False 
 external_iface = 'eth0'
 internal_iface = 'eth1'
 
+# Create the application and initialize sijax
 app = flask.Flask(__name__)
-db = redis.Redis('localhost',db=0)
+
+# The path where you want the extension to create the needed javascript files
+# DON'T put any of your files in this directory, because they'll be deleted!
+app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
+
+# You need to point Sijax to the json2.js library if you want to support
+# browsers that don't support JSON natively (like IE <= 7)
+app.config["SIJAX_JSON_URI"] = '/home/albert/pyenv/test/lib/python2.7/site-packages/sijax/js/json2.js'
+
+flaskext.sijax.init_sijax(app)
+
+# Set up redis key,value stores
+topic_db = redis.Redis('localhost',db=2)
+state_db = redis.Redis('localhost',db=0)
 
 # Start the throttling nodes and the mjpeg streamer
 if use_streamer:
@@ -121,6 +144,47 @@ def camera_topics():
             }
     return flask.render_template('camera_topics.html',**kwargs)
 
+# sijax tests
+# --------------------------------------------------------------------------------
+
+def sijax_test_handler(obj_response, sleep_time):
+    while 1:
+        data_str = topic_db.get('camera1_info')
+        data = pickle.loads(data_str)
+        seq = 'seq: %s'%(data.header.seq,)
+        obj_response.html('#seq', seq)
+        yield obj_response
+        time.sleep(sleep_time)
+
+@flaskext.sijax.route(app, '/sijax_test')
+def sijax_test():
+    if flask.g.sijax.is_sijax_request:
+        flask.g.sijax.register_comet_callback('do_work', sijax_test_handler)
+        return flask.g.sijax.process_request()
+    return flask.render_template('sijax_test.html')
+
+def comet_do_work_handler(obj_response, sleep_time):
+    for i in range(6):
+        width = '%spx' % (i * 80)
+        obj_response.css('#progress', 'width', width)
+        obj_response.html('#progress', width)
+        # Yielding tells Sijax to flush the data to the browser.
+        # This only works for Streaming functions (Comet or Upload)
+        # and would not work for normal Sijax functions
+        yield obj_response
+        if i != 5:
+            time.sleep(sleep_time)
+
+@flaskext.sijax.route(app, "/sijax_comet")
+def sijax_comet():
+    if flask.g.sijax.is_sijax_request:
+        # The request looks like a valid Sijax request
+        # Let's register the handlers and tell Sijax to process it
+        flask.g.sijax.register_comet_callback('do_work', comet_do_work_handler)
+        return flask.g.sijax.process_request()
+    return flask.render_template('comet.html')
+
+# -----------------------------------------------------------------------------
 def get_ip_addr(iface):
     """
     Returns the IP address for the given interface.
@@ -130,9 +194,12 @@ def get_ip_addr(iface):
     return ip
 
 def exit_func():
+    """
+    Cleanup on shutdown
+    """
     if use_streamer:
         streamer.stop()
-    for k in db.keys('*'):
+    for k in state_db.keys('*'):
         db.delete(k)
 
 atexit.register(exit_func)

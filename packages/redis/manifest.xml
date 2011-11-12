@@ -1,16 +1,16 @@
 <package>
-  <description brief="web_apps">
+  <description brief="redis">
 
-     web_apps
+     redis
 
   </description>
   <author>Albert Lee</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/web_apps</url>
+  <url>http://ros.org/wiki/redis</url>
   <depend package="rospy"/>
-  <depend package="tracker_camera_tools"/>
   <depend package="sensor_msgs"/>
+  <depend package="tracker_camera_tools" />
 
 </package>
 

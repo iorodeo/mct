@@ -1,10 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
+{{ super() }}
 <div id=container_group>
     <h2 class="color"> ROS Topics by Camera  </h2>
     <a href="{{url_for('index')}}"> index </a>
-    </br>
-    </br>
+    <br/>
+    <br/>
     <form action="{{ url_for('camera_topics') }}" method=post name="cameraSelect">
         <select name="camera" >
             {% for camera_name in camera_list %}
@@ -17,7 +18,7 @@
         </select>
         <input type=submit name=button value="Submit">
     </form>
-    </br>
+    <br/>
     <table class="center">
         {% for topic in camera_topic_list %}
         <tr>
