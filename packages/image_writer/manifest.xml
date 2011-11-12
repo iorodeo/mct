@@ -1,0 +1,18 @@
+<package>
+  <description brief="image_writer">
+
+     image_writer
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mjpeg_topic_stream</url>
+  <depend package="rospy"/>
+  <depend package="opencv2" />
+  <depend package="sensor_msgs" />
+  <depend package="cv_bridge" />
+
+</package>
+
+
