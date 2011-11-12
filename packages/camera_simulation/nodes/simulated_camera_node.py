@@ -20,7 +20,7 @@ class SimulatedCamera:
 
     # Test Rig
     self.test_rig = TestRig()
-    self.test_rig.set_object_parameter('display_render',False)
+    self.test_rig.set_obj_parameter('display_render',False)
     self.camera_info = self.test_rig.get_camera_info(self.camera_number)
     self.render_dir = os.path.dirname(camera_simulation.test_rig.__file__)
     self.rendered_path = self.render_dir + '/' + self.camera_info['image_name']
@@ -42,8 +42,11 @@ class SimulatedCamera:
     while not rospy.is_shutdown():
       if self.initialized:
         self.test_rig.render_camera(self.camera_number)
-        self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_GRAYSCALE)
-        self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"passthrough"))
+        try:
+          self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_GRAYSCALE)
+          self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"passthrough"))
+        except IOError:
+          pass
         rospy.sleep(0.1)
 
 #       # Image Initialization

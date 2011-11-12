@@ -35,11 +35,11 @@ class Camera(object):
         self.info['image_name'] = name + '.png'
 
     def set_parameters(self,obj):
-        obj.set_object_parameter('camera_projection',self.info['projection'])
-        obj.set_object_parameter('camera_angle',self.info['angle'])
-        obj.set_object_parameter('camera_location',self.info['location'])
-        obj.set_object_parameter('camera_look_at',self.info['look_at'])
-        obj.set_object_parameter('image_size',self.info['image_size'])
+        obj.set_obj_parameter('camera_projection',self.info['projection'])
+        obj.set_obj_parameter('camera_angle',self.info['angle'])
+        obj.set_obj_parameter('camera_location',self.info['location'])
+        obj.set_obj_parameter('camera_look_at',self.info['look_at'])
+        obj.set_obj_parameter('image_size',self.info['image_size'])
 
     def get_info(self):
         return copy.copy(self.info)
@@ -53,10 +53,14 @@ class TestRig(csg.Union):
         self.__set_camera_list()
         self.__make_box()
         self.__make_checkerboard_floor()
+        self.show_floor_bool = False
         # self.__set_bom()
 
     def get_parameters(self):
         return copy.deepcopy(self.parameters)
+
+    def show_floor(self,show_floor_bool=True):
+        self.show_floor_bool = bool(self.show_floor_bool)
 
     def get_camera_info(self,camera_number):
         camera_list_index = camera_number - 1
@@ -64,6 +68,9 @@ class TestRig(csg.Union):
         return camera.get_info()
 
     def render_camera(self,camera_number):
+        self.set_obj_list(self.box)
+        if self.show_floor_bool:
+            self.add_obj(self.checkerboard_floor)
         camera_list_index = camera_number - 1
         camera = self.camera_list[camera_list_index]
         camera.set_parameters(self)
@@ -77,7 +84,7 @@ class TestRig(csg.Union):
 
     def __set_light_sources(self):
         light_source_list = [[100,100,1000],[-100,100,1000],[100,-100,1000],[-100,-100,1000]]
-        self.set_object_parameter('light_source_list',light_source_list)
+        self.set_obj_parameter('light_source_list',light_source_list)
 
     def __set_camera_list(self):
         regular_angle = 65
@@ -105,7 +112,7 @@ class TestRig(csg.Union):
         BOM.set_parameter('vendor',self.parameters['vendor'])
         BOM.set_parameter('part number',self.parameters['part number'])
         BOM.set_parameter('cost',self.parameters['cost'])
-        self.set_object_parameter('bom',BOM)
+        self.set_obj_parameter('bom',BOM)
 
     def __make_box(self):
         beam_sl = self.parameters['beam_side_length']
@@ -117,15 +124,13 @@ class TestRig(csg.Union):
         beams_y = po.LinearArray(beam_y,x=[-box_sl/2,box_sl/2],y=0,z=0)
         beam_z = fso.Box(x=beam_sl,y=beam_sl,z=beam_length)
         beams_z = po.LinearArray(beam_z,x=[-box_sl/2,box_sl/2],y=[-box_sl/2,box_sl/2],z=beam_length/2)
-        box = beams_x | beams_y | beams_z
-        box.set_color(self.parameters['color'],recursive=True)
-        self.add_obj(beams_x)
-        self.add_obj(beams_y)
-        self.add_obj(beams_z)
+        self.box = beams_x | beams_y | beams_z
+        self.box.set_color(self.parameters['color'],recursive=True)
+        # self.add_obj(self.box)
 
     def __make_checkerboard_floor(self):
-        cb = Checkerboard(10,8,8)
-        self.add_obj(cb)
+        self.checkerboard_floor = Checkerboard(10,8,8)
+        # self.add_obj(self.checkerboard_floor)
 
 
 # ---------------------------------------------------------------------
