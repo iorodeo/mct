@@ -38,6 +38,9 @@ class Checkerboard(csg.Union):
 
         self.parameters['thickness'] = thickness
 
+        self.parameters['length_x'] = self.parameters['square_count_x']*self.parameters['square_length']
+        self.parameters['length_y'] = self.parameters['square_count_y']*self.parameters['square_length']
+
         self.__make_checkerboard()
         # self.__set_bom()
 

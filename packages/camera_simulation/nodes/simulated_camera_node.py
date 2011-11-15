@@ -21,9 +21,12 @@ class SimulatedCamera:
     # Test Rig
     self.test_rig = TestRig()
     self.test_rig.set_obj_parameter('display_render',False)
+    self.test_rig.show_calibration(True)
     self.camera_info = self.test_rig.get_camera_info(self.camera_number)
-    self.render_dir = os.path.dirname(camera_simulation.test_rig.__file__)
-    self.rendered_path = self.render_dir + '/' + self.camera_info['image_name']
+    # self.render_dir = os.path.dirname(camera_simulation.test_rig.__file__)
+    self.render_dir = os.path.expanduser('~/.ros')
+    self.rendered_path = os.path.join(self.render_dir,self.camera_info['image_name'])
+    # self.rendered_path = self.camera_info['image_path']
 
     # Broadcaster/Publishers
     self.rendered_image_pub = rospy.Publisher("/camera" + str(self.camera_number) + "/camera/rendered",Image)

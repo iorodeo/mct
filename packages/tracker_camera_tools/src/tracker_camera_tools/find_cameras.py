@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-import roslib 
+import roslib
 roslib.load_manifest('tracker_camera_tools')
 import rospy
 
 def find_cameras():
     """
-    Returns a list of all active cameras by looking for topics of the form 
+    Returns a list of all active cameras by looking for topics of the form
     /cameraN/camera
     """
-    cameras = set() 
+    cameras = set()
     topic_list = rospy.get_published_topics('/')
     for topic in topic_list:
         topic= topic[0]

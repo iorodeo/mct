@@ -3,6 +3,9 @@ import roslib
 roslib.load_manifest('camera_simulation')
 import rospy
 import copy
+import os
+import math
+import random
 
 import cad.finite_solid_objects as fso
 import cad.csg_objects as csg
@@ -24,7 +27,7 @@ PARAMETERS = {
 
 
 class Camera(object):
-    def __init__(self,name='camera1',projection='perspective',angle=65,location=[0,0,100],look_at=[0,0,0],image_size=[640,480]):
+    def __init__(self,name='camera1',projection='perspective',angle=65,location=[0,0,100],look_at=[0,0,0],image_size=[640,480],image_dir=''):
         self.info = {}
         self.info['name'] = name
         self.info['projection'] = projection
@@ -33,6 +36,8 @@ class Camera(object):
         self.info['look_at'] = look_at
         self.info['image_size'] = image_size
         self.info['image_name'] = name + '.png'
+        self.info['image_dir'] = image_dir
+        self.info['image_path'] = os.path.join(self.info['image_dir'],self.info['image_name'])
 
     def set_parameters(self,obj):
         obj.set_obj_parameter('camera_projection',self.info['projection'])
@@ -52,15 +57,20 @@ class TestRig(csg.Union):
         self.__set_light_sources()
         self.__set_camera_list()
         self.__make_box()
-        self.__make_checkerboard_floor()
+        self.__make_floor_checkerboard()
+        self.__make_calibration_checkerboard()
         self.show_floor_bool = False
+        self.show_calibration_bool = False
         # self.__set_bom()
 
     def get_parameters(self):
         return copy.deepcopy(self.parameters)
 
     def show_floor(self,show_floor_bool=True):
-        self.show_floor_bool = bool(self.show_floor_bool)
+        self.show_floor_bool = bool(show_floor_bool)
+
+    def show_calibration(self,show_calibration_bool=True):
+        self.show_calibration_bool = bool(show_calibration_bool)
 
     def get_camera_info(self,camera_number):
         camera_list_index = camera_number - 1
@@ -70,12 +80,15 @@ class TestRig(csg.Union):
     def render_camera(self,camera_number):
         self.set_obj_list(self.box)
         if self.show_floor_bool:
-            self.add_obj(self.checkerboard_floor)
+            self.add_obj(self.floor_checkerboard)
         camera_list_index = camera_number - 1
         camera = self.camera_list[camera_list_index]
         camera.set_parameters(self)
-        info = camera.get_info()
-        self.export(info['image_name'])
+        camera_info = camera.get_info()
+        if self.show_calibration_bool:
+            self.__place_calibration_checkerboard(camera_info)
+            self.add_obj(self.calibration_checkerboard)
+        self.export(camera_info['image_path'])
 
     def render_all_cameras(self):
         for camera_list_index in range(len(self.camera_list)):
@@ -92,17 +105,19 @@ class TestRig(csg.Union):
         camera_z = 80
         floor_z = 0
         image_size = [640,480]
-        camera1 = Camera('camera01','perspective',regular_angle,[19,-42.75,camera_z],[19,-42.75,floor_z],image_size)
-        camera2 = Camera('camera02','perspective',regular_angle,[-19,-42.75,camera_z],[-19,-42.75,floor_z],image_size)
-        camera3 = Camera('camera03','perspective',regular_angle,[38,-14.25,camera_z],[38,-14.25,floor_z],image_size)
-        camera4 = Camera('camera04','perspective',regular_angle,[0,-14.25,camera_z],[0,-14.25,floor_z],image_size)
-        camera5 = Camera('camera05','perspective',regular_angle,[-38,-14.25,camera_z],[-38,-14.25,floor_z],image_size)
-        camera6 = Camera('camera06','fisheye',fisheye_angle,[0,0,camera_z],[0,0,floor_z],image_size)
-        camera7 = Camera('camera07','perspective',regular_angle,[38,14.25,camera_z],[38,14.25,floor_z],image_size)
-        camera8 = Camera('camera08','perspective',regular_angle,[0,14.25,camera_z],[0,14.25,floor_z],image_size)
-        camera9 = Camera('camera09','perspective',regular_angle,[-38,14.25,camera_z],[-38,14.25,floor_z],image_size)
-        camera10 = Camera('camera10','perspective',regular_angle,[19,42.75,camera_z],[19,42.75,floor_z],image_size)
-        camera11 = Camera('camera11','perspective',regular_angle,[-19,42.75,camera_z],[-19,42.75,floor_z],image_size)
+        # image_dir = '~/.multi_cam_tracker'
+        image_dir = ''
+        camera1 = Camera('camera01','perspective',regular_angle,[19,-42.75,camera_z],[19,-42.75,floor_z],image_size,image_dir)
+        camera2 = Camera('camera02','perspective',regular_angle,[-19,-42.75,camera_z],[-19,-42.75,floor_z],image_size,image_dir)
+        camera3 = Camera('camera03','perspective',regular_angle,[38,-14.25,camera_z],[38,-14.25,floor_z],image_size,image_dir)
+        camera4 = Camera('camera04','perspective',regular_angle,[0,-14.25,camera_z],[0,-14.25,floor_z],image_size,image_dir)
+        camera5 = Camera('camera05','perspective',regular_angle,[-38,-14.25,camera_z],[-38,-14.25,floor_z],image_size,image_dir)
+        camera6 = Camera('camera06','fisheye',fisheye_angle,[0,0,camera_z],[0,0,floor_z],image_size,image_dir)
+        camera7 = Camera('camera07','perspective',regular_angle,[38,14.25,camera_z],[38,14.25,floor_z],image_size,image_dir)
+        camera8 = Camera('camera08','perspective',regular_angle,[0,14.25,camera_z],[0,14.25,floor_z],image_size,image_dir)
+        camera9 = Camera('camera09','perspective',regular_angle,[-38,14.25,camera_z],[-38,14.25,floor_z],image_size,image_dir)
+        camera10 = Camera('camera10','perspective',regular_angle,[19,42.75,camera_z],[19,42.75,floor_z],image_size,image_dir)
+        camera11 = Camera('camera11','perspective',regular_angle,[-19,42.75,camera_z],[-19,42.75,floor_z],image_size,image_dir)
         self.camera_list = [camera1,camera2,camera3,camera4,camera5,camera6,camera7,camera8,camera9,camera10,camera11]
 
     def __set_bom(self):
@@ -128,9 +143,35 @@ class TestRig(csg.Union):
         self.box.set_color(self.parameters['color'],recursive=True)
         # self.add_obj(self.box)
 
-    def __make_checkerboard_floor(self):
-        self.checkerboard_floor = Checkerboard(10,8,8)
-        # self.add_obj(self.checkerboard_floor)
+    def __make_floor_checkerboard(self):
+        self.floor_checkerboard = Checkerboard(10,8,8)
+        # self.add_obj(self.floor_checkerboard)
+
+    def __make_calibration_checkerboard(self):
+        self.calibration_checkerboard = Checkerboard(5,8,6)
+
+    def __place_calibration_checkerboard(self,camera_info):
+        projection = camera_info['projection']
+        angle = camera_info['angle']
+        location = camera_info['location']
+        look_at = camera_info['look_at']
+        image_size = camera_info['image_size']
+
+        midpoint = [(location[0]+look_at[0])/2,(location[1]+look_at[1])/2,(location[2]+look_at[2])/2]
+        self.calibration_checkerboard.set_orientation()
+
+        angle_max_deg = 45
+        angle_min_deg = -45
+        rand_angle_x = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
+        rand_angle_y = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
+        self.calibration_checkerboard.rotate(angle=rand_angle_x,axis=[1,0,0])
+        self.calibration_checkerboard.rotate(angle=rand_angle_y,axis=[0,1,0])
+
+        dev_max = 15
+        x_pos = midpoint[0] + random.randrange(-dev_max,dev_max)
+        y_pos = midpoint[1] + random.randrange(-dev_max,dev_max)
+        z_pos = random.randrange((look_at[2]+midpoint[2])/2,midpoint[2])
+        self.calibration_checkerboard.set_position([x_pos,y_pos,z_pos])
 
 
 # ---------------------------------------------------------------------
