@@ -2,6 +2,7 @@ from __future__ import division
 import roslib
 roslib.load_manifest('camera_simulation')
 import rospy
+
 import copy
 import os
 import math
@@ -59,12 +60,16 @@ class TestRig(csg.Union):
         self.__make_box()
         self.__make_floor_checkerboard()
         self.__make_calibration_checkerboard()
+        self.show_box_bool = True
         self.show_floor_bool = False
         self.show_calibration_bool = False
         # self.__set_bom()
 
     def get_parameters(self):
         return copy.deepcopy(self.parameters)
+
+    def show_box(self,show_box_bool=True):
+        self.show_box_bool = bool(show_box_bool)
 
     def show_floor(self,show_floor_bool=True):
         self.show_floor_bool = bool(show_floor_bool)
@@ -78,7 +83,10 @@ class TestRig(csg.Union):
         return camera.get_info()
 
     def render_camera(self,camera_number):
-        self.set_obj_list(self.box)
+        if self.show_box_bool and (not self.show_calibration_bool):
+            self.set_obj_list(self.box)
+        else:
+            self.set_obj_list([])
         if self.show_floor_bool:
             self.add_obj(self.floor_checkerboard)
         camera_list_index = camera_number - 1
@@ -167,10 +175,10 @@ class TestRig(csg.Union):
         self.calibration_checkerboard.rotate(angle=rand_angle_x,axis=[1,0,0])
         self.calibration_checkerboard.rotate(angle=rand_angle_y,axis=[0,1,0])
 
-        dev_max = 15
+        dev_max = 25
         x_pos = midpoint[0] + random.randrange(-dev_max,dev_max)
         y_pos = midpoint[1] + random.randrange(-dev_max,dev_max)
-        z_pos = random.randrange((look_at[2]+midpoint[2])/2,midpoint[2])
+        z_pos = random.randrange((look_at[2]+midpoint[2])/2,(location[2]+midpoint[2])/2)
         self.calibration_checkerboard.set_position([x_pos,y_pos,z_pos])
 
 

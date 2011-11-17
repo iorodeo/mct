@@ -70,7 +70,8 @@ class Checkerboard(csg.Union):
         offset = sl/2
         checkers_black = po.ArbitraryArray(square_black,[[-offset,-offset,0],[offset,offset,0]])
         checkers_white = po.ArbitraryArray(square_white,[[offset,-offset,0],[-offset,offset,0]])
-        checkers = checkers_black | checkers_white
+        # checkers = checkers_black | checkers_white
+        checkers = checkers_black
 
         checkers_count_x = scx//2
         checkers_count_y = scy//2

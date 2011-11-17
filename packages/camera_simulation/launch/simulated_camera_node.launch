@@ -12,6 +12,8 @@
     <node pkg="camera_simulation" type="simulated_camera_node.py" name="simulated_camera_node">
       <param name="camera_number" value="1" type="int"/>
     </node>
+    <node pkg="camera_simulation" type="simulated_camera_info_node" name="simulated_camera_info_node">
+    </node>
   </group>
 
 </launch>

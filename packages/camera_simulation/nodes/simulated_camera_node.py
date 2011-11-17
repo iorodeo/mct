@@ -426,7 +426,7 @@ class SimulatedCamera:
 #   cv.DestroyAllWindows()
 
 if __name__ == '__main__':
-  rospy.init_node('SimulatedCamera')
+  rospy.init_node('simulated_camera_node')
   sc = SimulatedCamera()
   try:
     sc.publish()
