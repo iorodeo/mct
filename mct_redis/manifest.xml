@@ -1,0 +1,17 @@
+<package>
+  <description brief="mct_redis">
+
+     mct_redis
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_redis</url>
+  <depend package="rospy"/>
+  <depend package="sensor_msgs"/>
+  <depend package="mct_camera_tools" />
+
+</package>
+
+

@@ -1,0 +1,17 @@
+<package>
+  <description brief="mct_web_apps">
+
+     mct_web_apps
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_web_apps</url>
+  <depend package="rospy"/>
+  <depend package="tracker_camera_tools"/>
+  <depend package="sensor_msgs"/>
+
+</package>
+
+
