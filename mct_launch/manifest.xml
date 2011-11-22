@@ -1,0 +1,14 @@
+<package>
+  <description brief="mct_launch">
+
+     mct_launch
+
+  </description>
+  <author>Peter Polidoro</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_launch</url>
+
+</package>
+
+
