@@ -1,0 +1,6 @@
+<launch>
+  <group name="mct">
+    <include file="$(find mct_config_launch)/mct.machine" />
+    <include file="$(find mct_config_launch)/cameras.launch" />
+  </group>
+</launch>
