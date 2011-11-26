@@ -26,7 +26,7 @@ class CadModel(csg.Union):
     def __init__(self):
         super(CadModel, self).__init__()
         self.parameters = PARAMETERS
-        self.__set_light_sources()
+        # self.__set_light_sources()
         self.__add_cameras()
         self.__make_box()
         self.__make_floor_checkerboard()
