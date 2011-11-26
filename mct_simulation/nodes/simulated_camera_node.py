@@ -10,7 +10,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 import mct_simulation
-from mct_simulation.test_rig import TestRig
+from mct_simulation.cad_model import CadModel
 
 
 class SimulatedCamera:
@@ -19,11 +19,11 @@ class SimulatedCamera:
     self.camera_number = rospy.get_param("~camera_number")
 
     # Test Rig
-    self.test_rig = TestRig()
-    self.test_rig.set_obj_parameter('display_render',False)
-    self.test_rig.show_calibration(True)
-    self.camera_info = self.test_rig.get_camera_info(self.camera_number)
-    # self.render_dir = os.path.dirname(mct_simulation.test_rig.__file__)
+    self.cad_model = CadModel()
+    self.cad_model.set_obj_parameter('display_render',False)
+    self.cad_model.show_calibration(True)
+    self.camera_info = self.cad_model.get_camera_info(self.camera_number)
+    # self.render_dir = os.path.dirname(mct_simulation.cad_model.__file__)
     self.render_dir = os.path.expanduser('~/.ros')
     self.rendered_path = os.path.join(self.render_dir,self.camera_info['image_name'])
     # self.rendered_path = self.camera_info['image_path']
@@ -44,7 +44,7 @@ class SimulatedCamera:
   def publish(self):
     while not rospy.is_shutdown():
       if self.initialized:
-        self.test_rig.render_camera(self.camera_number)
+        self.cad_model.render_camera(self.camera_number)
         try:
           self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_GRAYSCALE)
           self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"passthrough"))
