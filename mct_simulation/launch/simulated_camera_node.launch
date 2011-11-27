@@ -1,7 +1,7 @@
 <launch>
-  <group ns="simulated_camera1" >
+  <group ns="simulation/camera1" >
     <node pkg="mct_simulation" type="simulated_camera_node.py" name="simulated_camera_node">
-      <param name="camera_number" value="1" type="int"/>
+      <param name="camera_name" value="camera1" type="str"/>
     </node>
     <node pkg="mct_simulation" type="simulated_camera_info_node" name="simulated_camera_info_node">
     </node>

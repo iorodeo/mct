@@ -25,8 +25,8 @@ PARAMETERS = {
 class CadModel(csg.Union):
     def __init__(self):
         super(CadModel, self).__init__()
-        self.parameters = PARAMETERS
-        # self.__set_light_sources()
+        self.update_obj_parameters(PARAMETERS)
+        self.__set_light_sources()
         self.__add_cameras()
         self.__make_box()
         self.__make_floor_checkerboard()
@@ -34,9 +34,6 @@ class CadModel(csg.Union):
         self.show_box_bool = True
         self.show_floor_bool = False
         self.show_calibration_bool = False
-
-    def get_parameters(self):
-        return copy.deepcopy(self.parameters)
 
     def show_box(self,show_box_bool=True):
         self.show_box_bool = bool(show_box_bool)
@@ -55,15 +52,13 @@ class CadModel(csg.Union):
         if self.show_floor_bool:
             self.add_obj(self.floor_checkerboard)
         if self.show_calibration_bool:
-            self.__place_calibration_checkerboard(camera_info)
+            self.__place_calibration_checkerboard()
             self.add_obj(self.calibration_checkerboard)
         super(CadModel, self).render()
 
     def __set_light_sources(self):
-        self.add_light(position=[25,25,100])
-        self.add_light(position=[-25,25,100])
-        self.add_light(position=[25,-25,100])
-        self.add_light(position=[-25,-25,100])
+        self.add_light(position=[-3000,3000,-3000])
+        # self.add_light(position=[3000,-3000,-3000])
 
     def __add_cameras(self):
         regular_angle = 65
@@ -86,8 +81,9 @@ class CadModel(csg.Union):
         self.add_camera('camera11','perspective',regular_angle,[-19,42.75,camera_z],[-19,42.75,floor_z],image_size,image_dir)
 
     def __make_box(self):
-        beam_sl = self.parameters['beam_side_length']
-        box_sl = self.parameters['box_side_length']
+        beam_sl = self.get_obj_parameter('beam_side_length')
+        box_sl = self.get_obj_parameter('box_side_length')
+        box_color = self.get_obj_parameter('box_color')
         beam_length = box_sl - beam_sl
         beam_x = fso.Box(x=beam_length,y=beam_sl,z=beam_sl)
         beams_x = po.LinearArray(beam_x,x=[0],y=[-box_sl/2,box_sl/2],z=0)
@@ -96,7 +92,7 @@ class CadModel(csg.Union):
         beam_z = fso.Box(x=beam_sl,y=beam_sl,z=beam_length)
         beams_z = po.LinearArray(beam_z,x=[-box_sl/2,box_sl/2],y=[-box_sl/2,box_sl/2],z=beam_length/2)
         self.box = beams_x | beams_y | beams_z
-        self.box.set_color(self.parameters['box_color'],recursive=True)
+        self.box.set_color(box_color,recursive=True)
         # self.add_obj(self.box)
 
     def __make_floor_checkerboard(self):
@@ -106,14 +102,14 @@ class CadModel(csg.Union):
     def __make_calibration_checkerboard(self):
         self.calibration_checkerboard = Checkerboard(5,8,6)
 
-    def __place_calibration_checkerboard(self,camera_info):
-        projection = camera_info['projection']
-        angle = camera_info['angle']
-        location = camera_info['location']
-        look_at = camera_info['look_at']
-        image_size = camera_info['image_size']
+    def __place_calibration_checkerboard(self):
+        projection = self.camera.get_obj_parameter('camera_projection')
+        angle = self.camera.get_obj_parameter('camera_angle')
+        position = self.camera.get_position()
+        look_at = self.camera.get_obj_parameter('camera_look_at')
+        image_size = self.camera.get_obj_parameter('image_size')
 
-        midpoint = [(location[0]+look_at[0])/2,(location[1]+look_at[1])/2,(location[2]+look_at[2])/2]
+        midpoint = [(position[0]+look_at[0])/2,(position[1]+look_at[1])/2,(position[2]+look_at[2])/2]
         self.calibration_checkerboard.set_orientation()
 
         angle_max_deg = 45
@@ -126,7 +122,7 @@ class CadModel(csg.Union):
         dev_max = 25
         x_pos = midpoint[0] + random.randrange(-dev_max,dev_max)
         y_pos = midpoint[1] + random.randrange(-dev_max,dev_max)
-        z_pos = random.randrange((look_at[2]+midpoint[2])/2,(location[2]+midpoint[2])/2)
+        z_pos = random.randrange((look_at[2]+midpoint[2])/2,(position[2]+midpoint[2])/2)
         self.calibration_checkerboard.set_position([x_pos,y_pos,z_pos])
 
 
