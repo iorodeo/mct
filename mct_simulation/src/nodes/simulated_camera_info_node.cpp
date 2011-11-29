@@ -68,7 +68,7 @@ int main(int argc, char **argv)
   // dvr.setup();
   while (node.ok())
     {
-      // dvr.poll();
+      dvr.publish();
       ros::spinOnce();
     }
   // dvr.shutdown();

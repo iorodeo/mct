@@ -57,7 +57,7 @@ namespace camera_info_driver
     CameraInfoDriver(ros::NodeHandle priv_nh,
                      ros::NodeHandle camera_nh);
     ~CameraInfoDriver();
-    // void poll(void);
+    void publish(void);
     // void setup(void);
     // void shutdown(void);
 
@@ -68,10 +68,14 @@ namespace camera_info_driver
     ros::NodeHandle priv_nh_;             // private node handle
     ros::NodeHandle camera_nh_;           // camera name space handle
     std::string camera_name_;             // camera name
+    std::string camera_info_url_;         // camera info url
+    sensor_msgs::CameraInfo camera_info_; // camera info
+    ros::Publisher camera_info_pub_;      // camera info publisher
+    ros::Rate loop_rate;                  // loop rate
 
     /** camera calibration information */
     boost::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_;
-    bool calibration_matches_;            // CameraInfo matches video mode
+    bool calibration_found_;
 
   }; // end class CameraInfoDriver
 

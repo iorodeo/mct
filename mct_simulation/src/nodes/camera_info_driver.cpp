@@ -60,22 +60,48 @@ namespace camera_info_driver
     camera_nh_(camera_nh),
     camera_name_("camera"),
     cinfo_(new camera_info_manager::CameraInfoManager(camera_nh_)),
-    calibration_matches_(true)
+    calibration_found_(false),
+    loop_rate(10)
   {
+    ros::param::get("~camera_name", camera_name_);
+    ros::param::get("~camera_info_url", camera_info_url_);
     if (!cinfo_->setCameraName(camera_name_))
       {
         ROS_WARN_STREAM("[" << camera_name_
                         << "] name not valid"
                         << " for camera_info_manger");
       }
+    // set the new URL and load CameraInfo (if any) from it
+    if (cinfo_->validateURL(camera_info_url_))
+      {
+        if(cinfo_->loadCameraInfo(camera_info_url_))
+          {
+            camera_info_pub_ = camera_nh_.advertise<sensor_msgs::CameraInfo>("camera_info", 1000);
+            calibration_found_ = true;
+          }
+      }
   }
 
   CameraInfoDriver::~CameraInfoDriver()
   {}
 
-  /** device poll */
-  // void CameraInfoDriver::poll(void)
-  // {}
+  /** device publish */
+  void CameraInfoDriver::publish(void)
+  {
+    if (calibration_found_)
+      {
+        // get current CameraInfo data
+        camera_info_ = cinfo_->getCameraInfo();
+        // publish CameraInfo data
+        camera_info_pub_.publish(camera_info_);
+      }
+    loop_rate.sleep();
+
+    // sensor_msgs::CameraInfoPtr
+    //   ci(new sensor_msgs::CameraInfo(cinfo_->getCameraInfo()));
+    // // Publish via image_transport
+    // image_pub_.publish(image, ci);
+  }
 
   // void CameraInfoDriver::setup(void)
   // {}

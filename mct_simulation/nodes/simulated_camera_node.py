@@ -28,8 +28,9 @@ class SimulatedCamera:
     self.rendered_path = os.path.join(self.render_dir,self.cad_model.camera.get_obj_parameter('image_name'))
 
     # Broadcaster/Publishers
-    self.rendered_image_pub = rospy.Publisher("/simulation/" + self.camera_name + "/camera/image_raw",Image)
-    self.rendered_image = cv.CreateImage(self.cad_model.camera.get_obj_parameter('image_size'),cv.IPL_DEPTH_8U,1)
+    self.rendered_image_pub = rospy.Publisher("/" + self.camera_name + "/camera/image_raw",Image)
+    # self.rendered_image = cv.CreateImage(self.cad_model.camera.get_obj_parameter('image_size'),cv.IPL_DEPTH_8U,1)
+    self.rendered_image = cv.CreateImage(self.cad_model.camera.get_obj_parameter('image_size'),cv.IPL_DEPTH_8U,3)
 
     # OpenCV
     self.max_8U = 255
@@ -45,9 +46,11 @@ class SimulatedCamera:
       if self.initialized:
         self.cad_model.render()
         try:
-          self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_GRAYSCALE)
-          self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"passthrough"))
-        except IOError:
+          # self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_GRAYSCALE)
+          self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_COLOR)
+          # self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"passthrough"))
+          self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"bgr8"))
+        except IOError,CvBridgeError:
           pass
         rospy.sleep(0.1)
 

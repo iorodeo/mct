@@ -1,18 +1,20 @@
 <launch>
-  <group ns="simulation/camera1" >
-    <node pkg="mct_simulation" type="simulated_camera_node.py" name="simulated_camera_node">
-      <param name="camera_name" value="camera1" type="str"/>
-    </node>
+  <group ns="sim_camera1" >
+    <param name="~camera_name" value="sim_camera1" type="str"/>
+    <node pkg="mct_simulation" type="simulated_camera_node.py" name="simulated_camera_node"></node>
     <node pkg="mct_simulation" type="simulated_camera_info_node" name="simulated_camera_info_node">
+      <param name="camera_info_url" value="package://mct_config/calibration/calibration_sim_camera1.yaml" />
     </node>
+    <node ns="camera" pkg="image_proc" type="image_proc" name="image_proc" />
   </group>
 
-  <group ns="simulation/camera6" >
-    <node pkg="mct_simulation" type="simulated_camera_node.py" name="simulated_camera_node">
-      <param name="camera_name" value="camera6" type="str"/>
-    </node>
+  <group ns="sim_camera6" >
+    <param name="~camera_name" value="sim_camera6" type="str"/>
+    <node pkg="mct_simulation" type="simulated_camera_node.py" name="simulated_camera_node"></node>
     <node pkg="mct_simulation" type="simulated_camera_info_node" name="simulated_camera_info_node">
+      <param name="camera_info_url" value="package://mct_config/calibration/calibration_sim_camera6.yaml" />
     </node>
+    <node ns="camera" pkg="image_proc" type="image_proc" name="image_proc" />
   </group>
 
 </launch>

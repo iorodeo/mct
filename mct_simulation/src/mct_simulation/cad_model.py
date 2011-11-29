@@ -68,17 +68,17 @@ class CadModel(csg.Union):
         image_size = [640,480]
         # image_dir = '~/.multi_cam_tracker'
         image_dir = ''
-        self.add_camera('camera1','perspective',regular_angle,[19,-42.75,camera_z],[19,-42.75,floor_z],image_size,image_dir)
-        self.add_camera('camera2','perspective',regular_angle,[-19,-42.75,camera_z],[-19,-42.75,floor_z],image_size,image_dir)
-        self.add_camera('camera3','perspective',regular_angle,[38,-14.25,camera_z],[38,-14.25,floor_z],image_size,image_dir)
-        self.add_camera('camera4','perspective',regular_angle,[0,-14.25,camera_z],[0,-14.25,floor_z],image_size,image_dir)
-        self.add_camera('camera5','perspective',regular_angle,[-38,-14.25,camera_z],[-38,-14.25,floor_z],image_size,image_dir)
-        self.add_camera('camera6','fisheye',fisheye_angle,[0,0,camera_z],[0,0,floor_z],image_size,image_dir)
-        self.add_camera('camera7','perspective',regular_angle,[38,14.25,camera_z],[38,14.25,floor_z],image_size,image_dir)
-        self.add_camera('camera8','perspective',regular_angle,[0,14.25,camera_z],[0,14.25,floor_z],image_size,image_dir)
-        self.add_camera('camera9','perspective',regular_angle,[-38,14.25,camera_z],[-38,14.25,floor_z],image_size,image_dir)
-        self.add_camera('camera10','perspective',regular_angle,[19,42.75,camera_z],[19,42.75,floor_z],image_size,image_dir)
-        self.add_camera('camera11','perspective',regular_angle,[-19,42.75,camera_z],[-19,42.75,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera1','perspective',regular_angle,[19,-42.75,camera_z],[19,-42.75,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera2','perspective',regular_angle,[-19,-42.75,camera_z],[-19,-42.75,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera3','perspective',regular_angle,[38,-14.25,camera_z],[38,-14.25,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera4','perspective',regular_angle,[0,-14.25,camera_z],[0,-14.25,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera5','perspective',regular_angle,[-38,-14.25,camera_z],[-38,-14.25,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera6','fisheye',fisheye_angle,[0,0,camera_z],[0,0,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera7','perspective',regular_angle,[38,14.25,camera_z],[38,14.25,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera8','perspective',regular_angle,[0,14.25,camera_z],[0,14.25,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera9','perspective',regular_angle,[-38,14.25,camera_z],[-38,14.25,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera10','perspective',regular_angle,[19,42.75,camera_z],[19,42.75,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera11','perspective',regular_angle,[-19,42.75,camera_z],[-19,42.75,floor_z],image_size,image_dir)
 
     def __make_box(self):
         beam_sl = self.get_obj_parameter('beam_side_length')
@@ -119,10 +119,10 @@ class CadModel(csg.Union):
         self.calibration_checkerboard.rotate(angle=rand_angle_x,axis=[1,0,0])
         self.calibration_checkerboard.rotate(angle=rand_angle_y,axis=[0,1,0])
 
-        dev_max = 25
+        dev_max = 45
         x_pos = midpoint[0] + random.randrange(-dev_max,dev_max)
         y_pos = midpoint[1] + random.randrange(-dev_max,dev_max)
-        z_pos = random.randrange((look_at[2]+midpoint[2])/2,(position[2]+midpoint[2])/2)
+        z_pos = random.randrange((look_at[2]+midpoint[2])/8,(position[2]+midpoint[2])*7/8)
         self.calibration_checkerboard.set_position([x_pos,y_pos,z_pos])
 
 
