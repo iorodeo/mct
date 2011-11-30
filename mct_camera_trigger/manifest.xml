@@ -11,6 +11,8 @@
   <depend package="rospy"/>
   <depend package="mct_msg_and_srv"/>
 
+  <rosdep name="pyserial"/>
+
 </package>
 
 
