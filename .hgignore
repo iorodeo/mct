@@ -2,6 +2,7 @@ syntax: glob
 *.pyc
 *~
 *.o
+*.so
 *.egg-info
 *.swp
 *.scad
@@ -20,3 +21,4 @@ msg_gen
 srv_gen
 src/*/msg
 src/*/srv
+bin
