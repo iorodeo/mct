@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/mct_camera_tools</url>
   <depend package="rospy"/>
   <depend package="roscpp"/>
+  <depend package="mct_msg_and_srv"/>
 
 </package>
 

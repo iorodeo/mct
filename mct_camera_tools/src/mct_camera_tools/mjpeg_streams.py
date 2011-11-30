@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import roslib 
-roslib.load_manifest('tracker_camera_tools')
+roslib.load_manifest('mct_camera_tools')
 import rospy
 import subprocess
 import signal
 import os
-from find_cameras import find_cameras
+from find_camera_topics import find_camera_topics
 
 PORT_DICT = { 
         'image_raw' : (8080,8181),
@@ -28,7 +28,7 @@ class MJPEG_Streamer(object):
         """
         env = os.environ.copy()
         # Start camera image throttling nodes
-        camera_list = find_cameras()
+        camera_list = find_camera_topics()
         for camera in camera_list:
             env['ROS_NAMESPACE'] = '%s'%(camera,)
             proc_cmd = [ 

@@ -16,3 +16,7 @@ dist
 deb_dist
 *.png
 *.pov
+msg_gen
+srv_gen
+src/*/msg
+src/*/srv
