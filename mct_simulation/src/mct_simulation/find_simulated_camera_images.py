@@ -7,7 +7,7 @@ import rospy
 def find_simulated_camera_images():
     """
     Returns a list of all active simulated camera images by looking for topics of the form
-    /camera_name/camera/image_raw
+    /camera_name/camera/rendered
     """
     simulated_camera_images = set()
     topic_list = rospy.get_published_topics('/')
@@ -16,7 +16,7 @@ def find_simulated_camera_images():
         topic_split = topic.split('/')
         if len(topic_split) <= 2:
             continue
-        if (topic_split[3] == 'image_raw'):
+        if (topic_split[3] == 'rendered'):
             name = topic_split[1]
             name_split = name.split('_')
             if name_split[0] == "sim":

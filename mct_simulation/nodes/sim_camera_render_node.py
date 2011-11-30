@@ -13,7 +13,7 @@ import mct_simulation
 from mct_simulation.cad_model import CadModel
 
 
-class SimulatedCamera:
+class SimCameraRender:
   def __init__(self):
     self.initialized = False
     self.camera_name = rospy.get_param("~camera_name")
@@ -28,7 +28,7 @@ class SimulatedCamera:
     self.rendered_path = os.path.join(self.render_dir,self.cad_model.camera.get_obj_parameter('image_name'))
 
     # Broadcaster/Publishers
-    self.rendered_image_pub = rospy.Publisher("/" + self.camera_name + "/camera/image_raw",Image)
+    self.rendered_image_pub = rospy.Publisher("/" + self.camera_name + "/camera/rendered",Image)
     # self.rendered_image = cv.CreateImage(self.cad_model.camera.get_obj_parameter('image_size'),cv.IPL_DEPTH_8U,1)
     self.rendered_image = cv.CreateImage(self.cad_model.camera.get_obj_parameter('image_size'),cv.IPL_DEPTH_8U,3)
 
@@ -56,9 +56,9 @@ class SimulatedCamera:
 
 
 if __name__ == '__main__':
-  rospy.init_node('simulated_camera_node')
-  sc = SimulatedCamera()
+  rospy.init_node('sim_camera_render_node')
+  scr = SimCameraRender()
   try:
-    sc.publish()
+    scr.publish()
   except rospy.ROSInterruptException:
     pass

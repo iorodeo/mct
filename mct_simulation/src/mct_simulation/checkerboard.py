@@ -10,8 +10,7 @@ import cad.pattern_objects as po
 
 # Units of inches, scale later to be in mm
 PARAMETERS = {
-    # 'color_black' : [0.0,0.0,0.0,1.0],
-    'color_black' : [1.0,0.0,0.0,1.0],
+    'color_black' : [0.0,0.0,0.0,1.0],
     'color_white' : [1.0,1.0,1.0,1.0],
     }
 

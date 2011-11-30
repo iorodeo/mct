@@ -1,5 +1,3 @@
-/* $Id: camera1394_node.cpp 34660 2010-12-11 18:27:24Z joq $ */
-
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
@@ -35,7 +33,7 @@
 *********************************************************************/
 
 #include <signal.h>
-#include "camera_info_driver.h"
+#include "sim_camera_driver.h"
 
 /** @file
 
@@ -58,20 +56,17 @@ void sigsegv_handler(int sig)
 /** Main node entry point. */
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "simulated_camera_info_node");
+  ros::init(argc, argv, "sim_camera_driver_node");
   ros::NodeHandle node;
   ros::NodeHandle priv_nh("~");
   ros::NodeHandle camera_nh("camera");
   signal(SIGSEGV, &sigsegv_handler);
-  camera_info_driver::CameraInfoDriver dvr(priv_nh, camera_nh);
+  sim_camera_driver::SimCameraDriver dvr(priv_nh, camera_nh);
 
-  // dvr.setup();
   while (node.ok())
     {
-      dvr.publish();
       ros::spinOnce();
     }
-  // dvr.shutdown();
 
   return 0;
 }

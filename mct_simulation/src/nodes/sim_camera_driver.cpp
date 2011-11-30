@@ -1,5 +1,3 @@
-// $Id: driver1394.cpp 36902 2011-05-26 23:20:18Z joq $
-
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
@@ -34,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include "camera_info_driver.h"
+#include "sim_camera_driver.h"
 
 /** @file
 
@@ -52,16 +50,18 @@
 
 */
 
-namespace camera_info_driver
+namespace sim_camera_driver
 {
-  CameraInfoDriver::CameraInfoDriver(ros::NodeHandle priv_nh,
+  SimCameraDriver::SimCameraDriver(ros::NodeHandle priv_nh,
                                      ros::NodeHandle camera_nh):
     priv_nh_(priv_nh),
     camera_nh_(camera_nh),
     camera_name_("camera"),
     cinfo_(new camera_info_manager::CameraInfoManager(camera_nh_)),
     calibration_found_(false),
-    loop_rate(10)
+    it_(new image_transport::ImageTransport(camera_nh_)),
+    image_pub_(it_->advertiseCamera("image_raw", 1)),
+    image_sub_(it_->subscribe("rendered",1,&SimCameraDriver::imageCallback,this))
   {
     ros::param::get("~camera_name", camera_name_);
     ros::param::get("~camera_info_url", camera_info_url_);
@@ -71,43 +71,41 @@ namespace camera_info_driver
                         << "] name not valid"
                         << " for camera_info_manger");
       }
+
     // set the new URL and load CameraInfo (if any) from it
     if (cinfo_->validateURL(camera_info_url_))
       {
         if(cinfo_->loadCameraInfo(camera_info_url_))
           {
-            camera_info_pub_ = camera_nh_.advertise<sensor_msgs::CameraInfo>("camera_info", 1000);
             calibration_found_ = true;
           }
       }
   }
 
-  CameraInfoDriver::~CameraInfoDriver()
+  SimCameraDriver::~SimCameraDriver()
   {}
 
+  void SimCameraDriver::imageCallback(const sensor_msgs::ImageConstPtr& image)
+  {
+    publish(image);
+  }
+
   /** device publish */
-  void CameraInfoDriver::publish(void)
+  void SimCameraDriver::publish(const sensor_msgs::ImageConstPtr &image)
   {
     if (calibration_found_)
       {
         // get current CameraInfo data
-        camera_info_ = cinfo_->getCameraInfo();
-        // publish CameraInfo data
-        camera_info_pub_.publish(camera_info_);
-      }
-    loop_rate.sleep();
+        sensor_msgs::CameraInfoPtr
+          ci(new sensor_msgs::CameraInfo(cinfo_->getCameraInfo()));
 
-    // sensor_msgs::CameraInfoPtr
-    //   ci(new sensor_msgs::CameraInfo(cinfo_->getCameraInfo()));
-    // // Publish via image_transport
-    // image_pub_.publish(image, ci);
+        ci->header.frame_id = image->header.frame_id;
+        ci->header.stamp = image->header.stamp;
+
+        // Publish via image_transport
+        image_pub_.publish(image, ci);
+
+      }
   }
 
-  // void CameraInfoDriver::setup(void)
-  // {}
-
-  /** driver termination */
-  // void CameraInfoDriver::shutdown(void)
-  // {}
-
-}; // end namespace camera_info_driver
+}; // end namespace sim_camera_driver

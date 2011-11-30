@@ -1,6 +1,4 @@
 /* -*- mode: C++ -*- */
-/* $Id: driver1394.h 36902 2011-05-26 23:20:18Z joq $ */
-
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
@@ -37,6 +35,7 @@
 
 #include <ros/ros.h>
 #include <camera_info_manager/camera_info_manager.h>
+#include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
 
 
@@ -46,37 +45,38 @@
 
 */
 
-namespace camera_info_driver
+namespace sim_camera_driver
 {
 
-  class CameraInfoDriver
+  class SimCameraDriver
   {
   public:
 
     // public methods
-    CameraInfoDriver(ros::NodeHandle priv_nh,
+    SimCameraDriver(ros::NodeHandle priv_nh,
                      ros::NodeHandle camera_nh);
-    ~CameraInfoDriver();
-    void publish(void);
-    // void setup(void);
-    // void shutdown(void);
+    ~SimCameraDriver();
+    void imageCallback(const sensor_msgs::ImageConstPtr& image);
 
   private:
 
     // private methods
+    void publish(const sensor_msgs::ImageConstPtr &image);
 
     ros::NodeHandle priv_nh_;             // private node handle
     ros::NodeHandle camera_nh_;           // camera name space handle
     std::string camera_name_;             // camera name
     std::string camera_info_url_;         // camera info url
-    sensor_msgs::CameraInfo camera_info_; // camera info
-    ros::Publisher camera_info_pub_;      // camera info publisher
-    ros::Rate loop_rate;                  // loop rate
 
     /** camera calibration information */
     boost::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_;
     bool calibration_found_;
 
-  }; // end class CameraInfoDriver
+    /** image transport interfaces */
+    boost::shared_ptr<image_transport::ImageTransport> it_;
+    image_transport::CameraPublisher image_pub_;
+    image_transport::Subscriber image_sub_;
 
-}; // end namespace camera_info_driver
+  }; // end class SimCameraDriver
+
+}; // end namespace sim_camera_driver
