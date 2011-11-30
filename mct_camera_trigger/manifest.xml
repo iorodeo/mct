@@ -1,0 +1,16 @@
+<package>
+  <description brief="mct_camera_trigger">
+
+     mct_camera_trigger
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_camera_trigger</url>
+  <depend package="rospy"/>
+  <depend package="mct_msg_and_srv"/>
+
+</package>
+
+
