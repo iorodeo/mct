@@ -1,0 +1,15 @@
+<package>
+  <description brief="mct_msg_and_srv">
+
+     mct_msg_and_srv
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_msg_and_srv</url>
+  <depend package="rospy"/>
+
+</package>
+
+
