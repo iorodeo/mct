@@ -56,7 +56,7 @@ void sigsegv_handler(int sig)
 /** Main node entry point. */
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "sim_camera_driver_node");
+  ros::init(argc, argv, "sim_camera_driver");
   ros::NodeHandle node;
   ros::NodeHandle priv_nh("~");
   ros::NodeHandle camera_nh("camera");

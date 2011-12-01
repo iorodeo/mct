@@ -6,6 +6,7 @@ import sys
 import os
 import rospy
 import cv
+import tf
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -29,8 +30,10 @@ class SimCameraRender:
 
     # Broadcaster/Publishers
     self.rendered_image_pub = rospy.Publisher("/" + self.camera_name + "/camera/rendered",Image)
-    # self.rendered_image = cv.CreateImage(self.cad_model.camera.get_obj_parameter('image_size'),cv.IPL_DEPTH_8U,1)
     self.rendered_image = cv.CreateImage(self.cad_model.camera.get_obj_parameter('image_size'),cv.IPL_DEPTH_8U,3)
+
+    # Listeners/Subscribers
+    self.tf_listener = tf.TransformListener()
 
     # OpenCV
     self.max_8U = 255
@@ -44,19 +47,19 @@ class SimCameraRender:
   def publish(self):
     while not rospy.is_shutdown():
       if self.initialized:
-        self.cad_model.render()
         try:
-          # self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_GRAYSCALE)
+          (position,orientation) = self.tf_listener.lookupTransform('world','render_object',rospy.Time(0))
+          self.cad_model.render(position,orientation)
           self.rendered_image = cv.LoadImage(self.rendered_path,cv.CV_LOAD_IMAGE_COLOR)
-          # self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"passthrough"))
           self.rendered_image_pub.publish(self.bridge.cv_to_imgmsg(self.rendered_image,"bgr8"))
-        except IOError,CvBridgeError:
+        except (tf.LookupException, tf.ConnectivityException, IOError, CvBridgeError):
           pass
+
         rospy.sleep(0.1)
 
 
 if __name__ == '__main__':
-  rospy.init_node('sim_camera_render_node')
+  rospy.init_node('sim_camera_render')
   scr = SimCameraRender()
   try:
     scr.publish()

@@ -14,10 +14,12 @@ import cad.pattern_objects as po
 
 from checkerboard import Checkerboard
 
-# Units of inches, scale later to be in mm
+# Units of meters
 PARAMETERS = {
-    'beam_side_length' : 1.5,
-    'box_side_length' : 94.5,
+    # 'beam_side_length' : 1.5,
+    # 'box_side_length' : 94.5,
+    'beam_side_length' : 0.0381,
+    'box_side_length' : 2.4,
     'box_color' : [0.8,0.8,0.8,1.0],
     }
 
@@ -44,7 +46,7 @@ class CadModel(csg.Union):
     def show_calibration(self,show_calibration_bool=True):
         self.show_calibration_bool = bool(show_calibration_bool)
 
-    def render(self):
+    def render(self,position=[0,0,0],orientation=[0,0,0,1]):
         if self.show_box_bool and (not self.show_calibration_bool):
             self.set_obj_list(self.box)
         else:
@@ -52,7 +54,7 @@ class CadModel(csg.Union):
         if self.show_floor_bool:
             self.add_obj(self.floor_checkerboard)
         if self.show_calibration_bool:
-            self.__place_calibration_checkerboard()
+            self.__place_calibration_checkerboard(position,orientation)
             self.add_obj(self.calibration_checkerboard)
         super(CadModel, self).render()
 
@@ -63,22 +65,35 @@ class CadModel(csg.Union):
     def __add_cameras(self):
         regular_angle = 65
         fisheye_angle = 185
-        camera_z = 80
+        # camera_z = 80
+        camera_z = 2.032
         floor_z = 0
         image_size = [640,480]
         # image_dir = '~/.multi_cam_tracker'
         image_dir = ''
-        self.add_camera('sim_camera1','perspective',regular_angle,[19,-42.75,camera_z],[19,-42.75,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera2','perspective',regular_angle,[-19,-42.75,camera_z],[-19,-42.75,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera3','perspective',regular_angle,[38,-14.25,camera_z],[38,-14.25,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera4','perspective',regular_angle,[0,-14.25,camera_z],[0,-14.25,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera5','perspective',regular_angle,[-38,-14.25,camera_z],[-38,-14.25,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera1','perspective',regular_angle,[19,-42.75,camera_z],[19,-42.75,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera2','perspective',regular_angle,[-19,-42.75,camera_z],[-19,-42.75,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera3','perspective',regular_angle,[38,-14.25,camera_z],[38,-14.25,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera4','perspective',regular_angle,[0,-14.25,camera_z],[0,-14.25,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera5','perspective',regular_angle,[-38,-14.25,camera_z],[-38,-14.25,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera6','fisheye',fisheye_angle,[0,0,camera_z],[0,0,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera7','perspective',regular_angle,[38,14.25,camera_z],[38,14.25,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera8','perspective',regular_angle,[0,14.25,camera_z],[0,14.25,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera9','perspective',regular_angle,[-38,14.25,camera_z],[-38,14.25,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera10','perspective',regular_angle,[19,42.75,camera_z],[19,42.75,floor_z],image_size,image_dir)
+        # self.add_camera('sim_camera11','perspective',regular_angle,[-19,42.75,camera_z],[-19,42.75,floor_z],image_size,image_dir)
+
+        self.add_camera('sim_camera1','perspective',regular_angle,[0.4826,-1.08585,camera_z],[0.4826,-1.08585,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera2','perspective',regular_angle,[-0.4826,-1.08585,camera_z],[-0.4826,-1.08585,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera3','perspective',regular_angle,[0.9652,-0.36195,camera_z],[0.9652,-0.36195,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera4','perspective',regular_angle,[0,-0.36195,camera_z],[0,-0.36195,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera5','perspective',regular_angle,[-0.9652,-0.36195,camera_z],[-0.9652,-0.36195,floor_z],image_size,image_dir)
         self.add_camera('sim_camera6','fisheye',fisheye_angle,[0,0,camera_z],[0,0,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera7','perspective',regular_angle,[38,14.25,camera_z],[38,14.25,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera8','perspective',regular_angle,[0,14.25,camera_z],[0,14.25,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera9','perspective',regular_angle,[-38,14.25,camera_z],[-38,14.25,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera10','perspective',regular_angle,[19,42.75,camera_z],[19,42.75,floor_z],image_size,image_dir)
-        self.add_camera('sim_camera11','perspective',regular_angle,[-19,42.75,camera_z],[-19,42.75,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera7','perspective',regular_angle,[0.9652,0.36195,camera_z],[0.9652,0.36195,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera8','perspective',regular_angle,[0,0.36195,camera_z],[0,0.36195,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera9','perspective',regular_angle,[-0.9652,0.36195,camera_z],[-0.9652,0.36195,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera10','perspective',regular_angle,[0.4826,1.08585,camera_z],[0.4826,1.08585,floor_z],image_size,image_dir)
+        self.add_camera('sim_camera11','perspective',regular_angle,[-0.4826,1.08585,camera_z],[-0.4826,1.08585,floor_z],image_size,image_dir)
 
     def __make_box(self):
         beam_sl = self.get_obj_parameter('beam_side_length')
@@ -96,34 +111,38 @@ class CadModel(csg.Union):
         # self.add_obj(self.box)
 
     def __make_floor_checkerboard(self):
-        self.floor_checkerboard = Checkerboard(10,8,8)
+        self.floor_checkerboard = Checkerboard(0.254,8,8)
         # self.add_obj(self.floor_checkerboard)
 
     def __make_calibration_checkerboard(self):
-        self.calibration_checkerboard = Checkerboard(5,8,6)
+        self.calibration_checkerboard = Checkerboard(0.127,8,6)
 
-    def __place_calibration_checkerboard(self):
-        projection = self.camera.get_obj_parameter('camera_projection')
-        angle = self.camera.get_obj_parameter('camera_angle')
-        position = self.camera.get_position()
-        look_at = self.camera.get_obj_parameter('camera_look_at')
-        image_size = self.camera.get_obj_parameter('image_size')
+    def __place_calibration_checkerboard(self,position=[0,0,0],orientation=[0,0,0,1]):
+        self.calibration_checkerboard.set_position(position)
+        self.calibration_checkerboard.set_orientation(orientation)
 
-        midpoint = [(position[0]+look_at[0])/2,(position[1]+look_at[1])/2,(position[2]+look_at[2])/2]
-        self.calibration_checkerboard.set_orientation()
+        # projection = self.camera.get_obj_parameter('camera_projection')
+        # angle = self.camera.get_obj_parameter('camera_angle')
+        # position = self.camera.get_position()
+        # look_at = self.camera.get_obj_parameter('camera_look_at')
+        # image_size = self.camera.get_obj_parameter('image_size')
 
-        angle_max_deg = 45
-        angle_min_deg = -45
-        rand_angle_x = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
-        rand_angle_y = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
-        self.calibration_checkerboard.rotate(angle=rand_angle_x,axis=[1,0,0])
-        self.calibration_checkerboard.rotate(angle=rand_angle_y,axis=[0,1,0])
+        # midpoint = [(position[0]+look_at[0])/2,(position[1]+look_at[1])/2,(position[2]+look_at[2])/2]
+        # self.calibration_checkerboard.set_orientation()
 
-        dev_max = 45
-        x_pos = midpoint[0] + random.randrange(-dev_max,dev_max)
-        y_pos = midpoint[1] + random.randrange(-dev_max,dev_max)
-        z_pos = random.randrange((look_at[2]+midpoint[2])/8,(position[2]+midpoint[2])*7/8)
-        self.calibration_checkerboard.set_position([x_pos,y_pos,z_pos])
+        # angle_max_deg = 45
+        # angle_min_deg = -45
+        # rand_angle_x = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
+        # rand_angle_y = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
+        # self.calibration_checkerboard.rotate(angle=rand_angle_x,axis=[1,0,0])
+        # self.calibration_checkerboard.rotate(angle=rand_angle_y,axis=[0,1,0])
+
+        # # dev_max = 45
+        # dev_max = 1
+        # x_pos = midpoint[0] + random.randrange(-dev_max,dev_max)
+        # y_pos = midpoint[1] + random.randrange(-dev_max,dev_max)
+        # z_pos = random.randrange(int((look_at[2]+midpoint[2])/8),int((position[2]+midpoint[2])*7/8))
+        # self.calibration_checkerboard.set_position([x_pos,y_pos,z_pos])
 
 
 # ---------------------------------------------------------------------
