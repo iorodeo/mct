@@ -16,7 +16,7 @@ PARAMETERS = {
 
 
 class Checkerboard(csg.Union):
-    def __init__(self,square_length=1,square_count_x=8,square_count_y=8,thickness=0.01):
+    def __init__(self,square_length=1,square_count_x=8,square_count_y=8,thickness=0.001):
         super(Checkerboard, self).__init__()
         self.update_obj_parameters(PARAMETERS)
         self.set_obj_parameter('square_length',square_length)

@@ -1,20 +1,24 @@
 <launch>
-  <group ns="sim_camera1" >
-    <param name="~camera_name" value="sim_camera1" type="str"/>
-    <node pkg="mct_simulation" type="simulated_camera_node.py" name="simulated_camera_node"></node>
-    <node pkg="mct_simulation" type="simulated_camera_info_node" name="simulated_camera_info_node">
-      <param name="camera_info_url" value="package://mct_config/calibration/calibration_sim_camera1.yaml" />
+  <arg name="camera_name" default="sim_camera1" />
+  <group ns="$(arg camera_name)" >
+    <param name="~camera_name" value="$(arg camera_name)" type="str"/>
+    <node pkg="mct_simulation" type="sim_camera_render.py" name="sim_camera_render"></node>
+    <node pkg="mct_simulation" type="sim_camera_driver" name="sim_camera_driver">
+      <param name="camera_info_url" value="package://mct_config/calibration/calibration_$(arg camera_name).yaml" />
+    </node>
+    <node ns="camera" pkg="image_proc" type="image_proc" name="image_proc" />
+    <node pkg="mct_simulation" type="render_tf_broadcaster.py" name="render_tf_broadcaster" />
+  </group>
+
+  <arg name="origin_camera_name" default="sim_camera6" />
+  <group ns="$(arg origin_camera_name)" >
+    <param name="~camera_name" value="$(arg origin_camera_name)" type="str"/>
+    <node pkg="mct_simulation" type="sim_camera_render.py" name="sim_camera_render"></node>
+    <node pkg="mct_simulation" type="sim_camera_driver" name="sim_camera_driver">
+      <param name="camera_info_url" value="package://mct_config/calibration/calibration_$(arg origin_camera_name).yaml" />
     </node>
     <node ns="camera" pkg="image_proc" type="image_proc" name="image_proc" />
   </group>
 
-  <group ns="sim_camera6" >
-    <param name="~camera_name" value="sim_camera6" type="str"/>
-    <node pkg="mct_simulation" type="simulated_camera_node.py" name="simulated_camera_node"></node>
-    <node pkg="mct_simulation" type="simulated_camera_info_node" name="simulated_camera_info_node">
-      <param name="camera_info_url" value="package://mct_config/calibration/calibration_sim_camera6.yaml" />
-    </node>
-    <node ns="camera" pkg="image_proc" type="image_proc" name="image_proc" />
-  </group>
 
 </launch>

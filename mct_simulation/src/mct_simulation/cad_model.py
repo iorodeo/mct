@@ -63,8 +63,8 @@ class CadModel(csg.Union):
         # self.add_light(position=[3000,-3000,-3000])
 
     def __add_cameras(self):
-        regular_angle = 65
-        fisheye_angle = 185
+        regular_angle = 65*math.pi/180
+        fisheye_angle = 185*math.pi/180
         # camera_z = 80
         camera_z = 2.032
         floor_z = 0
@@ -115,7 +115,14 @@ class CadModel(csg.Union):
         # self.add_obj(self.floor_checkerboard)
 
     def __make_calibration_checkerboard(self):
-        self.calibration_checkerboard = Checkerboard(0.127,8,6)
+        square_length = 0.127
+        square_count_x = 8
+        square_count_y = 6
+        self.calibration_checkerboard = Checkerboard(square_length,square_count_x,square_count_y)
+        self.calibration_checkerboard_size = [square_length*square_count_x,square_length*square_count_y]
+
+    def get_calibration_checkerboard_size(self):
+        return copy.deepcopy(self.calibration_checkerboard_size)
 
     def __place_calibration_checkerboard(self,position=[0,0,0],orientation=[0,0,0,1]):
         self.calibration_checkerboard.set_position(position)

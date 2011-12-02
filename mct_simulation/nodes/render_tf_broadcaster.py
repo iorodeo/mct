@@ -5,6 +5,8 @@ roslib.load_manifest('mct_simulation')
 import rospy
 import tf
 import random
+import numpy
+import math
 
 import mct_simulation
 from mct_simulation.cad_model import CadModel
@@ -28,20 +30,41 @@ class RenderTfBroadcaster:
     self.camera_look_at = self.cad_model.camera.get_obj_parameter('camera_look_at')
     self.image_size = self.cad_model.camera.get_obj_parameter('image_size')
 
+    self.calibration_checkerboard_size = self.cad_model.get_calibration_checkerboard_size()
+
     # Broadcaster/Publishers
     self.br = tf.TransformBroadcaster()
 
     self.initialized = True
 
   def find_position_orientation(self):
-    pos_x = self.camera_look_at[0] + random.uniform(-.1,.1)
-    pos_y = self.camera_look_at[1] + random.uniform(-.1,.1)
-    pos_z = self.camera_look_at[2] + random.uniform(-.1,.1)
-    # pos_x = self.camera_look_at[0]
-    # pos_y = self.camera_look_at[1]
-    # pos_z = self.camera_look_at[2]
-    position = [pos_x,pos_y,pos_z]
-    orientation = tf.transformations.quaternion_from_euler(0, 0, 0)
+    camera_position = numpy.array(self.camera_position)
+    camera_look_at = numpy.array(self.camera_look_at)
+    camera_dir =  camera_look_at - camera_position
+    camera_dist = numpy.linalg.norm(camera_dir)
+    camera_dir /= camera_dist
+    camera_angle = min([self.camera_angle,math.pi/2])
+
+    dist_min = max(self.calibration_checkerboard_size)/2
+    dist_max = camera_dist
+
+    dist = random.uniform(dist_min,dist_max)
+
+    position = camera_position + camera_dir*dist
+    dev = dist*math.tan(camera_angle/2)
+    dev /= 2
+    position[0] += random.uniform(-dev,dev)
+    position[1] += random.uniform(-dev,dev)
+
+    angle_min = -45*math.pi/180
+    angle_max = 45*math.pi/180
+    ang_x = random.uniform(angle_min,angle_max)
+    ang_y = random.uniform(angle_min,angle_max)
+    orientation = tf.transformations.quaternion_from_euler(ang_x,ang_y, 0)
+
+    # position = camera_look_at
+    # orientation = [0,0,0,1]
+
     return position,orientation
 
   def publish(self):
