@@ -1,0 +1,17 @@
+<package>
+  <description brief="mct_light_control">
+
+     mct_light_control
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_light_control</url>
+  <depend package="rospy"/>
+  <depend package="mct_msg_and_srv"/>
+  <rosdep name="pyserial"/>
+
+</package>
+
+
