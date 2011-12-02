@@ -1,0 +1,4 @@
+int32 channel
+bool enable
+---
+bool flag
