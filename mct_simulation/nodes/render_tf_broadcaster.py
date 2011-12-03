@@ -7,6 +7,7 @@ import tf
 import random
 import numpy
 import math
+from std_msgs.msg import String
 
 import mct_simulation
 from mct_simulation.cad_model import CadModel
@@ -33,7 +34,8 @@ class RenderTfBroadcaster:
     self.calibration_checkerboard_size = self.cad_model.get_calibration_checkerboard_size()
 
     # Broadcaster/Publishers
-    self.br = tf.TransformBroadcaster()
+    self.render_tf_br = tf.TransformBroadcaster()
+    self.camera_trigger_pub = rospy.Publisher('/camera/trigger', String)
 
     self.initialized = True
 
@@ -43,9 +45,9 @@ class RenderTfBroadcaster:
     camera_dir =  camera_look_at - camera_position
     camera_dist = numpy.linalg.norm(camera_dir)
     camera_dir /= camera_dist
-    camera_angle = min([self.camera_angle,math.pi/2])
+    camera_angle = min([self.camera_angle,7*math.pi/8])
 
-    dist_min = max(self.calibration_checkerboard_size)/2
+    dist_min = max(self.calibration_checkerboard_size)/4
     dist_max = camera_dist
 
     dist = random.uniform(dist_min,dist_max)
@@ -71,11 +73,12 @@ class RenderTfBroadcaster:
     while not rospy.is_shutdown():
       if self.initialized:
         position,orientation = self.find_position_orientation()
-        self.br.sendTransform(position,
-                              orientation,
-                              rospy.Time.now(),
-                              "render_object",
-                              "world")
+        self.render_tf_br.sendTransform(position,
+                                        orientation,
+                                        rospy.Time.now(),
+                                        "render_object",
+                                        "world")
+        self.camera_trigger_pub.publish(String(""))
         self.rate.sleep()
 
 

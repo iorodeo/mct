@@ -14,7 +14,7 @@ def find_simulated_camera_images():
     for topic in topic_list:
         topic = topic[0]
         topic_split = topic.split('/')
-        if len(topic_split) <= 2:
+        if len(topic_split) <= 3:
             continue
         if (topic_split[3] == 'rendered'):
             name = topic_split[1]

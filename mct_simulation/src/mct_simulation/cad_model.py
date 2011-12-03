@@ -115,11 +115,11 @@ class CadModel(csg.Union):
         # self.add_obj(self.floor_checkerboard)
 
     def __make_calibration_checkerboard(self):
-        square_length = 0.127
-        square_count_x = 8
-        square_count_y = 6
-        self.calibration_checkerboard = Checkerboard(square_length,square_count_x,square_count_y)
-        self.calibration_checkerboard_size = [square_length*square_count_x,square_length*square_count_y]
+        checker_size = 0.127
+        checker_count_x = 8
+        checker_count_y = 6
+        self.calibration_checkerboard = Checkerboard(checker_size,checker_count_x,checker_count_y)
+        self.calibration_checkerboard_size = [checker_size*checker_count_x,checker_size*checker_count_y]
 
     def get_calibration_checkerboard_size(self):
         return copy.deepcopy(self.calibration_checkerboard_size)
@@ -127,29 +127,6 @@ class CadModel(csg.Union):
     def __place_calibration_checkerboard(self,position=[0,0,0],orientation=[0,0,0,1]):
         self.calibration_checkerboard.set_position(position)
         self.calibration_checkerboard.set_orientation(orientation)
-
-        # projection = self.camera.get_obj_parameter('camera_projection')
-        # angle = self.camera.get_obj_parameter('camera_angle')
-        # position = self.camera.get_position()
-        # look_at = self.camera.get_obj_parameter('camera_look_at')
-        # image_size = self.camera.get_obj_parameter('image_size')
-
-        # midpoint = [(position[0]+look_at[0])/2,(position[1]+look_at[1])/2,(position[2]+look_at[2])/2]
-        # self.calibration_checkerboard.set_orientation()
-
-        # angle_max_deg = 45
-        # angle_min_deg = -45
-        # rand_angle_x = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
-        # rand_angle_y = random.randrange(angle_min_deg,angle_max_deg)*math.pi/180
-        # self.calibration_checkerboard.rotate(angle=rand_angle_x,axis=[1,0,0])
-        # self.calibration_checkerboard.rotate(angle=rand_angle_y,axis=[0,1,0])
-
-        # # dev_max = 45
-        # dev_max = 1
-        # x_pos = midpoint[0] + random.randrange(-dev_max,dev_max)
-        # y_pos = midpoint[1] + random.randrange(-dev_max,dev_max)
-        # z_pos = random.randrange(int((look_at[2]+midpoint[2])/8),int((position[2]+midpoint[2])*7/8))
-        # self.calibration_checkerboard.set_position([x_pos,y_pos,z_pos])
 
 
 # ---------------------------------------------------------------------
