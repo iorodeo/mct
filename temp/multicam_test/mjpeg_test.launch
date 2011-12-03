@@ -1,0 +1,38 @@
+<launch>
+
+  <!-- This is just a test - later we will do this from a python script which autodetects the camera streams -->
+
+  <!-- Camera 1 -->
+  <node pkg="topic_tools" type="throttle" name="camera1_throttle" args="messages /camera1/camera/image_raw 10.0 /camera1/camera/image_throttled"/>
+
+  <!-- Camera 2 -->
+  <node pkg="topic_tools" type="throttle" name="camera2_throttle" args="messages /camera2/camera/image_raw 10.0 /camera2/camera/image_throttled"/>
+
+  <!-- Camera 3 -->
+  <node pkg="topic_tools" type="throttle" name="camera3_throttle" args="messages /camera3/camera/image_raw 10.0 /camera3/camera/image_throttled"/>
+
+  <!-- Camera 4 -->
+  <node pkg="topic_tools" type="throttle" name="camera4_throttle" args="messages /camera4/camera/image_raw 10.0 /camera4/camera/image_throttled"/>
+
+  <!-- Camera 5 -->
+  <node pkg="topic_tools" type="throttle" name="camera5_throttle" args="messages /camera5/camera/image_raw 10.0 /camera5/camera/image_throttled"/>
+
+  <!-- Camera 6 -->
+  <node pkg="topic_tools" type="throttle" name="camera6_throttle" args="messages /camera6/camera/image_raw 10.0 /camera6/camera/image_throttled"/>
+
+  <!-- Camera 7 -->
+  <node pkg="topic_tools" type="throttle" name="camera7_throttle" args="messages /camera7/camera/image_raw 10.0 /camera7/camera/image_throttled"/>
+
+  <!-- Camera 7 -->
+  <node pkg="topic_tools" type="throttle" name="camera8_throttle" args="messages /camera8/camera/image_raw 10.0 /camera8/camera/image_throttled"/>
+
+  <!-- mjpeg servers -->
+  <node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server8080" >
+    <param name="port" value="8080"/>
+  </node>
+
+  <node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server8181" >
+    <param name="port" value="8181"/>
+  </node>
+
+</launch>

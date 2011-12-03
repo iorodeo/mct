@@ -1,0 +1,4 @@
+<launch>
+  <machine name="c1" address="felis" user="albert" default="true"/>
+  <machine name="c2" address="tabby" user="albert"/>
+</launch>
