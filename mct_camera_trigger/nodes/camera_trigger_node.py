@@ -43,6 +43,7 @@ class TriggerNode(object):
         flag = True
         if command == 'start':
             freq = req.frequency
+            self.dev.stop()
             self.dev.start(freq)
         elif command == 'stop':
             self.dev.stop()

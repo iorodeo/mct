@@ -22,3 +22,6 @@ srv_gen
 src/*/msg
 src/*/srv
 bin
+mct_camera1394_trig/cfg/cpp
+mct_camera1394_trig/docs
+mct_camera1394_trig/src/mct_camera1394_trig/cfg
