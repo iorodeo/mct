@@ -97,7 +97,6 @@ class Camera1394Inspector(object):
             cameraInfoList.append(cameraInfo)
         return cameraInfoList
 
-
 class NullDevice(object):
     """
     Simple class for redirecting stdout and stderr
@@ -128,7 +127,7 @@ def printDict(x,indent=''):
         print '%s%s: %s'%(indent,k,v)
 
 # -----------------------------------------------------------------------------
-if __name__ == '__main__':
+if __name__ == '__main__': 
 
     inspector = Camera1394Inspector()
     guidDict =  inspector.getGUIDDict()
