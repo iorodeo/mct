@@ -1,0 +1,15 @@
+<package>
+  <description brief="mct_install">
+
+     mct_install
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_install</url>
+  <depend package="rospy"/>
+
+</package>
+
+

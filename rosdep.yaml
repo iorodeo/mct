@@ -7,3 +7,9 @@ bzr:
 virtualenv:
   ubuntu: python-virtualenv
 
+pydc1394: 
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/create_python_virtualenv.py
+
+
+
