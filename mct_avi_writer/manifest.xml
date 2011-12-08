@@ -1,0 +1,19 @@
+<package>
+  <description brief="mct_avi_writer">
+
+     lia_avi_writer
+
+  </description>
+  <author>Will Dickson</author>
+  <license>Apache V2.0</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/lia_avi_writer</url>
+  <depend package="rospy"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="sensor_msgs"/>
+  <depand package="mct_msg_and_srv"/>
+
+</package>
+
+
