@@ -7,7 +7,7 @@
       <param name="camera_info_url" value="package://mct_config/calibration/calibration_$(arg camera_name).yaml" />
     </node>
     <node ns="camera" pkg="image_proc" type="image_proc" name="image_proc" />
-    <node pkg="mct_simulation" type="render_tf_broadcaster.py" name="render_tf_broadcaster" />
+    <node pkg="mct_simulation" type="camera_trigger_render_tf_broadcaster.py" name="camera_trigger_render_tf_broadcaster" />
   </group>
 
 </launch>
