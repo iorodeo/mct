@@ -1,3 +1,9 @@
 pyserial:
   ubuntu: python-serial
 
+bzr:
+  ubuntu: bzr
+  
+virtualenv:
+  ubuntu: python-virtualenv
+

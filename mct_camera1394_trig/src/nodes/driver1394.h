@@ -45,8 +45,8 @@
 #include <sensor_msgs/CameraInfo.h>
 
 #include "dev_camera1394.h"
-#include "camera1394/Camera1394Config.h"
-typedef camera1394::Camera1394Config Config;
+#include "mct_camera1394_trig/Camera1394Config.h"
+typedef mct_camera1394_trig::Camera1394Config Config;
 
 /** @file
 
@@ -76,7 +76,7 @@ private:
   bool openCamera(Config &newconfig);
   void publish(const sensor_msgs::ImagePtr &image);
   bool read(sensor_msgs::ImagePtr &image);
-  void reconfig(camera1394::Camera1394Config &newconfig, uint32_t level);
+  void reconfig(mct_camera1394_trig::Camera1394Config &newconfig, uint32_t level);
 
   /** Non-recursive mutex for serializing callbacks with device polling. */
   boost::mutex mutex_;
@@ -89,11 +89,11 @@ private:
   std::string camera_name_;             // camera name
 
   /** libdc1394 camera device interface */
-  boost::shared_ptr<camera1394::Camera1394> dev_;
+  boost::shared_ptr<mct_camera1394_trig::Camera1394> dev_;
 
   /** dynamic parameter configuration */
-  camera1394::Camera1394Config config_;
-  dynamic_reconfigure::Server<camera1394::Camera1394Config> srv_;
+  mct_camera1394_trig::Camera1394Config config_;
+  dynamic_reconfigure::Server<mct_camera1394_trig::Camera1394Config> srv_;
   ros::Rate cycle_;                     // polling rate when closed
 
   /** camera calibration information */
