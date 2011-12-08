@@ -47,12 +47,12 @@
 // ROS includes
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include "camera1394/Camera1394Config.h"
+#include "mct_camera1394_trig/Camera1394Config.h"
 #include "format7.h"
 
 class Features;
 
-namespace camera1394
+namespace mct_camera1394_trig
 {
   //! Macro for defining an exception with a given parent
   //  (std::runtime_error should be top parent)
@@ -72,7 +72,7 @@ namespace camera1394
     Camera1394 ();
     ~Camera1394 ();
 
-    int open(camera1394::Camera1394Config &newconfig);
+    int open(mct_camera1394_trig::Camera1394Config &newconfig);
     int close();
     void readData (sensor_msgs::Image &image);
 

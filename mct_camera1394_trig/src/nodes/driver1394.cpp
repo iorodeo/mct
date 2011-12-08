@@ -40,7 +40,7 @@
 #include <tf/transform_listener.h>
 
 #include "driver1394.h"
-#include "camera1394/Camera1394Config.h"
+#include "mct_camera1394_trig/Camera1394Config.h"
 #include "features.h"
 
 /** @file
@@ -64,7 +64,7 @@ pipeline similar to the other ROS camera drivers.
 namespace camera1394_driver
 {
   // some convenience typedefs
-  typedef camera1394::Camera1394Config Config;
+  typedef mct_camera1394_trig::Camera1394Config Config;
   typedef driver_base::Driver Driver;
   typedef driver_base::SensorLevels Levels;
 
@@ -75,7 +75,7 @@ namespace camera1394_driver
     priv_nh_(priv_nh),
     camera_nh_(camera_nh),
     camera_name_("camera"),
-    dev_(new camera1394::Camera1394()),
+    dev_(new mct_camera1394_trig::Camera1394()),
     srv_(priv_nh),
     cycle_(1.0),                        // slow poll when closed
     cinfo_(new camera_info_manager::CameraInfoManager(camera_nh_)),
@@ -142,7 +142,7 @@ namespace camera1394_driver
               }
 
           }
-        catch (camera1394::Exception& e)
+        catch (mct_camera1394_trig::Exception& e)
           {
             state_ = Driver::CLOSED;    // since the open() failed
             if (retries > 0)
@@ -259,7 +259,7 @@ namespace camera1394_driver
         dev_->readData(*image);
         ROS_DEBUG_STREAM("[" << camera_name_ << "] read returned");
       }
-    catch (camera1394::Exception& e)
+    catch (mct_camera1394_trig::Exception& e)
       {
         ROS_WARN_STREAM("[" << camera_name_
                         << "] Exception reading data: " << e.what());

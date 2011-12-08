@@ -74,7 +74,7 @@
   }
 
 
-using namespace camera1394;
+using namespace mct_camera1394_trig;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Constructor
@@ -159,7 +159,7 @@ bool Camera1394::findBayerMethod(const char* method)
  *     * validate newconfig.video_mode
  *     * initialize Features class
  */
-int Camera1394::open(camera1394::Camera1394Config &newconfig)
+int Camera1394::open(mct_camera1394_trig::Camera1394Config &newconfig)
 {
   //////////////////////////////////////////////////////////////
   // First, look for the camera
@@ -174,7 +174,7 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
   d = dc1394_new ();
   if (d == NULL)
     {
-      CAM_EXCEPT(camera1394::Exception,
+      CAM_EXCEPT(mct_camera1394_trig::Exception,
                  "Could not initialize dc1394_context.\n"
                  "Make sure /dev/raw1394 exists, you have access permission,\n"
                  "and libraw1394 development package is installed.");
@@ -183,13 +183,13 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
   err = dc1394_camera_enumerate(d, &list);
   if (err != DC1394_SUCCESS)
     {
-      CAM_EXCEPT(camera1394::Exception, "Could not get camera list");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Could not get camera list");
       return -1;
     }
   
   if (list->num == 0)
     {
-      CAM_EXCEPT(camera1394::Exception, "No cameras found");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "No cameras found");
       return -1;
     }
   
@@ -236,11 +236,11 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
     {
       if (strcmp(guid,"")==0)
         { 
-          CAM_EXCEPT(camera1394::Exception, "Could not find camera");
+          CAM_EXCEPT(mct_camera1394_trig::Exception, "Could not find camera");
         }
       else
         {
-          CAM_EXCEPT_ARGS(camera1394::Exception,
+          CAM_EXCEPT_ARGS(mct_camera1394_trig::Exception,
                           "Could not find camera with guid %s", guid);
         }
       return -1;
@@ -265,7 +265,7 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
   if (false == Modes::setIsoSpeed(camera_, newconfig.iso_speed))
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception,
+      CAM_EXCEPT(mct_camera1394_trig::Exception,
                  "Unable to set ISO speed; is the camera plugged in?");
       return -1;
     }
@@ -275,7 +275,7 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
   if (DC1394_SUCCESS != dc1394_video_set_mode(camera_, videoMode_))
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception, "Failed to set video mode");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to set video mode");
       return -1;
     }
 
@@ -286,25 +286,25 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
   if (DC1394_SUCCESS != dc1394_external_trigger_set_polarity(camera_, DC1394_TRIGGER_ACTIVE_HIGH))  
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception, "Failed to set external trigger polarity");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to set external trigger polarity");
       return -1;
     }
   if (DC1394_SUCCESS != dc1394_external_trigger_set_mode(camera_, DC1394_TRIGGER_MODE_0))
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception, "Failed to set external trigger polarity");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to set external trigger polarity");
       return -1;
     }
   if (DC1394_SUCCESS != dc1394_external_trigger_set_source(camera_, DC1394_TRIGGER_SOURCE_0))
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception, "Failed to set external trigger source");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to set external trigger source");
       return -1;
     }
   if (DC1394_SUCCESS != dc1394_external_trigger_set_power(camera_, DC1394_ON))
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception, "Failed to set external trigger power");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to set external trigger power");
       return -1;
     }
 
@@ -323,7 +323,7 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
       if (!format7_.start(camera_, videoMode_, newconfig))
         {
           SafeCleanup();
-          CAM_EXCEPT(camera1394::Exception, "Format7 start failed");
+          CAM_EXCEPT(mct_camera1394_trig::Exception, "Format7 start failed");
           return -1;
         }
     }
@@ -334,7 +334,7 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
       if (!Modes::setFrameRate(camera_, videoMode_, newconfig.frame_rate))
         {
           SafeCleanup();
-          CAM_EXCEPT(camera1394::Exception, "Failed to set frame rate");
+          CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to set frame rate");
           return -1;
         }
     }
@@ -352,7 +352,7 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
                                              DC1394_CAPTURE_FLAGS_DEFAULT))
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception, "Failed to open device!");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to open device!");
       return -1;
     }
   
@@ -360,7 +360,7 @@ int Camera1394::open(camera1394::Camera1394Config &newconfig)
   if (DC1394_SUCCESS != dc1394_video_set_transmission(camera_, DC1394_ON))
     {
       SafeCleanup();
-      CAM_EXCEPT(camera1394::Exception, "Failed to start device!");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Failed to start device!");
       return -1;
     }
 
@@ -440,7 +440,7 @@ void Camera1394::readData(sensor_msgs::Image& image)
   dc1394_capture_dequeue (camera_, DC1394_CAPTURE_POLICY_WAIT, &frame);
   if (!frame)
     {
-      CAM_EXCEPT(camera1394::Exception, "Unable to capture frame");
+      CAM_EXCEPT(mct_camera1394_trig::Exception, "Unable to capture frame");
       return;
     }
   
@@ -468,7 +468,7 @@ void Camera1394::readData(sensor_msgs::Image& image)
         {
           free(frame2.image);
           dc1394_capture_enqueue(camera_, frame);
-          CAM_EXCEPT(camera1394::Exception, "Could not convert/debayer frames");
+          CAM_EXCEPT(mct_camera1394_trig::Exception, "Could not convert/debayer frames");
           return;
         }
 
@@ -586,7 +586,7 @@ void Camera1394::readData(sensor_msgs::Image& image)
         }
       else
         {
-          CAM_EXCEPT(camera1394::Exception, "Unknown image mode");
+          CAM_EXCEPT(mct_camera1394_trig::Exception, "Unknown image mode");
           return;
         }
     }
