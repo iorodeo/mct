@@ -2,6 +2,7 @@
 from __future__ import print_function
 import os
 import os.path
+from subprocess import call
 from create_mct_resources import create_mct_resources
 from install_tools import create_dir
 
@@ -22,8 +23,7 @@ def create_python_virtualenv():
         print('exists')
     else:
         print('creating')
-        cmd = 'virtualenv {0}'.format(virtualenv_dir)
-        os.system(cmd)
+        call('virtualenv {0}'.format(virtualenv_dir),shell=True)
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__': 

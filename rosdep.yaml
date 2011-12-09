@@ -9,7 +9,7 @@ virtualenv:
 
 pydc1394: 
   ubuntu: |
-    python $MCT_INSTALL_SCRIPTS/create_python_virtualenv.py
+    python $MCT_INSTALL_SCRIPTS/install_pydc1394.py
 
 
 
