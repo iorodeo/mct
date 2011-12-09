@@ -1,6 +1,6 @@
 <launch>
   <group name="mct">
     <include file="$(find mct_config)/machine/mct.machine" />
-    <include file="$(find mct_config)/cameras/cameras.launch" />
+    <!-- <include file="$(find mct_config)/cameras/cameras.launch" /> -->
   </group>
 </launch>

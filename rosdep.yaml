@@ -1,3 +1,6 @@
+fabric:
+  ubuntu: fabric
+
 pyserial:
   ubuntu: python-serial
 
@@ -17,4 +20,14 @@ pydc1394:
 jinja2:
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_jinja2.py
+
+libdc1394-dev:
+  ubuntu: libdc1394-22-dev
+
+ros_camera_drivers:
+  ubuntu: ros-diamondback-camera-drivers
+
+ros_vision_opencv:
+  ubuntu: ros-diamondback-vision-opencv
+
 

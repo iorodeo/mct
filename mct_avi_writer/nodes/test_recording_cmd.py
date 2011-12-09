@@ -1,5 +1,5 @@
 import roslib
-roslib.load_manifest('lia_avi_writer')
+roslib.load_manifest('mct_avi_writer')
 import rospy
 from lia_services.srv import RecordingCmd
 

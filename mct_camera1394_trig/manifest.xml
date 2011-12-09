@@ -20,6 +20,7 @@
   <depend package="tf"/>
 
   <rosdep name="libdc1394-dev"/>
+  <rosdep name="ros_camera_drivers"/>
 
   <export>
     <nodelet plugin="${prefix}/camera1394_nodelet.xml"/>
