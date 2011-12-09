@@ -7,9 +7,14 @@ bzr:
 virtualenv:
   ubuntu: python-virtualenv
 
+pip:
+  ubuntu: python-pip
+
 pydc1394: 
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_pydc1394.py
 
-
+jinja2:
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/install_jinja2.py
 

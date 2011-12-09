@@ -14,7 +14,9 @@
 
   <rosdep name="bzr"/>
   <rosdep name="virtualenv"/>
+  <rosdep name="pip" />
   <rosdep name="pydc1394" />
+  <rosdep name="jinja2" />
 
 </package>
 

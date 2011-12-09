@@ -23,15 +23,14 @@ def install_pydc1394():
     else:
         print('downloading')
         call('bzr branch lp:pydc1394 {0}'.format(pydc1394_dir), shell=True)
-
-    python_virtualenv = os.environ['MCT_PYTHON_VIRTUALENV']
-    print('installing pydc1394 into virtualenv {0}'.format(python_virtualenv))
-    install_cmds = []
-    install_cmds.append('source {0}/bin/activate'.format(python_virtualenv))
-    install_cmds.append('cd {0}'.format(pydc1394_dir))
-    install_cmds.append('python setup.py install')
-    install_cmds = '; '.join(install_cmds)
-    call(install_cmds, shell=True, executable='/bin/bash')
+        python_virtualenv = os.environ['MCT_PYTHON_VIRTUALENV']
+        print('installing pydc1394 into virtualenv {0}'.format(python_virtualenv))
+        install_cmds = []
+        install_cmds.append('source {0}/bin/activate'.format(python_virtualenv))
+        install_cmds.append('cd {0}'.format(pydc1394_dir))
+        install_cmds.append('python setup.py install')
+        install_cmds = '; '.join(install_cmds)
+        call(install_cmds, shell=True, executable='/bin/bash')
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
