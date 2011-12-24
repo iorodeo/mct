@@ -10,8 +10,6 @@ def get_slave_info():
     machine_dir = os.path.join(config_pkg,'machine')
     slave_macs_file = os.path.join(machine_dir,'slave_macs')
 
-    print slave_macs_file
-
     with open(slave_macs_file,'r') as f:
         slave_dict = {}
         for line in f.readlines():

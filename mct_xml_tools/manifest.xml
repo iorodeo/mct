@@ -1,0 +1,19 @@
+<package>
+  <description brief="mct_xml_tools">
+
+     mct_xml_tools
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_xml_tools</url>
+  <depend package="rospy"/>
+
+  <rosdep name="virtualenv"/>
+  <rosdep name="pip" />
+  <rosdep name="jinja2" />
+
+</package>
+
+

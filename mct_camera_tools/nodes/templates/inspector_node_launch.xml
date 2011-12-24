@@ -1,7 +1,0 @@
-<launch>
-    {% for name in machine_names %}
-    <group ns="{{name}}">
-        <node pkg="mct_camera_tools" type="{{name}}" name="camera1394_inspector" />
-    </group>
-    {% endfor %}
-</launch>

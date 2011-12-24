@@ -11,12 +11,12 @@
   <depend package="rospy"/>
   <depend package="roscpp"/>
   <depend package="mct_msg_and_srv"/>
+  <depend package="mct_xml_tools"/>
 
   <rosdep name="bzr"/>
   <rosdep name="virtualenv"/>
   <rosdep name="pip" />
   <rosdep name="pydc1394" />
-  <rosdep name="jinja2" />
 
 </package>
 
