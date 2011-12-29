@@ -22,7 +22,7 @@ class Camera_Inspector_Master(object):
         self.tmp_dir = tempfile.gettempdir()
         self.launch_file = os.path.join(self.tmp_dir,'inspector_nodes.launch')
 
-        self.launch_pid = None
+        self.launch_popen = None
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera_inspector_master')
         self.launch_inspector_nodes()
@@ -40,7 +40,7 @@ class Camera_Inspector_Master(object):
         """
         Kills all camera inspector nodes by killing the launch process.
         """
-        if self.launch_pid is not None:
+        if self.launch_popen is not None:
             pass
 
     def create_launch_file(self):
