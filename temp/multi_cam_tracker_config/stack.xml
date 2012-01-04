@@ -1,9 +1,0 @@
-<stack>
-  <description brief="multi_cam_tracker_config">multi_cam_tracker_config</description>
-  <author>Maintained by Peter Polidoro</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/multi_cam_tracker_config</url>
-  <depend stack="ros" />
-
-</stack>
