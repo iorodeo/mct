@@ -25,3 +25,4 @@ bin
 mct_camera1394_trig/cfg/cpp
 mct_camera1394_trig/docs
 mct_camera1394_trig/src/mct_camera1394_trig/cfg
+mct_camera1394_trig/cfg/Camera1394.cfgc
