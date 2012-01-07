@@ -5,10 +5,17 @@ import os.path
 from subprocess import call
 from fabric.api import local
 from fabric.api import sudo 
+from fabric.api import env
 from fabric.decorators import hosts
 from admin_tools import get_slave_info
 
 slave_info = get_slave_info()
+
+msg_dict = {
+        'wakeup'         : 'waking up camera computers',
+        'shutdown'       : 'shutting down camera computers',
+        'push_mct_setup' : 'pushing mct_setup.bash to camera computers',
+        }
 
 def wakeup():
     """
@@ -24,19 +31,26 @@ def shutdown():
     """
     sudo('halt',shell=False)
 
+@hosts(*slave_info.keys())
+def push_mct_setup():
+    """
+    Pushes the mct_setup.bash file to the camera computers.
+    """
+    for k,v in env.iteritems():
+        print('{0} {1}'.format(k,v))
 
 def main(argv):
     # Get command line argument
     cmd = argv[1].lower()
-    
-    if cmd == 'wakeup':
-        print('waking up camera computers')
-    elif cmd == 'shutdown':
-        print('shutting down camera computers')
-    else:
-        print('Error: unknown command {0}'.format(cmd))
 
     fabfile, ext = os.path.splitext(__file__)
     fabfile = '{0}.py'.format(fabfile)
+
+    try: 
+        msg = msg_dict[cmd]
+    except KeyError:
+        print('Error: unknown command {0}'.format(cmd))
+        sys.exit(0)
+
     call('fab -f {0} {1}'.format(fabfile, cmd), shell=True)
 
