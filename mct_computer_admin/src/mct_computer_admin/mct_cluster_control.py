@@ -2,6 +2,6 @@
 import roslib
 roslib.load_manifest('mct_computer_admin')
 import sys
-from mct_computer_admin import cluster_control
-cluster_control.main(sys.argv)
+from mct_computer_admin import cluster_control_fab
+cluster_control_fab.main(sys.argv)
 
