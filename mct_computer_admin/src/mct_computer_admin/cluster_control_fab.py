@@ -11,14 +11,15 @@ from admin_tools import get_slave_info
 slave_info = get_slave_info()
 
 msg_dict = {
-        'wakeup'         : 'waking up camera computers',
-        'push_setup'     : 'pushing setup to slave computers',
-        'shutdown'       : 'shutting down camera computers',
-        'list_slaves'    : 'listing slaves',
-        'pull'           : 'pulling latest version of mct from repository on slave computers',
-        'clone'          : 'clone new version of mct from repository of slave computers',
-        'clean'          : 'remove old version of mct',
-        'rosmake'        : 'use rosmake to build mct on slave computers',
+        'wakeup'           : 'waking up camera computers',
+        'push_setup'       : 'pushing setup to slave computers',
+        'shutdown'         : 'shutting down camera computers',
+        'list_slaves'      : 'listing slaves',
+        'pull'             : 'pulling latest version of mct from repository on slave computers',
+        'clone'            : 'clone new version of mct from repository of slave computers',
+        'clean'            : 'remove old version of mct',
+        'rosmake'          : 'use rosmake to build mct on slave computers',
+        'rosmake_preclean' : 'use rosmake to build mct on slave computers',
         }
 
 def wakeup():
@@ -63,14 +64,23 @@ def pull():
 def rosmake():
     """
     Run rosmake on mct project directory on remote computers
-
-    DEBUG: not work as it seems that the environment variables aren't set correctly as rosmake
-    isn't being found.
     """
     mct_name = os.environ['MCT_NAME']
     if exists(mct_name):
         with cd(mct_name):
-            run('rosmake --rosdep-install --pre-clean')
+            run('source ~/bin/mct_setup.bash; rosmake --rosdep-install',shell=True)
+    else:
+        print('ERROR: unable to run rosamke {0} does not exist'.format(mct_name))
+
+@hosts(*slave_info.keys())
+def rosmake_preclean():
+    """
+    Run rosmake on mct project directory on remote computers - preclean before makeing.
+    """
+    mct_name = os.environ['MCT_NAME']
+    if exists(mct_name):
+        with cd(mct_name):
+            run('source ~/bin/mct_setup.bash; rosmake --rosdep-install --pre-clean',shell=True)
     else:
         print('ERROR: unable to run rosamke {0} does not exist'.format(mct_name))
 
@@ -78,6 +88,8 @@ def rosmake():
 def clone():
     """
     Clone a new versoin of mct on the slave computers.
+
+    Note, may want to move bitbucket address to configuration file.
     """
     ros_local = os.environ['ROS_LOCAL']
     mct_name = os.environ['MCT_NAME']
@@ -88,6 +100,22 @@ def clone():
             run('rm -r {0}'.format(mct_name))
         run('hg clone http://bitbucket.org/iorodeo/mct')
 
+@hosts(*slave_info.keys())
+def clean():
+    """
+    Remove any old versions of mct, the contents of the .mct directory, and the
+    bash setup file mct_setup.bash.
+    """
+    mct_name = os.environ['MCT_NAME']
+    if exists(mct_name):
+        run('rm -r {0}'.format(mct_name))
+    mct_resources = os.environ['MCT_RESOURCES'] 
+    if exists(mct_resources):
+        run('rm -r {0}'.format(mct_resources))
+    bin_dir = os.path.join(os.environ['HOME'],'bin')
+    setup_file = os.path.join(bin_dir,'mct_setup.bash')
+    run('rm {0}'.format(setup_file))
+
 def list_slaves():
     """
     List slaves names and mac addresses
@@ -96,6 +124,9 @@ def list_slaves():
         print('{0} {1}'.format(name,mac))
 
 def main(argv):
+    """
+    Main function for mct_cluster_control when called as a commandline program.
+    """
     # Get command line argument
     cmd = argv[1].lower()
     fabfile, ext = os.path.splitext(__file__)

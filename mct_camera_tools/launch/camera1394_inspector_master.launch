@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="mct_camera_tools" type="camera1394_inspector_master.py" name="camera1394_inspector_master" />
+</launch>

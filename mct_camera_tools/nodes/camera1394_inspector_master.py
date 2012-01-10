@@ -24,7 +24,7 @@ class Camera_Inspector_Master(object):
 
         self.launch_popen = None
         rospy.on_shutdown(self.clean_up)
-        rospy.init_node('camera_inspector_master')
+        rospy.init_node('camera1394_inspector_master')
         self.launch_inspector_nodes()
 
     def run(self):
@@ -35,6 +35,7 @@ class Camera_Inspector_Master(object):
         Lauches camera inspector nodes on all computers in the cluster.
         """
         self.create_launch_file()
+        self.launch_popen = subprocess.Popen(['roslaunch', self.launch_file])
 
     def kill_inspector_nodes(self):
         """
