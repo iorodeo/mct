@@ -1,10 +1,12 @@
+from __future__ import print_function
 import os
 import os.path
 from xml.etree import ElementTree 
 
+
 def read_machine_file():
     """
-    Reads the machine definiiton file  MCT_CONFIG/machine/mct.machine
+    Reads the machine definition xml ROS launch file  MCT_CONFIG/machine/mct.machine
 
     Returns a list containg a dictionary of attributes for each machine in the
     machine file.
@@ -18,11 +20,13 @@ def read_machine_file():
         machine_list.append(machine_elem.attrib)
     return machine_list
 
-# -----------------------------------------------------------------------------
-if __name__ == '__main__':
 
+
+# -----------------------------------------------------------------------------
+if __name__ == '__main__': 
     machine_list = read_machine_file()
-    print machine_list
+    print(machine_list)
+
 
     
 
