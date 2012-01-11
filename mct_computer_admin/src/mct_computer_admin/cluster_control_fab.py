@@ -21,6 +21,7 @@ msg_dict = {
         'push_setup'         : 'pushing setup to slave computers',
         'shutdown'           : 'shutting down camera computers',
         'list_slaves'        : 'listing slaves',
+        'rospack_profile'    : 'run rospack profile on all slave computers', 
         'pull'               : 'pulling latest version of mct from repository on slave computers',
         'pull_master'        : 'pulling laster version of mct form repository on master',
         'pull_all'           : 'pull latest version of mct form repository for all computers in current machine',
@@ -153,6 +154,13 @@ def clean():
     bin_dir = os.path.join(os.environ['HOME'],'bin')
     setup_file = os.path.join(bin_dir,'mct_setup.bash')
     run('rm {0}'.format(setup_file))
+
+@hosts(*slave_list)
+def rospack_profile():
+    """
+    Run rospack profile on all slave computers.
+    """
+    run('source ~/bin/mct_setup.bash; rospack profile',shell=True)
 
 def list_slaves():
     """
