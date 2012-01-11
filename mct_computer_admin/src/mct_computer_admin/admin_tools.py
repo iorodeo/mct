@@ -51,6 +51,13 @@ def get_slave_macs():
     slave_info = get_slave_info()
     return [v['mac'] for k,v in slave_info.iteritems()]
 
+def get_master():
+    """
+    Get the host name of the master computer.
+    """
+    machine_def = get_machine_def()
+    return machine_def['master']['address']
+
 
 
 # -----------------------------------------------------------------------------

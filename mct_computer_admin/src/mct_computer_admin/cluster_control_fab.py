@@ -11,9 +11,11 @@ from admin_tools import get_slave_hosts
 from admin_tools import get_slave_macs
 from admin_tools import get_machine_def
 from admin_tools import get_hosts
+from admin_tools import get_master
 
 slave_list = get_slave_hosts()
 host_list = get_hosts()
+master = get_master()
 
 msg_dict = {
         'wakeup'           : 'waking up camera computers',
@@ -22,6 +24,7 @@ msg_dict = {
         'list_slaves'      : 'listing slaves',
         'machine_def'      : 'current machine definition',
         'pull'             : 'pulling latest version of mct from repository on slave computers',
+        'pull_master'      : 'pulling laster version of mct form repository on master',
         'pull_all'         : 'pull latest version of mct form repository for all computers in current machine',
         'clone'            : 'clone new version of mct from repository of slave computers',
         'clean'            : 'remove old version of mct',
@@ -56,10 +59,9 @@ def push_setup():
     with cd(bin_dir):
         put(setup_file,setup_file)
 
-@hosts(*slave_list)
-def pull():
+def _pull():
     """
-    Pull latest version of mct repositoy on slave computers.
+    Pull lastest version of mct from the repository.
     """
     mct_name = os.environ['MCT_NAME']
     if exists(mct_name):
@@ -67,6 +69,27 @@ def pull():
             run('hg pull -u')
     else:
         print('ERROR: unable to pull and update {0} does not exits'.format(mct_name))
+
+@hosts(*slave_list)
+def pull():
+    """
+    Pull lastest version of mct from the repository on slave computers only.
+    """
+    _pull()
+
+@hosts(master)
+def pull_master():
+    """
+    Pull latest version of mct from repository on master computer only.
+    """
+    _pull()
+
+@hosts(*host_list)
+def pull_all():
+    """
+    Pull latest version for mct repository on all computers in machine
+    """
+    _pull()
 
 @hosts(*slave_list)
 def rosmake():
