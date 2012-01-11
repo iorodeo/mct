@@ -56,7 +56,7 @@ def create_machine_launch(filename,machine_def):
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    if 0:
+    if 1:
         filename = 'camera1394_inspector.launch'
         machines = ['c1', 'c2', 'c3']
         create_inspector_launch(filename,machines)

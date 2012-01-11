@@ -1,3 +1,4 @@
 <launch>
-    <node pkg="mct_camera_tools" type="camera1394_inspector_master.py" name="camera1394_inspector_master" />
+    <include file="/home/albert/ros/mct_config/machine/mct.machine" />
+    <node pkg="mct_camera_tools" type="camera1394_inspector_master.py" name="camera1394_inspector_master" machine="master"/>
 </launch>

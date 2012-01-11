@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_camera_tools')
 import rospy
@@ -8,6 +9,10 @@ import tempfile
 import subprocess
 from mct_xml_tools.machine import read_machine_file
 from mct_xml_tools.launch import create_inspector_launch
+
+# Services
+from mct_msg_and_srv.srv import MasterInspectorCameras
+from mct_msg_and_srv.srv import MasterInspectorCamerasResponse
 
 class Camera_Inspector_Master(object):
     """
@@ -27,8 +32,28 @@ class Camera_Inspector_Master(object):
         rospy.init_node('camera1394_inspector_master')
         self.launch_inspector_nodes()
 
+        self.camera_srv = rospy.Service(
+                'master_inspector_cameras',
+                MasterInspectorCameras,
+                self.handle_cameras,
+                )
+                
+
     def run(self):
         rospy.spin()
+
+    def handle_cameras(self,req): 
+        """ 
+        Hanldes requests to start and stop the cameras found by the inspector
+        nodes.  
+        """
+        if req.lower() == 'start':
+            # Start cameras
+            pass
+        elif req.lower() == 'stop':
+            # Stop cameras
+            pass
+        
 
     def launch_inspector_nodes(self):
         """
