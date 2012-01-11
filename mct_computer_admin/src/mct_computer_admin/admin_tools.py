@@ -1,23 +1,74 @@
+from __future__ import print_function
 import os
 import os.path
+import yaml
+
+def get_machine_def():
+    """
+    Reads the machine definition file.
+    """
+    config_pkg = os.environ['MCT_CONFIG']
+    machine_def_file = os.path.join(config_pkg,'machine','machine_def.yaml')
+    with open(machine_def_file,'r') as f:
+        machine_def = yaml.load(f)
+    return machine_def
 
 def get_slave_info():
     """
-    Reads the slave_macs file in the configuration machine/slave_macs 
-    file. This file contiains a list of hostnames and mac addresses.
+    Reads the machine definition file and gets the slave information.
     """
-    config_pkg = os.environ['MCT_CONFIG']
-    machine_dir = os.path.join(config_pkg,'machine')
-    slave_macs_file = os.path.join(machine_dir,'slave_macs')
+    slave_info = get_machine_def()
+    slave_info.pop('master') 
+    slave_info.pop('user')
+    return slave_info
 
-    with open(slave_macs_file,'r') as f:
-        slave_dict = {}
-        for line in f.readlines():
-            line = line.split()
-            hostname = line[0]
-            macaddress = line[1]
-            slave_dict[hostname] = macaddress
+def get_hosts():
+    """
+    Returns a list of all hosts in the current machine
+    """
+    machine_def = get_machine_def()
+    hosts = []
+    for k,v in machine_def.iteritems():
+        try:
+            hosts.append(v['address'])
+        except KeyError:
+            pass
+        except TypeError:
+            pass
+    return hosts
 
-    return slave_dict
+def get_slave_hosts():
+    """
+    Returns a list of the slave host names
+    """
+    slave_info = get_slave_info()
+    return [v['address'] for k,v in slave_info.iteritems()]
+
+def get_slave_macs():
+    """
+    Return a list of the slave mac addresses
+    """
+    slave_info = get_slave_info()
+    return [v['mac'] for k,v in slave_info.iteritems()]
+
+
+
+# -----------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    machine_def = get_machine_def()
+    print(machine_def)
+
+    slave_info = get_slave_info()
+    print(slave_info)
+
+    slave_hosts = get_slave_hosts()
+    print(slave_hosts)
+
+    slave_macs = get_slave_macs()
+    print(slave_macs)
+
+    hosts = get_hosts()
+    print(hosts)
             
 

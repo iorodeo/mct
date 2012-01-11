@@ -7,15 +7,22 @@ from fabric.api import *
 from fabric.decorators import hosts
 from fabric.contrib.files import exists
 from admin_tools import get_slave_info
+from admin_tools import get_slave_hosts
+from admin_tools import get_slave_macs
+from admin_tools import get_machine_def
+from admin_tools import get_hosts
 
-slave_info = get_slave_info()
+slave_list = get_slave_hosts()
+host_list = get_hosts()
 
 msg_dict = {
         'wakeup'           : 'waking up camera computers',
         'push_setup'       : 'pushing setup to slave computers',
         'shutdown'         : 'shutting down camera computers',
         'list_slaves'      : 'listing slaves',
+        'machine_def'      : 'current machine definition',
         'pull'             : 'pulling latest version of mct from repository on slave computers',
+        'pull_all'         : 'pull latest version of mct form repository for all computers in current machine',
         'clone'            : 'clone new version of mct from repository of slave computers',
         'clean'            : 'remove old version of mct',
         'rosmake'          : 'use rosmake to build mct on slave computers',
@@ -26,17 +33,18 @@ def wakeup():
     """
     Wakes up camera computers using wake on lan. 
     """
-    for name, mac in slave_info.iteritems():
+    mac_list = get_slave_macs()
+    for mac in mac_list:
         local('sudo etherwake -i eth1 {0}'.format(mac))
 
-@hosts(*slave_info.keys())
+@hosts(*slave_list)
 def shutdown(): 
     """
     Shutdown camera computers
     """
     sudo('halt',shell=False)
 
-@hosts(*slave_info.keys())
+@hosts(*slave_list)
 def push_setup():
     """
     Pushes mct_setup.bash file to the slave computers
@@ -48,7 +56,7 @@ def push_setup():
     with cd(bin_dir):
         put(setup_file,setup_file)
 
-@hosts(*slave_info.keys())
+@hosts(*slave_list)
 def pull():
     """
     Pull latest version of mct repositoy on slave computers.
@@ -60,7 +68,7 @@ def pull():
     else:
         print('ERROR: unable to pull and update {0} does not exits'.format(mct_name))
 
-@hosts(*slave_info.keys())
+@hosts(*slave_list)
 def rosmake():
     """
     Run rosmake on mct project directory on remote computers
@@ -72,7 +80,7 @@ def rosmake():
     else:
         print('ERROR: unable to run rosamke {0} does not exist'.format(mct_name))
 
-@hosts(*slave_info.keys())
+@hosts(*slave_list)
 def rosmake_preclean():
     """
     Run rosmake on mct project directory on remote computers - preclean before makeing.
@@ -84,7 +92,7 @@ def rosmake_preclean():
     else:
         print('ERROR: unable to run rosamke {0} does not exist'.format(mct_name))
 
-@hosts(*slave_info.keys())
+@hosts(*slave_list)
 def clone():
     """
     Clone a new versoin of mct on the slave computers.
@@ -100,7 +108,7 @@ def clone():
             run('rm -r {0}'.format(mct_name))
         run('hg clone http://bitbucket.org/iorodeo/mct')
 
-@hosts(*slave_info.keys())
+@hosts(*slave_list)
 def clean():
     """
     Remove any old versions of mct, the contents of the .mct directory, and the
@@ -120,8 +128,24 @@ def list_slaves():
     """
     List slaves names and mac addresses
     """
-    for name, mac in slave_info.iteritems():
-        print('{0} {1}'.format(name,mac))
+    slave_info = get_slave_info()
+    for slave, info in slave_info.iteritems():
+        print(slave,info)
+
+def machine_def():
+    """
+    Prints the current machine definition.
+    """
+    machine_def = get_machine_def()
+    print('user', machine_def['user'])
+    print('master', machine_def['master'])
+
+    slave_keys = machine_def.keys()
+    slave_keys.remove('user')
+    slave_keys.remove('master')
+    slave_keys.sort()
+    for key in slave_keys:
+        print(key,machine_def[key])
 
 def main(argv):
     """
