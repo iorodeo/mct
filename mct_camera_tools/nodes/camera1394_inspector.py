@@ -14,12 +14,12 @@ class Inspector_Node(object):
     def __init__(self):
         self.cam_inspector = Camera1394Inspector()
         self.find_cameras_srv = rospy.Service(
-                'find_camera_1394',
+                'find_camera1394',
                 FindCamera1394,
                 self.handle_find_cameras
                 )
         self.get_camera_info_srv = rospy.Service(
-                'find_camera_1394_info',
+                'find_camera1394_info',
                 FindCamera1394,
                 self.handle_find_cameras_info
                 )

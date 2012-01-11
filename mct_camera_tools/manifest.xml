@@ -12,6 +12,7 @@
   <depend package="roscpp"/>
   <depend package="mct_msg_and_srv"/>
   <depend package="mct_xml_tools"/>
+  <depend package="mct_introspection"/>
 
   <rosdep name="bzr"/>
   <rosdep name="virtualenv"/>

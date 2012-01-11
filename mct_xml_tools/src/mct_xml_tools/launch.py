@@ -48,22 +48,26 @@ def create_machine_launch(filename,machine_def):
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
     xml_str = template.render(user=user,machine_info_list=machine_info_list)
-    print xml_str
 
+    with open(filename, 'w') as f:
+        f.write(xml_str)
 
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    import roslib
-    roslib.load_manifest('mct_xml_tools')
-    from mct_computer_admin import admin_tools
 
     if 0:
-        filename = 'test.xml'
+        filename = 'camera1394_inspector.launch'
         machines = ['c1', 'c2', 'c3']
         create_inspector_launch(filename,machines)
 
     if 1:
-        filename = 'mct_machine.launch'
-        machine_def = admin_tools.get_machine_def()
+        filename = 'mct.mcahine'
+        machine_def = {
+                'user' : 'albert',
+                'master' : {'address' : 'felis'},
+                }
+        for i in range(0,10):
+            machine_def['slave{0}'.format(i)] = {'address' : 'tabby{0}'.format(i)}
+
         create_machine_launch(filename,machine_def)
