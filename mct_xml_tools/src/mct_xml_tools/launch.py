@@ -52,21 +52,29 @@ def create_machine_launch(filename,machine_def):
     with open(filename, 'w') as f:
         f.write(xml_str)
 
-def create_inspector_camera_launch():
+def create_inspector_camera_launch(filename, camera_dict):
     """
-    Creates camera launch file to be called from the camera inspector node .
+    Creates camera launch file to  be called from the camera inspector node.
     """
-    pass
+    file_path, file_name = os.path.split(__file__)
+    template_dir = os.path.join(file_path, 'templates')
+    template_name = 'inspector_camera_launch.xml'
+
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(camera_dict=camera_dict)
+    print(xml_str)
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    if 1:
+    if 0:
         filename = 'camera1394_inspector.launch'
         machines = ['c1', 'c2', 'c3']
         create_inspector_launch(filename,machines)
 
-    if 1:
+    if 0:
         filename = 'mct.mcahine'
         machine_def = {
                 'user' : 'albert',
@@ -74,5 +82,23 @@ if __name__ == '__main__':
                 }
         for i in range(0,10):
             machine_def['slave{0}'.format(i)] = {'address' : 'tabby{0}'.format(i)}
-
         create_machine_launch(filename,machine_def)
+
+    if 1:
+        filename = 'inspector_camera.launch'
+        camera_dict = {
+                '30530001412079' :  {'machine': 'slave2', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2efa' :  {'machine': 'master', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2efb' :  {'machine': 'master', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2ef9' :  {'machine': 'slave2', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '3053000140e715' :  {'machine': 'slave1', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2ef8' :  {'machine': 'slave2', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '30530001410997' :  {'machine': 'slave1', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2ef4' :  {'machine': 'master', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2ef5' :  {'machine': 'master', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2ef6' :  {'machine': 'slave1', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2ef7' :  {'machine': 'slave2', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                '305300013f2ef3' :  {'machine': 'slave1', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
+                }
+        create_inspector_camera_launch(filename, camera_dict)
+
