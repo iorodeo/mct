@@ -9,6 +9,7 @@ import tempfile
 import subprocess
 from mct_xml_tools.machine import read_machine_file
 from mct_xml_tools.launch import create_inspector_launch
+from mct_introspection import find_cameras
 
 # Services
 from mct_msg_and_srv.srv import MasterInspectorCameras
@@ -48,12 +49,12 @@ class Camera_Inspector_Master(object):
         nodes.  
         """
         if req.lower() == 'start':
-            # Start cameras
-            pass
+            # Generate launch file for cameras
+            camera_dict = find_cameras()
+
         elif req.lower() == 'stop':
             # Stop cameras
             pass
-        
 
     def launch_inspector_nodes(self):
         """

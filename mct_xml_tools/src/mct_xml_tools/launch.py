@@ -52,6 +52,11 @@ def create_machine_launch(filename,machine_def):
     with open(filename, 'w') as f:
         f.write(xml_str)
 
+def create_inspector_camera_launch():
+    """
+    Creates camera launch file to be called from the camera inspector node .
+    """
+    pass
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
