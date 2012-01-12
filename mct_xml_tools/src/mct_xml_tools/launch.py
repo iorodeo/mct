@@ -1,6 +1,7 @@
 import os
 import os.path
 import jinja2
+import yaml
 
 def create_inspector_launch(filename,machine_names):
     """
@@ -30,12 +31,12 @@ def create_machine_launch(filename,machine_def):
     template_name = 'mct_machine.xml'
 
     user = machine_def['user']
-    master_info = machine_def['master']
-    master_info['name'] = 'master'
+    master_info = machine_def['mct_master']
+    master_info['name'] = 'mct_master'
     master_info['default'] = 'true'
 
     slave_keys = machine_def.keys()
-    slave_keys.remove('master')
+    slave_keys.remove('mct_master')
     slave_keys.remove('user')
     slave_keys.sort()
     machine_info_list = [master_info]
@@ -52,18 +53,38 @@ def create_machine_launch(filename,machine_def):
     with open(filename, 'w') as f:
         f.write(xml_str)
 
+def create_inspector_camera_yaml(tmp_dir,camera_dict):
+    """
+    Creates the yaml files for each camera which are required for the 
+    lauch file. Note, add the yaml file to the info dictionary for each 
+    camera for later use.
+    """
+    for guid, info in camera_dict.iteritems():
+        filename = os.path.join(tmp_dir,'camera_guid_{0}.yaml'.format(guid))
+        info['yaml_file'] = filename
+        with open(filename,'w') as f:
+            data = {'guid': guid, 'frame_id': 'camera_guid_{0}'.format(guid)}
+            yaml.dump(data,f,default_flow_style=False)
+    return camera_dict
+
 def create_inspector_camera_launch(filename, camera_dict):
     """
     Creates camera launch file to  be called from the camera inspector node.
+
+    Note, assumes that the yaml files for the cameras have been added to the
+    info dict for each camera.
     """
     file_path, file_name = os.path.split(__file__)
     template_dir = os.path.join(file_path, 'templates')
     template_name = 'inspector_camera_launch.xml'
+    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
 
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
-    xml_str = template.render(camera_dict=camera_dict)
-    print(xml_str)
+    xml_str = template.render(machine_file=machine_file, camera_dict=camera_dict)
+
+    with open(filename,'w') as f:
+        f.write(xml_str)
 
 
 # -----------------------------------------------------------------------------
@@ -78,14 +99,15 @@ if __name__ == '__main__':
         filename = 'mct.mcahine'
         machine_def = {
                 'user' : 'albert',
-                'master' : {'address' : 'felis'},
+                'mct_master' : {'address' : 'felis'},
                 }
         for i in range(0,10):
-            machine_def['slave{0}'.format(i)] = {'address' : 'tabby{0}'.format(i)}
+            machine_def['mct_slave{0}'.format(i)] = {'address' : 'tabby{0}'.format(i)}
         create_machine_launch(filename,machine_def)
 
     if 1:
         filename = 'inspector_camera.launch'
+        tmp_dir = '.'
         camera_dict = {
                 '30530001412079' :  {'machine': 'slave2', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
                 '305300013f2efa' :  {'machine': 'master', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
@@ -100,5 +122,6 @@ if __name__ == '__main__':
                 '305300013f2ef7' :  {'machine': 'slave2', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
                 '305300013f2ef3' :  {'machine': 'slave1', 'model': 'scA640-120fm', 'vendor': 'Basler', 'unit': 0},
                 }
+        create_inspector_camera_yaml(tmp_dir,camera_dict)
         create_inspector_camera_launch(filename, camera_dict)
 

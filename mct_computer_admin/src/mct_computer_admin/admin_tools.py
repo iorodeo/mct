@@ -18,7 +18,7 @@ def get_slave_info():
     Reads the machine definition file and gets the slave information.
     """
     slave_info = get_machine_def()
-    slave_info.pop('master') 
+    slave_info.pop('mct_master') 
     slave_info.pop('user')
     return slave_info
 
@@ -56,7 +56,7 @@ def get_master():
     Get the host name of the master computer.
     """
     machine_def = get_machine_def()
-    return machine_def['master']['address']
+    return machine_def['mct_master']['address']
 
 
 
