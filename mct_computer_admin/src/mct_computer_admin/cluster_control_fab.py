@@ -2,12 +2,16 @@
 from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_computer_admin')
+import rospy
 
 import sys
+import time
 import os.path
+import subprocess
 import mct_xml_tools
+import mct_introspection
 import admin_tools
-from subprocess import call
+
 from fabric.api import *
 from fabric.decorators import hosts
 from fabric.contrib.files import exists
@@ -16,7 +20,7 @@ slave_list = admin_tools.get_slave_hosts()
 host_list = admin_tools.get_hosts()
 master = admin_tools.get_master()
 
-msg_dict = {
+cmd_msgs = {
         'wakeup'             : 'waking up camera computers',
         'push_setup'         : 'pushing setup to slave computers',
         'shutdown'           : 'shutting down camera computers',
@@ -31,8 +35,26 @@ msg_dict = {
         'rosmake_preclean'   : 'use rosmake to build mct on slave computers',
         'update_machine_def' : 'updating the ROS xml machine launch file',
         'list_machine_def'   : 'listing current machine definition',
+        'list_cameras'       : 'listing cameras',
         'test'               : 'test command for development',
         }
+
+fab_cmds = [ 
+        'wakeup', 
+        'push_setup', 
+        'shutdown', 
+        'list_slaves', 
+        'rospack_profile', 
+        'pull', 
+        'pull_master',
+        'pull_all',
+        'clone',
+        'clean',
+        'rosmake',
+        'rosmake_preclean',
+        'update_machine_def',
+        'list_machine_def',
+        ]
 
 def wakeup():
     """
@@ -195,6 +217,20 @@ def list_machine_def():
     for key in slave_keys:
         print(key,machine_def[key])
 
+def list_cameras():
+    """
+    Lists all comands currently connected to the system.
+    """
+    inspector_popen = subprocess.Popen(['roslaunch', 'mct_camera_tools', 'camera1394_inspector_master.launch'])
+    time.sleep(3.0) # Wait fo processes to start - kludgey need a better approach
+    camera_dict = mct_introspection.find_cameras()
+    print('\nfound {0} cameras\n'.format(len(camera_dict)))
+    for k,v in camera_dict.iteritems():
+        print('guid {0}, {1}'.format(k,v))
+    print('\n')
+    inspector_popen.send_signal(subprocess.signal.SIGINT) 
+
+
 def test(*args):
     print('test')
 
@@ -207,17 +243,24 @@ def main(argv):
     fabfile, ext = os.path.splitext(__file__)
     fabfile = '{0}.py'.format(fabfile)
     try: 
-        msg = msg_dict[cmd]
+        msg = cmd_msgs[cmd]
         print('\n{0}\n'.format(msg))
     except KeyError:
         print('Error: unknown command {0}'.format(cmd))
         sys.exit(0)
 
     # Generate fab command and add any arguments
-    fab_cmd = 'fab -f {0} {1}'.format(fabfile, cmd,)
-    if argv[2:]:
-        fab_cmd_args = ','.join(argv[2:])
-        fab_cmd = '{0}:{1}'.format(fab_cmd,fab_cmd_args)
+    if cmd in fab_cmds:
+        fab_cmd = 'fab -f {0} {1}'.format(fabfile, cmd,)
+        if argv[2:]:
+            fab_cmd_args = ','.join(argv[2:])
+            fab_cmd = '{0}:{1}'.format(fab_cmd,fab_cmd_args)
 
-    call(fab_cmd, shell=True)
+        subprocess.call(fab_cmd, shell=True)
+    else:
+        try:
+            globals()[cmd]() 
+        except KeyError:
+            print('ERROR: command not found, {0}'.format(cmd))
+
 

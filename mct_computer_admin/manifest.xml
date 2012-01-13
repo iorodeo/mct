@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/mct_cluster_adim</url>
   <depend package="rospy"/>
   <depend package="mct_xml_tools"/>
+  <depend package="mct_introspection"/>
 
   <rosdep name="fabric"/>
 

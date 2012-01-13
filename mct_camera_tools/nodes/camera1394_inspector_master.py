@@ -7,7 +7,6 @@ import os
 import os.path
 import tempfile
 import subprocess
-import signal
 from mct_xml_tools.machine import read_machine_file
 from mct_xml_tools.launch import create_inspector_launch
 from mct_xml_tools.launch import create_inspector_camera_launch
@@ -34,6 +33,7 @@ class Camera_Inspector_Master(object):
 
         self.inspector_popen = None
         self.camera_popen = None
+        self.camera_dict = None
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera1394_inspector_master')
         self.launch_inspector_nodes()
@@ -43,7 +43,6 @@ class Camera_Inspector_Master(object):
                 MasterInspectorCameras,
                 self.handle_cameras,
                 )
-                
 
     def run(self):
         rospy.spin()
@@ -57,20 +56,32 @@ class Camera_Inspector_Master(object):
         cmd = req.command
         cmd = cmd.lower()
         if cmd == 'start':
-            # Generate yaml and launch files for cameras
-            camera_dict = find_cameras()
-            camera_dict = create_inspector_camera_yaml(self.tmp_dir,camera_dict)
-            create_inspector_camera_launch(self.camera_launch_file,camera_dict)
-            self.camera_popen = subprocess.Popen(['roslaunch',self.camera_launch_file])
-
+            self.launch_camera_nodes()
         elif cmd == 'stop':
-            if self.camera_popen is not None:
-                self.camera_popen.send_signal(subprocess.signal.SIGINT)
-                self.camera_popen = None
+            self.camera_nodes_clean_up()
         else:
             response = False
 
         return MasterInspectorCamerasResponse(response)
+
+    def launch_camera_nodes(self):
+        """
+        Creates the temporary camera yaml and launch files and then launches
+        the camera nodes.
+        """
+        camera_dict = find_cameras()
+        camera_dict = create_inspector_camera_yaml(self.tmp_dir,camera_dict)
+        create_inspector_camera_launch(self.camera_launch_file,camera_dict)
+        self.camera_popen = subprocess.Popen(['roslaunch',self.camera_launch_file])
+        self.camera_dict = camera_dict
+
+    def kill_camera_nodes(self):
+        """
+        Kills all camera nodes by killing the launch process
+        """
+        if self.camera_popen is not None:
+            self.camera_popen.send_signal(subprocess.signal.SIGINT)
+            self.camera_popen = None
 
     def launch_inspector_nodes(self):
         """
@@ -85,6 +96,7 @@ class Camera_Inspector_Master(object):
         """
         if self.inspector_popen is not None:
             self.inspector_popen.send_signal(subprocess.signal.SIGINT)
+            self.inspector_popen = None
 
     def create_launch_file(self):
         """
@@ -95,15 +107,45 @@ class Camera_Inspector_Master(object):
         machine_name_list = [m['name'] for m in machine_list]
         create_inspector_launch(self.inspector_launch_file, machine_name_list)
 
-    def delete_launch_file(self):
+    def delete_inspector_launch_file(self):
         """
-        Deletes temporary launch file for camera inspector nodes.
+        Deletes the temporary launch file for camera inspector nodes.
         """
-        os.remove(self.inspector_launch_file)
+        if os.path.isfile(self.inspector_launch_file):
+            os.remove(self.inspector_launch_file)
+
+    def delete_camera_launch_file(self):
+        """
+        Deletes the temporary launch and yaml files for the cameras
+        """
+        if self.camera_dict is not None:
+            for guid, info in self.camera_dict.iteritems():
+                yaml_file = info['yaml_file']
+                if os.path.isfile(yaml_file):
+                    os.remove(yaml_file)
+        if os.path.isfile(self.camera_launch_file):
+            os.remove(self.camera_launch_file)
+
+    def inspector_nodes_clean_up(self):
+        """
+        Kills inspector nodes and removes temporary launch file.
+        """
+        self.kill_inspector_nodes()
+        self.delete_inspector_launch_file()
+
+    def camera_nodes_clean_up(self):
+        """
+        Kills camera nodes and removes temporary launch and yaml files.
+        """
+        self.kill_camera_nodes()
+        self.delete_camera_launch_file()
 
     def clean_up(self):
-        self.kill_inspector_nodes()
-        self.delete_launch_file()
+        """
+        Clean up function for node shutdown.
+        """
+        self.camera_nodes_clean_up()
+        self.inspector_nodes_clean_up()
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
