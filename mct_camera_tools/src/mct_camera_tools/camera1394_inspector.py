@@ -24,7 +24,7 @@ class Camera1394Inspector(object):
         for camera in cameraList:
             guid = camera.pop('guid')
             cameraConv = camera
-            cameraConv['guid'] = '%x'%(guid,)
+            cameraConv['guid'] = '%016x'%(guid,)
             cameraListConv.append(cameraConv)
         return cameraListConv
 
@@ -103,6 +103,7 @@ class NullDevice(object):
     """
     def write(self,s):
         pass
+
 
 # Some print functions for testing
 # -----------------------------------------------------------------------------
