@@ -60,10 +60,10 @@ def create_inspector_camera_yaml(tmp_dir,camera_dict):
     camera for later use.
     """
     for guid, info in camera_dict.iteritems():
-        filename = os.path.join(tmp_dir,'camera_guid_{0}.yaml'.format(guid))
+        filename = os.path.join(tmp_dir,'camera_{0}.yaml'.format(guid))
         info['yaml_file'] = filename
         with open(filename,'w') as f:
-            data = {'guid': guid, 'frame_id': 'camera_guid_{0}'.format(guid)}
+            data = {'guid': guid, 'frame_id': 'camera_{0}'.format(guid)}
             yaml.dump(data,f,default_flow_style=False)
     return camera_dict
 
