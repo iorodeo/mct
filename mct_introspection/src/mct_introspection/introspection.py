@@ -1,6 +1,6 @@
 from __future__ import print_function
 import roslib
-roslib.load_manifest('mct_camera_tools')
+roslib.load_manifest('mct_introspection')
 import rospy
 import json
 import subprocess
@@ -59,6 +59,11 @@ def find_cameras(add_machine=True, add_info=False):
                 add_machine2camera_dict(camera_dict_temp, machine)
             camera_dict.update(camera_dict_temp)
     return camera_dict
+
+def find_camera_topics():
+    """
+    Finds a list of all active camera topics
+    """
 
 
 def add_machine2camera_dict(input_dict, machine):
