@@ -60,11 +60,19 @@ def find_cameras(add_machine=True, add_info=False):
             camera_dict.update(camera_dict_temp)
     return camera_dict
 
-def find_camera_topics():
+def find_camera_topics(transport='image_raw'):
     """
     Finds a list of all active camera topics
     """
-
+    topic_list = rospy.get_published_topics()
+    camera_topic_list = []
+    for topic in topic_list:
+        topic_name, topic_type= topic
+        topic_name_split = topic_name.split('/')
+        if (topic_name_split[-1] == transport) and ('camera' in topic_name_split):
+            camera_topic_list.append(topic_name)
+    return camera_topic_list
+        
 
 def add_machine2camera_dict(input_dict, machine):
     """
@@ -119,15 +127,21 @@ if __name__ == '__main__':
         print(service_list)
         print()
 
-    if 1:
+    if 0:
         camera_dict = find_cameras()
         for k,v in camera_dict.iteritems():
             print(k,v)
             print()
 
-    if 1:
+    if 0:
         camera_dict = find_cameras(add_info=True)
         for k,v in camera_dict.iteritems():
             print(k,v)
             print()
+
+    if 1:
+        camera_topics = find_camera_topics()
+        for topic in camera_topics:
+            print(topic)
+        
             
