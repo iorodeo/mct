@@ -34,6 +34,7 @@ class Camera_Inspector_Master(object):
         self.inspector_popen = None
         self.camera_popen = None
         self.camera_dict = None
+        self.camera_started = False
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera1394_inspector_master')
         self.launch_inspector_nodes()
@@ -56,9 +57,12 @@ class Camera_Inspector_Master(object):
         cmd = req.command
         cmd = cmd.lower()
         if cmd == 'start':
-            self.launch_camera_nodes()
+            if not self.camera_started:
+                self.launch_camera_nodes()
+                self.camera_started = True
         elif cmd == 'stop':
             self.camera_nodes_clean_up()
+            self.camera_started = False
         else:
             response = False
 
