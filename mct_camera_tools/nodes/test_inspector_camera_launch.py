@@ -2,15 +2,12 @@ from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_camera_tools')
 import rospy
-
-#from mct_msg_and_srv.srv import MasterInspectorCameras
 from mct_msg_and_srv.srv import CommandString 
 
 def inspector_camera_srv(cmd):
     rospy.wait_for_service('master_inspector_cameras')
-    #proxy = rospy.ServiceProxy('master_inspector_cameras',MasterInspectorCameras)
     proxy = rospy.ServiceProxy('master_inspector_cameras',CommandString)
-    response = False
+    response = None 
     try:
         response = proxy(cmd)
     except rospy.ServiceException, e:
@@ -27,7 +24,8 @@ if __name__ == '__main__':
     if not cmd in ('start', 'stop'):
         print("ERROR: command must be 'start' or 'stop'")
 
-    inspector_camera_srv(cmd)
+    response = inspector_camera_srv(cmd)
+    print(response)
 
     
 

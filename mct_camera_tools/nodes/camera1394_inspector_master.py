@@ -14,9 +14,6 @@ from mct_xml_tools.launch import create_inspector_camera_yaml
 from mct_introspection import find_cameras
 
 # Services
-from mct_msg_and_srv.srv import MasterInspectorCameras
-from mct_msg_and_srv.srv import MasterInspectorCamerasResponse
-
 from mct_msg_and_srv.srv import CommandString 
 from mct_msg_and_srv.srv import CommandStringResponse
 
@@ -37,16 +34,11 @@ class Camera_Inspector_Master(object):
         self.inspector_popen = None
         self.camera_popen = None
         self.camera_dict = None
-        self.camera_started = False
+        self.camera_running = False
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera1394_inspector_master')
         self.launch_inspector_nodes()
 
-        #self.camera_srv = rospy.Service(
-        #        'master_inspector_cameras',
-        #        MasterInspectorCameras,
-        #        self.handle_cameras,
-        #        )
         self.camera_srv = rospy.Service(
                 'master_inspector_cameras',
                 CommandString,
@@ -62,20 +54,28 @@ class Camera_Inspector_Master(object):
         nodes.  
         """
         response = True
+        message = ''
         cmd = req.command
         cmd = cmd.lower()
         if cmd == 'start':
-            if not self.camera_started:
+            if not self.camera_running:
                 self.launch_camera_nodes()
-                self.camera_started = True
+                self.camera_running = True
+            else:
+                response = False
+                message = 'cameras already running'
         elif cmd == 'stop':
-            self.camera_nodes_clean_up()
-            self.camera_started = False
+            if self.camera_running:
+                self.camera_nodes_clean_up()
+                self.camera_running = False
+            else:
+                response = False
+                message = 'cameras not running'
         else:
             response = False
+            message = 'unknow command'.format(cmd)
 
-        #return MasterInspectorCamerasResponse(response)
-        return CommandStringResponse(response)
+        return CommandStringResponse(response,message)
 
     def launch_camera_nodes(self):
         """
