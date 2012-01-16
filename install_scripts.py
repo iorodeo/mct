@@ -3,13 +3,13 @@ from __future__ import print_function
 import os
 import os.path
 
-script_list = ['mct_computer_admin/scripts/mct_cluster_control']
-
+script_dict = {'mct': 'mct_computer_admin/scripts/mct_cluster_control'}
 bin_dir = os.path.join(os.environ['HOME'],'bin')
-for script in script_list:
+
+print('installing scripts')
+for name, script in script_dict.iteritems():
     src = os.path.join(os.environ['MCT_NAME'],script)
-    dummy, script_name = os.path.split(src)
-    print('installing {0}'.format(script_name)
-    dst = os.path.join(bin_dir, script_name)
+    dst = os.path.join(bin_dir,name)
+    print('  {0} -> {1}'.format(src,dst))
     os.symlink(src,dst)
 

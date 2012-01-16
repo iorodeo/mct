@@ -17,6 +17,9 @@ from mct_introspection import find_cameras
 from mct_msg_and_srv.srv import MasterInspectorCameras
 from mct_msg_and_srv.srv import MasterInspectorCamerasResponse
 
+from mct_msg_and_srv.srv import CommandString 
+from mct_msg_and_srv.srv import CommandStringResponse
+
 class Camera_Inspector_Master(object):
     """
     Launches camera inspector nodes on all computers in the machine file.
@@ -39,9 +42,14 @@ class Camera_Inspector_Master(object):
         rospy.init_node('camera1394_inspector_master')
         self.launch_inspector_nodes()
 
+        #self.camera_srv = rospy.Service(
+        #        'master_inspector_cameras',
+        #        MasterInspectorCameras,
+        #        self.handle_cameras,
+        #        )
         self.camera_srv = rospy.Service(
                 'master_inspector_cameras',
-                MasterInspectorCameras,
+                CommandString,
                 self.handle_cameras,
                 )
 
@@ -66,7 +74,8 @@ class Camera_Inspector_Master(object):
         else:
             response = False
 
-        return MasterInspectorCamerasResponse(response)
+        #return MasterInspectorCamerasResponse(response)
+        return CommandStringResponse(response)
 
     def launch_camera_nodes(self):
         """
