@@ -20,10 +20,6 @@ if __name__ == '__main__':
 
     cmd = sys.argv[1]
     cmd = cmd.lower()
-    
-    if not cmd in ('start', 'stop'):
-        print("ERROR: command must be 'start' or 'stop'")
-
     response = inspector_camera_srv(cmd)
     print(response)
 

@@ -69,7 +69,7 @@ def create_inspector_camera_yaml(tmp_dir,camera_dict):
 
 def create_inspector_camera_launch(filename, camera_dict):
     """
-    Creates camera launch file to  be called from the camera inspector node.
+    Creates camera launch file which will called from the camera inspector node.
 
     Note, assumes that the yaml files for the cameras have been added to the
     info dict for each camera.
@@ -86,9 +86,28 @@ def create_inspector_camera_launch(filename, camera_dict):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def create_mjpeg_server_launch(filename, mjpeg_info_dict):
+    """
+    Creates a launch file for the mjpeg servers based on the mjpeg information
+    dictionary, mjpeg_info_dict. This function is designed to be called from
+    the mjpeg_manager node.
+    """
+    file_path, file_name = os.path.split(__file__)
+    template_dir = os.path.join(file_path, 'templates')
+    template_name = 'mjpeg_server_launch.xml'
+    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(machine_file=machine_file, mjpeg_info_dict=mjpeg_info_dict)
+
+    with open(filename,'w') as f:
+        f.write(xml_str)
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+
+    # Testing and development
 
     if 0:
         filename = 'camera1394_inspector.launch'
@@ -105,7 +124,7 @@ if __name__ == '__main__':
             machine_def['mct_slave{0}'.format(i)] = {'address' : 'tabby{0}'.format(i)}
         create_machine_launch(filename,machine_def)
 
-    if 1:
+    if 0:
         filename = 'inspector_camera.launch'
         tmp_dir = '.'
         camera_dict = {
@@ -124,4 +143,25 @@ if __name__ == '__main__':
                 }
         create_inspector_camera_yaml(tmp_dir,camera_dict)
         create_inspector_camera_launch(filename, camera_dict)
+
+    if 1:
+        filename = 'mjpeg_server.launch'
+        mjpeg_info_dict = {
+                '00305300013f2ef3': {'caemra_topic': '/mct_slave1/00305300013f2ef3/camera/image_raw', 'mjpeg_port': 8083, 'mjpeg_server': 'mjpeg_server_00305300013f2ef3'}, 
+                '00305300013f2ef6': {'caemra_topic': '/mct_slave1/00305300013f2ef6/camera/image_raw', 'mjpeg_port': 8085, 'mjpeg_server': 'mjpeg_server_00305300013f2ef6'}, 
+                '00305300013f2ef7': {'caemra_topic': '/mct_slave2/00305300013f2ef7/camera/image_raw', 'mjpeg_port': 8089, 'mjpeg_server': 'mjpeg_server_00305300013f2ef7'}, 
+                '00305300013f2ef4': {'caemra_topic': '/mct_master/00305300013f2ef4/camera/image_raw', 'mjpeg_port': 8088, 'mjpeg_server': 'mjpeg_server_00305300013f2ef4'}, 
+                '00305300013f2ef5': {'caemra_topic': '/mct_master/00305300013f2ef5/camera/image_raw', 'mjpeg_port': 8082, 'mjpeg_server': 'mjpeg_server_00305300013f2ef5'}, 
+                '0030530001410997': {'caemra_topic': '/mct_slave1/0030530001410997/camera/image_raw', 'mjpeg_port': 8081, 'mjpeg_server': 'mjpeg_server_0030530001410997'}, 
+                '00305300013f2ef8': {'caemra_topic': '/mct_slave2/00305300013f2ef8/camera/image_raw', 'mjpeg_port': 8084, 'mjpeg_server': 'mjpeg_server_00305300013f2ef8'}, 
+                '00305300013f2ef9': {'caemra_topic': '/mct_slave2/00305300013f2ef9/camera/image_raw', 'mjpeg_port': 8080, 'mjpeg_server': 'mjpeg_server_00305300013f2ef9'}, 
+                '00305300013f2efb': {'caemra_topic': '/mct_master/00305300013f2efb/camera/image_raw', 'mjpeg_port': 8090, 'mjpeg_server': 'mjpeg_server_00305300013f2efb'}, 
+                '00305300013f2efa': {'caemra_topic': '/mct_master/00305300013f2efa/camera/image_raw', 'mjpeg_port': 8087, 'mjpeg_server': 'mjpeg_server_00305300013f2efa'}, 
+                '003053000140e715': {'caemra_topic': '/mct_slave1/003053000140e715/camera/image_raw', 'mjpeg_port': 8086, 'mjpeg_server': 'mjpeg_server_003053000140e715'}, 
+                '0030530001412079': {'caemra_topic': '/mct_slave2/0030530001412079/camera/image_raw', 'mjpeg_port': 8091, 'mjpeg_server': 'mjpeg_server_0030530001412079'}
+                }
+        create_mjpeg_server_launch(filename,mjpeg_info_dict)
+       
+
+
 
