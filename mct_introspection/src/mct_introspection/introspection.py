@@ -6,7 +6,8 @@ import json
 import subprocess
 
 # Services
-from mct_msg_and_srv.srv import FindCamera1394
+#from mct_msg_and_srv.srv import FindCamera1394
+from mct_msg_and_srv.srv import GetJSONString 
 
 def get_nodes():
     """
@@ -46,11 +47,12 @@ def find_cameras(add_machine=True, add_info=False):
             continue
         machine = service_parts[1]
         rospy.wait_for_service(service)
-        find_cameras_proxy = rospy.ServiceProxy(service,FindCamera1394)
+        find_cameras_proxy = rospy.ServiceProxy(service,GetJSONString)
         camera_dict_temp = None
         try:
             response = find_cameras_proxy()
-            camera_dict_temp = json.loads(response.camera_info_json)
+            #camera_dict_temp = json.loads(response.camera_info_json)
+            camera_dict_temp = json.loads(response.json_string)
         except rospy.ServiceException, e:
             print('service request failed {0}'.format(str(e)))
         if camera_dict_temp is not None:
