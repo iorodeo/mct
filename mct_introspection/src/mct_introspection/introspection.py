@@ -4,9 +4,9 @@ roslib.load_manifest('mct_introspection')
 import rospy
 import json
 import subprocess
+from mct_utilities import json_tools
 
 # Services
-#from mct_msg_and_srv.srv import FindCamera1394
 from mct_msg_and_srv.srv import GetJSONString 
 
 def get_nodes():
@@ -51,12 +51,10 @@ def find_cameras(add_machine=True, add_info=False):
         camera_dict_temp = None
         try:
             response = find_cameras_proxy()
-            #camera_dict_temp = json.loads(response.camera_info_json)
-            camera_dict_temp = json.loads(response.json_string)
+            camera_dict_temp = json.loads(response.json_string,object_hook=json_tools.decode_dict)
         except rospy.ServiceException, e:
             print('service request failed {0}'.format(str(e)))
         if camera_dict_temp is not None:
-            camera_dict_temp = dict_unicode2str(camera_dict_temp)
             if add_machine:
                 add_machine2camera_dict(camera_dict_temp, machine)
             camera_dict.update(camera_dict_temp)
@@ -84,38 +82,6 @@ def add_machine2camera_dict(input_dict, machine):
     for k,v in input_dict.iteritems():
         v['machine'] = machine
 
-def dict_unicode2str(dict_input):
-    """
-    Convert all unicode strings in the dictionary to normal strings.
-    """
-    dict_output = {}
-    for k,v in dict_input.iteritems():
-        if type(k) == unicode:
-            k = str(k)
-        if type(v) == unicode:
-            v = str(v)
-        if type(v) == dict:
-            v = dict_unicode2str(v)
-        if type(v) == list:
-            v = list_unicode2str(v)
-        dict_output[k] = v
-    return dict_output
-
-def list_unicode2str(list_input):
-    """
-    Convert all unicode strings in a list to normal strings.
-    """
-    list_output = []
-    for v in list_input:
-        if type(v) == unicode:
-            v = str(v)
-        if type(v) == list:
-            v = list_unicode2str(v)
-        if type(v) == dict:
-            v = dict_unicode2str(v)
-        list_output.append(v)
-    return list_output
-
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -129,7 +95,7 @@ if __name__ == '__main__':
         print(service_list)
         print()
 
-    if 0:
+    if 1:
         camera_dict = find_cameras()
         for k,v in camera_dict.iteritems():
             print(k,v)
@@ -141,7 +107,7 @@ if __name__ == '__main__':
             print(k,v)
             print()
 
-    if 1:
+    if 0:
         camera_topics = find_camera_topics()
         for topic in camera_topics:
             print(topic)

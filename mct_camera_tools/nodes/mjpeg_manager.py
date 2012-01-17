@@ -7,12 +7,15 @@ import os
 import os.path
 import tempfile
 import subprocess
+import json
 from mct_introspection import find_camera_topics
 from mct_xml_tools.launch import create_mjpeg_server_launch
 
 # Services
 from mct_msg_and_srv.srv import CommandString 
 from mct_msg_and_srv.srv import CommandStringResponse
+from mct_msg_and_srv.srv import GetJSONString
+from mct_msg_and_srv.srv import GetJSONStringResponse
 
 class MJPEG_Manager(object):
 
@@ -33,9 +36,26 @@ class MJPEG_Manager(object):
                 CommandString, 
                 self.handle_mjpeg_servers_srv
                 )
+        self.mjpeg_servers_info_srv = rospy.Service(
+                'mjpeg_servers_info',
+                GetJSONString,
+                self.handle_mjpeg_servers_info_srv
+                )
 
     def run(self):
         rospy.spin()
+
+    def handle_mjpeg_servers_info_srv(self,req):
+        """
+        Handles request for information about the mjpeg servers. Returns a python
+        dictionary - serialized as a json string - containing the mjpeg_info_dict 
+        dictionary.
+        """
+        if self.mjpeg_info_dict == None:
+            mjpeg_info_json = json.dumps({})
+        else:
+            mjpeg_info_json = json.dumps(self.mjpeg_info_dict)
+        return GetJSONStringResponse(mjpeg_info_json)
 
     def handle_mjpeg_servers_srv(self,req):
         """

@@ -1,0 +1,15 @@
+<package>
+  <description brief="mct_utilities">
+
+     mct_utilities
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_utilities</url>
+  <depend package="rospy"/>
+
+</package>
+
+

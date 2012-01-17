@@ -1,4 +1,4 @@
-<launch>
-  <!-- Requires mct python virtualenv -->
-  <node pkg="mct_camera_tools" type="camera1394_inspector.py" name="camera1394_inpector"/>
+<launch> 
+    <include file="/home/albert/ros/mct_config/machine/mct.machine" />
+    <node pkg="mct_camera_tools" type="camera1394_inspector.py" name="camera1394_inpector" machine="mct_master"/>
 </launch>
