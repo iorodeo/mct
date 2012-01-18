@@ -1,0 +1,18 @@
+<package>
+  <description brief="mct_camera_assignment">
+
+     mct_camera_assignment
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_camera_assignment</url>
+  <depend package="rospy"/>
+  <depend package="mct_camera_tools"/>
+
+  <rosdep name="flask" />
+
+</package>
+
+

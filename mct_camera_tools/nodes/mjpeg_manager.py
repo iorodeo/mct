@@ -126,7 +126,7 @@ class MJPEG_Manager(object):
             mjpeg_server_name = 'mjpeg_server_{0}'.format(camera_name)
             mjpeg_server_port = self.mjpeg_start_port + i
             info = {
-                    'caemra_topic' : topic,
+                    'camera_topic' : topic,
                     'mjpeg_server' : mjpeg_server_name,
                     'mjpeg_port'   : mjpeg_server_port,
                     }

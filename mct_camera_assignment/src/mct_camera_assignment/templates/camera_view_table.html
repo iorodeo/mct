@@ -1,0 +1,45 @@
+<html>
+    <h1> Camera Assignment Tool </h1>
+    <form method="post">
+        <table>
+            {% for camera_id, info in mjpeg_info_dict.iteritems() %}
+            {% if loop.index0%4 == 0 %}
+            <tr>
+            {% endif %}
+                <td>
+                    <div>
+                        <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}">
+                            <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}?width=320?height=240" />
+                        </a>
+                        <div> 
+                            <select name="{{camera_id}}">
+                                <option value="--"> -- </option>
+                                {% for camera_id in mjpeg_info_dict %}
+                                <option value="{{loop.index}}"> {{loop.index}} </option>
+                                {% endfor %}
+                            </select>
+                            &nbsp &nbsp &nbsp
+                            GUID: {{camera_id}} 
+                        </div>
+                    </div>
+                </td>
+            {% if loop.index0%4 == 3 or loop.last%}
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </table>
+        <br>
+        <br>
+        <button type="submit"> Save Assignment</button> 
+    </form>
+
+    <br> <br>
+    <table>
+    {% for k,v in camera_assignment.iteritems() %}
+    <tr>
+        <td> {{k}} </td>
+        <td> {{v}} </td>
+    </tr>
+    {% endfor %}
+    </table>
+</html>

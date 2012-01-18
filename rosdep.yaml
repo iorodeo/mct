@@ -30,4 +30,6 @@ ros_camera_drivers:
 ros_vision_opencv:
   ubuntu: ros-diamondback-vision-opencv
 
+flask:
+  ubuntu: python-flask
 

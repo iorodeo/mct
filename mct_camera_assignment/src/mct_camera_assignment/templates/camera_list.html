@@ -1,0 +1,8 @@
+<html>
+    <h1> Cameras by GUID </h1>
+    {%for camera_id, mjpeg_info in mjpeg_info_dict.iteritems() %}
+    <a href="http://localhost:{{mjpeg_info['mjpeg_port']}}/stream?topic={{mjpeg_info['camera_topic']}}"> {{camera_id}} </a href>
+    <br>
+    {% endfor %}
+    <p> Number of cameras: {{mjpeg_info_dict|length}} </p>
+</html>

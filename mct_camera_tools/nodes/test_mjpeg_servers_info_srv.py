@@ -8,7 +8,6 @@ from mct_utilities import json_tools
 from mct_msg_and_srv.srv import GetJSONString 
 
 
-
 def mjpeg_servers_info_srv():
     rospy.wait_for_service('mjpeg_servers_info')
     proxy = rospy.ServiceProxy('mjpeg_servers_info',GetJSONString)
