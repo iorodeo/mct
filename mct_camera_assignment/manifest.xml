@@ -10,10 +10,13 @@
   <url>http://ros.org/wiki/mct_camera_assignment</url>
   <depend package="rospy"/>
   <depend package="mct_camera_tools"/>
+  <depend package="mct_utilities"/>
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>
   <rosdep name="flask" />
+  <rosdep name="redis_server"/>
+  <rosped name="python_redis"/>
 
 </package>
 

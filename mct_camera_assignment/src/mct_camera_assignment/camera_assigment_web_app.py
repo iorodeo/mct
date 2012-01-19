@@ -2,32 +2,44 @@ import roslib
 roslib.load_manifest('mct_camera_assignment')
 import rospy
 import flask
+import redis
+import atexit
 
 from mct_camera_tools import mjpeg_servers
+from mct_utilities import redis_tools
 
 app = flask.Flask(__name__)
 
+
+
 @app.route('/',methods=['GET','POST'])
 def index():
+
+    camera_assignment = redis_tools.get_dict(db,'camera_assignment')
     mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
 
-    if not hasattr(flask.g, 'camera_assignment'):
-        flask.g.camera_assignment = {}
-        for k in mjpeg_info_dict:
-            flask.g.camera_assignment[k] = '--'
-
     if flask.request.method == 'POST':
-        for k in mjpeg_info_dict:
-            flask.g.camera_assignment[k] = flask.request.form[k]
+        if 'save_button' in flask.request.form:
+            for camera_id in mjpeg_info_dict:
+                camera_assignment[camera_id] = str(flask.request.form[camera_id])
+        elif 'clear_button' in flask.request.form:
+            camera_assignment = create_empty_assignment(mjpeg_info_dict)
+            
     else:
         pass
 
-    output = flask.render_template(
-            'camera_view_table.html',
-            mjpeg_info_dict=mjpeg_info_dict,
-            camera_assignment=flask.g.camera_assignment,
-            )
-    return output
+    camera_numbers = [str(x) for x in range(1,len(mjpeg_info_dict)+1)]
+    select_values = ['--']
+    select_values.extend(camera_numbers)
+       
+    render_dict = {
+            'mjpeg_info_dict'   : mjpeg_info_dict,
+            'camera_assignment' : camera_assignment,
+            'select_values'     : select_values,
+            }
+
+    redis_tools.set_dict(db,'camera_assignment',camera_assignment)
+    return flask.render_template('camera_view_table.html', **render_dict)
 
 @app.route('/camerasbyguid')
 def cameras_by_guid():
@@ -35,9 +47,33 @@ def cameras_by_guid():
     return flask.render_template('camera_list.html', mjpeg_info_dict=mjpeg_info_dict) 
 
 
+def cleanup_db():
+    """
+    Clean up temporary redis database
+    """
+    db.flushdb()
+
+def create_empty_assignment(mjpeg_info_dict):
+    """
+    Creates an empty camera assignment dictionary
+    """
+    camera_assignment = {}
+    for k in mjpeg_info_dict:
+        camera_assignment[k] = '--'
+    return camera_assignment
+
+
+# Create db and add empty camera assignment
+db = redis.Redis('localhost',db=1)
+mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
+camera_assignment = create_empty_assignment(mjpeg_info_dict)
+redis_tools.set_dict(db,'camera_assignment',camera_assignment)
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+
+
+
     app.debug = True
     app.run()
 

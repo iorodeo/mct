@@ -8,14 +8,17 @@
             {% endif %}
                 <td>
                     <div>
-                        <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}">
-                            <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}?width=320?height=240" />
+                        <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}"> 
+                            <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}?width=320?height=240?quality=60" /> 
                         </a>
                         <div> 
                             <select name="{{camera_id}}">
-                                <option value="--"> -- </option>
-                                {% for camera_id in mjpeg_info_dict %}
-                                <option value="{{loop.index}}"> {{loop.index}} </option>
+                                {% for value in select_values %}
+                                {% if value == camera_assignment[camera_id] %}
+                                <option value="{{value}}" selected="selected"> {{value}} </option>
+                                {% else %}
+                                <option value="{{value}}"> {{value}} </option>
+                                {% endif %}
                                 {% endfor %}
                             </select>
                             &nbsp &nbsp &nbsp
@@ -30,10 +33,12 @@
         </table>
         <br>
         <br>
-        <button type="submit"> Save Assignment</button> 
+        <button type="submit" name="save_button" > Save Assignment</button> 
+        <button type="submit" name="clear_button" > Clear </button>
     </form>
 
     <br> <br>
+    <h2> Current Camera Assigment </h2>
     <table>
     {% for k,v in camera_assignment.iteritems() %}
     <tr>
@@ -42,4 +47,5 @@
     </tr>
     {% endfor %}
     </table>
+
 </html>

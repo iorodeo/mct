@@ -10,6 +10,9 @@
   <url>http://ros.org/wiki/mct_utilities</url>
   <depend package="rospy"/>
 
+  <rosdep name="redis_server"/>
+  <rosdep name="python_redis"/>
+
 </package>
 
 
