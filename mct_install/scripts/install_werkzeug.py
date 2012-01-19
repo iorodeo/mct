@@ -6,18 +6,18 @@ from subprocess import call
 from create_mct_resources import create_mct_resources
 from create_python_virtualenv import create_python_virtualenv
 
-def install_jinja2():
+def install_werkzeug():
     # Make sure that virtual environment exists
     create_python_virtualenv()
 
-    # Use pip to get jinja2 from within virtualenv
+    # Use pip to get werkzeug from within virtualenv
     python_virtualenv = os.environ['MCT_PYTHON_VIRTUALENV']
     install_cmds = []
     install_cmds.append('source {0}/bin/activate'.format(python_virtualenv))
-    install_cmds.append('pip install jinja2')
+    install_cmds.append('pip install werkzeug')
     install_cmds = '; '.join(install_cmds)
     call(install_cmds, shell=True, executable='/bin/bash')
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    install_jinja2()
+    install_werkzeug()

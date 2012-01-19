@@ -13,6 +13,9 @@ virtualenv:
 pip:
   ubuntu: python-pip
 
+setuptools:
+  ubuntu: python-setuptools
+
 pydc1394: 
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_pydc1394.py
@@ -30,6 +33,11 @@ ros_camera_drivers:
 ros_vision_opencv:
   ubuntu: ros-diamondback-vision-opencv
 
+werkzeug:
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/install_werkzeug.py
+
 flask:
-  ubuntu: python-flask
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/install_flask.py
 

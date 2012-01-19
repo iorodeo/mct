@@ -11,6 +11,8 @@
   <depend package="rospy"/>
   <depend package="mct_camera_tools"/>
 
+  <rosdep name="setuptools"/>
+  <rosdep name="werkzeug"/>
   <rosdep name="flask" />
 
 </package>
