@@ -15,6 +15,7 @@
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>
   <rosdep name="flask" />
+  <rosdep name="flask_sijax"/>
   <rosdep name="redis_server"/>
   <rosped name="python_redis"/>
 

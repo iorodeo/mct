@@ -22,14 +22,6 @@ redis_server:
 python_redis:
   ubuntu: python-redis
 
-pydc1394: 
-  ubuntu: |
-    python $MCT_INSTALL_SCRIPTS/install_pydc1394.py
-
-jinja2:
-  ubuntu: |
-    python $MCT_INSTALL_SCRIPTS/install_jinja2.py
-
 libdc1394-dev:
   ubuntu: libdc1394-22-dev
 
@@ -39,6 +31,14 @@ ros_camera_drivers:
 ros_vision_opencv:
   ubuntu: ros-diamondback-vision-opencv
 
+pydc1394: 
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/install_pydc1394.py
+
+jinja2:
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/install_jinja2.py
+
 werkzeug:
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_werkzeug.py
@@ -46,4 +46,8 @@ werkzeug:
 flask:
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_flask.py
+
+flask_sijax:
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/install_flask_sijax.py
 
