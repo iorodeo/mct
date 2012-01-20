@@ -2,15 +2,23 @@ import roslib
 roslib.load_manifest('mct_camera_assignment')
 import rospy
 import flask
+import flask_sijax
 import redis
 import atexit
 
 from mct_camera_tools import mjpeg_servers
 from mct_utilities import redis_tools
 
+# Setup application w/ sijax
+path = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app = flask.Flask(__name__)
+app.config['SIJAX_STATIC_PATH'] = path
+app.config['SIJAX_JSON_URI'] = '/static/js/sijax/json2.js'
+flask_sijax.Sijax(app)
 
 
+# Routes
+# ----------------------------------------------------------------------------------
 
 @app.route('/',methods=['GET','POST'])
 def index():
@@ -46,6 +54,8 @@ def cameras_by_guid():
     mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
     return flask.render_template('camera_list.html', mjpeg_info_dict=mjpeg_info_dict) 
 
+# Utility functions
+# ----------------------------------------------------------------------------------
 
 def cleanup_db():
     """
@@ -69,10 +79,8 @@ mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
 camera_assignment = create_empty_assignment(mjpeg_info_dict)
 redis_tools.set_dict(db,'camera_assignment',camera_assignment)
 
-# -----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 if __name__ == '__main__':
-
-
 
     app.debug = True
     app.run()
