@@ -1,51 +1,67 @@
-<html>
-    <h1> Camera Assignment Tool </h1>
-    <form method="post">
-        <table>
-            {% for camera_id, info in mjpeg_info_dict.iteritems() %}
-            {% if loop.index0%4 == 0 %}
-            <tr>
-            {% endif %}
-                <td>
-                    <div>
-                        <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}"> 
-                            <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}?width=320?height=240?quality=60" /> 
-                        </a>
-                        <div> 
-                            <select name="{{camera_id}}">
-                                {% for value in select_values %}
-                                {% if value == camera_assignment[camera_id] %}
-                                <option value="{{value}}" selected="selected"> {{value}} </option>
-                                {% else %}
-                                <option value="{{value}}"> {{value}} </option>
-                                {% endif %}
-                                {% endfor %}
-                            </select>
-                            &nbsp &nbsp &nbsp
-                            GUID: {{camera_id}} 
-                        </div>
-                    </div>
-                </td>
-            {% if loop.index0%4 == 3 or loop.last%}
-            </tr>
-            {% endif %}
-            {% endfor %}
-        </table>
-        <br>
-        <br>
-        <button type="submit" name="save_button" > Save Assignment</button> 
-        <button type="submit" name="clear_button" > Clear </button>
-    </form>
+{% extends "base.html" %}
+{% block head %}
+{{ super() }}
+<title> Camera Assignment Tool</title>
 
-    <br> <br>
-    <h2> Current Camera Assigment </h2>
+<script> 
+    function testFunc(obj) {
+        Sijax.request('test');
+    }
+</script>
+
+{% endblock %}
+{% block content %}
+{{ super() }}
+<h1> Camera Assignment Tool </h1>
+<form method="post">
     <table>
-    {% for k,v in camera_assignment.iteritems() %}
-    <tr>
-        <td> {{k}} </td>
-        <td> {{v}} </td>
-    </tr>
-    {% endfor %}
+        {% for camera_id, info in mjpeg_info_dict.iteritems() %}
+        {% if loop.index0%4 == 0 %}
+        <tr>
+        {% endif %}
+            <td>
+                <div>
+                    <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}"> 
+                        <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}?width=320?height=240?quality=60" /> 
+                    </a>
+                    <div> 
+                        <select name="{{camera_id}}" id="select_{{camera_id}}" onchange="return testFunc(this);" >
+                            {% for value in select_values %}
+                            {% if value == camera_assignment[camera_id] %}
+                            <option value="{{value}}" selected="selected" id="option_{{value}}"> {{value}} </option>
+                            {% else %}
+                            <option value="{{value}}" id="option_{{value}}"> {{value}} </option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        &nbsp &nbsp &nbsp
+                        GUID: {{camera_id}} 
+                    </div>
+                </div>
+            </td>
+        {% if loop.index0%4 == 3 or loop.last%}
+        </tr>
+        {% endif %}
+        {% endfor %}
     </table>
+    <br>
+    <br>
+    <button type="submit" name="save_button" > Save Assignment</button> 
+    <button type="submit" name="clear_button" > Clear </button>
+</form>
+<button name="test_button" onclick="return testFunc(this);"> Test</button>
 
-</html>
+<p id="test"> test </p>
+
+<br> <br>
+<h2> Current Camera Assigment </h2>
+<table>
+{% for k,v in camera_assignment.iteritems() %}
+<tr>
+    <td> {{k}} </td>
+    <td> {{v}} </td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
+
