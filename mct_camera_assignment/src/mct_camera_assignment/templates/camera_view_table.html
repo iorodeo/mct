@@ -21,8 +21,8 @@
         {% endif %}
             <td>
                 <div>
-                    <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}"> 
-                        <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}?width=320?height=240?quality=60" /> 
+                    <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle">
+                        <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width=320?height=240?quality=60" />
                     </a>
                     <div> 
                         <select name="{{camera_id}}" id="select_{{camera_id}}" onchange="return testFunc(this);" >

@@ -147,18 +147,18 @@ if __name__ == '__main__':
     if 1:
         filename = 'mjpeg_server.launch'
         mjpeg_info_dict = {
-                '00305300013f2ef3': {'caemra_topic': '/mct_slave1/00305300013f2ef3/camera/image_raw', 'mjpeg_port': 8083, 'mjpeg_server': 'mjpeg_server_00305300013f2ef3'}, 
-                '00305300013f2ef6': {'caemra_topic': '/mct_slave1/00305300013f2ef6/camera/image_raw', 'mjpeg_port': 8085, 'mjpeg_server': 'mjpeg_server_00305300013f2ef6'}, 
-                '00305300013f2ef7': {'caemra_topic': '/mct_slave2/00305300013f2ef7/camera/image_raw', 'mjpeg_port': 8089, 'mjpeg_server': 'mjpeg_server_00305300013f2ef7'}, 
-                '00305300013f2ef4': {'caemra_topic': '/mct_master/00305300013f2ef4/camera/image_raw', 'mjpeg_port': 8088, 'mjpeg_server': 'mjpeg_server_00305300013f2ef4'}, 
-                '00305300013f2ef5': {'caemra_topic': '/mct_master/00305300013f2ef5/camera/image_raw', 'mjpeg_port': 8082, 'mjpeg_server': 'mjpeg_server_00305300013f2ef5'}, 
-                '0030530001410997': {'caemra_topic': '/mct_slave1/0030530001410997/camera/image_raw', 'mjpeg_port': 8081, 'mjpeg_server': 'mjpeg_server_0030530001410997'}, 
-                '00305300013f2ef8': {'caemra_topic': '/mct_slave2/00305300013f2ef8/camera/image_raw', 'mjpeg_port': 8084, 'mjpeg_server': 'mjpeg_server_00305300013f2ef8'}, 
-                '00305300013f2ef9': {'caemra_topic': '/mct_slave2/00305300013f2ef9/camera/image_raw', 'mjpeg_port': 8080, 'mjpeg_server': 'mjpeg_server_00305300013f2ef9'}, 
-                '00305300013f2efb': {'caemra_topic': '/mct_master/00305300013f2efb/camera/image_raw', 'mjpeg_port': 8090, 'mjpeg_server': 'mjpeg_server_00305300013f2efb'}, 
-                '00305300013f2efa': {'caemra_topic': '/mct_master/00305300013f2efa/camera/image_raw', 'mjpeg_port': 8087, 'mjpeg_server': 'mjpeg_server_00305300013f2efa'}, 
-                '003053000140e715': {'caemra_topic': '/mct_slave1/003053000140e715/camera/image_raw', 'mjpeg_port': 8086, 'mjpeg_server': 'mjpeg_server_003053000140e715'}, 
-                '0030530001412079': {'caemra_topic': '/mct_slave2/0030530001412079/camera/image_raw', 'mjpeg_port': 8091, 'mjpeg_server': 'mjpeg_server_0030530001412079'}
+                '00305300013f2ef3': {'camera_topic': '/mct_slave1/00305300013f2ef3/camera/image_raw', 'mjpeg_port': 8083, 'mjpeg_server': 'mjpeg_server_00305300013f2ef3'}, 
+                '00305300013f2ef6': {'camera_topic': '/mct_slave1/00305300013f2ef6/camera/image_raw', 'mjpeg_port': 8085, 'mjpeg_server': 'mjpeg_server_00305300013f2ef6'}, 
+                '00305300013f2ef7': {'camera_topic': '/mct_slave2/00305300013f2ef7/camera/image_raw', 'mjpeg_port': 8089, 'mjpeg_server': 'mjpeg_server_00305300013f2ef7'}, 
+                '00305300013f2ef4': {'camera_topic': '/mct_master/00305300013f2ef4/camera/image_raw', 'mjpeg_port': 8088, 'mjpeg_server': 'mjpeg_server_00305300013f2ef4'}, 
+                '00305300013f2ef5': {'camera_topic': '/mct_master/00305300013f2ef5/camera/image_raw', 'mjpeg_port': 8082, 'mjpeg_server': 'mjpeg_server_00305300013f2ef5'}, 
+                '0030530001410997': {'camera_topic': '/mct_slave1/0030530001410997/camera/image_raw', 'mjpeg_port': 8081, 'mjpeg_server': 'mjpeg_server_0030530001410997'}, 
+                '00305300013f2ef8': {'camera_topic': '/mct_slave2/00305300013f2ef8/camera/image_raw', 'mjpeg_port': 8084, 'mjpeg_server': 'mjpeg_server_00305300013f2ef8'}, 
+                '00305300013f2ef9': {'camera_topic': '/mct_slave2/00305300013f2ef9/camera/image_raw', 'mjpeg_port': 8080, 'mjpeg_server': 'mjpeg_server_00305300013f2ef9'}, 
+                '00305300013f2efb': {'camera_topic': '/mct_master/00305300013f2efb/camera/image_raw', 'mjpeg_port': 8090, 'mjpeg_server': 'mjpeg_server_00305300013f2efb'}, 
+                '00305300013f2efa': {'camera_topic': '/mct_master/00305300013f2efa/camera/image_raw', 'mjpeg_port': 8087, 'mjpeg_server': 'mjpeg_server_00305300013f2efa'}, 
+                '003053000140e715': {'camera_topic': '/mct_slave1/003053000140e715/camera/image_raw', 'mjpeg_port': 8086, 'mjpeg_server': 'mjpeg_server_003053000140e715'}, 
+                '0030530001412079': {'camera_topic': '/mct_slave2/0030530001412079/camera/image_raw', 'mjpeg_port': 8091, 'mjpeg_server': 'mjpeg_server_0030530001412079'}
                 }
         create_mjpeg_server_launch(filename,mjpeg_info_dict)
        

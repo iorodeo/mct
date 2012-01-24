@@ -51,6 +51,13 @@ def get_slave_macs():
     slave_info = get_slave_info()
     return [v['mac'] for k,v in slave_info.iteritems()]
 
+def get_slave_mac_and_iface():
+    """
+    Returns a dictionary with the slave mac addresses and 
+    """
+    slave_info = get_slave_info()
+    return [(v['mac'], v['iface']) for k,v in slave_info.iteritems()]
+
 def get_master():
     """
     Get the host name of the master computer.
@@ -74,6 +81,9 @@ if __name__ == '__main__':
 
     slave_macs = get_slave_macs()
     print(slave_macs)
+
+    slave_mac_and_iface = get_slave_mac_and_iface()
+    print(slave_mac_and_iface)
 
     hosts = get_hosts()
     print(hosts)

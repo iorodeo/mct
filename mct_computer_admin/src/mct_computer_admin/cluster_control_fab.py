@@ -60,9 +60,9 @@ def wakeup():
     """
     Wakes up camera computers using wake on lan. 
     """
-    mac_list = admin_tools.get_slave_macs()
-    for mac in mac_list:
-        local('sudo etherwake -i eth1 {0}'.format(mac))
+    mac_and_iface_list = admin_tools.get_slave_mac_and_iface()
+    for mac, iface in mac_and_iface_list:
+        local('sudo etherwake -i {0} {1}'.format(iface,mac))
 
 @hosts(*slave_list)
 def shutdown(): 
