@@ -4,8 +4,23 @@
 <title> Camera Assignment Tool</title>
 
 <script> 
-    function testFunc(obj) {
-        Sijax.request('test');
+    function assignmentChange(obj) {
+        var values = Sijax.getFormValues('#camera_assignment_form');
+        Sijax.request('assignment_change',[values]);
+    }
+</script>
+
+<script>
+    function clearForm(obj) {
+        var values = Sijax.getFormValues('#camera_assignment_form');
+        Sijax.request('clear_form',[values]);
+    }
+</script>
+
+<script>
+    function assignmentSave(obj) {
+        var values = Sijax.getFormValues('#camera_assignment_form');
+        Sijax.request('assignment_save',[values]);
     }
 </script>
 
@@ -13,7 +28,7 @@
 {% block content %}
 {{ super() }}
 <h1> Camera Assignment Tool </h1>
-<form method="post">
+<form id="camera_assignment_form">
     <table>
         {% for camera_id, info in mjpeg_info_dict.iteritems() %}
         {% if loop.index0%4 == 0 %}
@@ -25,12 +40,12 @@
                         <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width=320?height=240?quality=60" />
                     </a>
                     <div> 
-                        <select name="{{camera_id}}" id="select_{{camera_id}}" onchange="return testFunc(this);" >
+                        <select name="{{camera_id}}" id="select_{{camera_id}}" onchange="return assignmentChange(this);" >
                             {% for value in select_values %}
                             {% if value == camera_assignment[camera_id] %}
-                            <option value="{{value}}" selected="selected" id="option_{{value}}"> {{value}} </option>
+                            <option value="{{value}}" selected="selected" id="option_{{camera_id}}_{{value}}"> {{value}} </option>
                             {% else %}
-                            <option value="{{value}}" id="option_{{value}}"> {{value}} </option>
+                            <option value="{{value}}" id="option_{{camera_id}}_{{value}}"> {{value}} </option>
                             {% endif %}
                             {% endfor %}
                         </select>
@@ -46,22 +61,11 @@
     </table>
     <br>
     <br>
-    <button type="submit" name="save_button" > Save Assignment</button> 
-    <button type="submit" name="clear_button" > Clear </button>
+    <button name="save_button" onclick="assignmentSave(this); return false;"> Save </button> 
+    <button name="clear_button" onclick="clearForm(this); return false;"> Clear </button>
 </form>
-<button name="test_button" onclick="return testFunc(this);"> Test</button>
 
-<p id="test"> test </p>
+<p id="message">  </p>
 
-<br> <br>
-<h2> Current Camera Assigment </h2>
-<table>
-{% for k,v in camera_assignment.iteritems() %}
-<tr>
-    <td> {{k}} </td>
-    <td> {{v}} </td>
-</tr>
-{% endfor %}
-</table>
 {% endblock %}
 

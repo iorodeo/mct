@@ -25,3 +25,5 @@ if __name__ == '__main__':
     if mjpeg_info_dict is not None:
         for k,v in mjpeg_info_dict.iteritems():
             print(k,v)
+    else:
+        print('None')

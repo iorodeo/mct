@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find mct_camera_tools)/launch/camera1394_inspector_master.launch"/>
+    <include file="$(find mct_camera_tools)/launch/mjpeg_manager.launch"/>
+</launch>
