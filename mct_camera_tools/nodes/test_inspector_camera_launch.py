@@ -2,26 +2,22 @@ from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_camera_tools')
 import rospy
-from mct_msg_and_srv.srv import CommandString 
+from mct_camera_tools import camera_inspector_master
 
-def inspector_camera_srv(cmd):
-    rospy.wait_for_service('master_inspector_cameras')
-    proxy = rospy.ServiceProxy('master_inspector_cameras',CommandString)
-    response = None 
-    try:
-        response = proxy(cmd)
-    except rospy.ServiceException, e:
-        print('ERROR: service request failed, {0}'.format(str(e)))
-    return response
-
-# -----------------------------------------------------------------------------
 if __name__ == '__main__':
+
     import sys
 
     cmd = sys.argv[1]
     cmd = cmd.lower()
-    response = inspector_camera_srv(cmd)
-    print(response)
+    if cmd == 'start':
+        resp = camera_inspector_master.start_cameras()
+        print(resp)
+    elif cmd == 'stop':
+        resp = camera_inspector_master.stop_cameras()
+        print(resp)
+    else:
+        print('unknown command {0}'.format(cmd))
 
     
 

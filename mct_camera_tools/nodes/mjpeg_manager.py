@@ -123,12 +123,14 @@ class MJPEG_Manager(object):
         mjpeg_info_dict = {}
         for i, topic in enumerate(camera_topics):
             camera_name = topic.split('/')[2]
+            camera_computer = topic.split('/')[1]
             mjpeg_server_name = 'mjpeg_server_{0}'.format(camera_name)
             mjpeg_server_port = self.mjpeg_start_port + i
             info = {
-                    'camera_topic' : topic,
-                    'mjpeg_server' : mjpeg_server_name,
-                    'mjpeg_port'   : mjpeg_server_port,
+                    'camera_topic'    : topic,
+                    'camera_computer' : camera_computer,
+                    'mjpeg_server'    : mjpeg_server_name,
+                    'mjpeg_port'      : mjpeg_server_port,
                     }
             mjpeg_info_dict[camera_name] = info 
         return mjpeg_info_dict

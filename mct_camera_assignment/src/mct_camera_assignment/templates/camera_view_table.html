@@ -1,35 +1,22 @@
 {% extends "base.html" %}
 {% block head %}
 {{ super() }}
-<title> Camera Assignment Tool</title>
-
-<script> 
-    function assignmentChange(obj) {
-        var values = Sijax.getFormValues('#camera_assignment_form');
-        Sijax.request('assignment_change',[values]);
-    }
-</script>
+<title> MCT: Camera Assignment Tool</title>
 
 <script>
-    function clearForm(obj) {
+    function formValuesRequest(obj,name) {
         var values = Sijax.getFormValues('#camera_assignment_form');
-        Sijax.request('clear_form',[values]);
-    }
-</script>
-
-<script>
-    function assignmentSave(obj) {
-        var values = Sijax.getFormValues('#camera_assignment_form');
-        Sijax.request('assignment_save',[values]);
+        Sijax.request(name,[values]);
     }
 </script>
 
 {% endblock %}
 {% block content %}
 {{ super() }}
-<h1> Camera Assignment Tool </h1>
+<h1 style="color:blue" > MCT: Camera Assignment Tool </h1>
+<br>
 <form id="camera_assignment_form">
-    <table>
+    <table id="mjpeg_table">
         {% for camera_id, info in mjpeg_info_dict.iteritems() %}
         {% if loop.index0%4 == 0 %}
         <tr>
@@ -40,7 +27,7 @@
                         <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width=320?height=240?quality=60" />
                     </a>
                     <div> 
-                        <select name="{{camera_id}}" id="select_{{camera_id}}" onchange="return assignmentChange(this);" >
+                        <select name="{{camera_id}}" id="select_{{camera_id}}" onchange="return formValuesRequest(this,'assignment_change');" >
                             {% for value in select_values %}
                             {% if value == camera_assignment[camera_id] %}
                             <option value="{{value}}" selected="selected" id="option_{{camera_id}}_{{value}}"> {{value}} </option>
@@ -59,13 +46,17 @@
         {% endif %}
         {% endfor %}
     </table>
-    <br>
-    <br>
-    <button name="save_button" onclick="assignmentSave(this); return false;"> Save </button> 
-    <button name="clear_button" onclick="clearForm(this); return false;"> Clear </button>
 </form>
 
-<p id="message">  </p>
+<br>
+<br>
+<button name="save_button" onclick="formValuesRequest(this,'assignment_save'); return false;"> Save </button> 
+<button name="clear_button" onclick="formValuesRequest(this, 'clear_form'); return false;"> Clear </button>
+<button name="test" onclick="formValuesRequest(this,'test'); return false;"> test </button>
+<p> <b id="message" style="color:black"> </b>  </p>
+
+<table id="message_table" style="display:none">
+</table>
 
 {% endblock %}
 
