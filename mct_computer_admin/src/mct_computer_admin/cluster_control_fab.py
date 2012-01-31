@@ -10,15 +10,14 @@ import os.path
 import subprocess
 import mct_xml_tools
 import mct_introspection
-import admin_tools
 
 from fabric.api import *
 from fabric.decorators import hosts
 from fabric.contrib.files import exists
 
-slave_list = admin_tools.get_slave_hosts()
-host_list = admin_tools.get_hosts()
-master = admin_tools.get_master()
+slave_list = mct_introspection.get_slave_hosts()
+host_list = mct_introspection.get_hosts()
+master = mct_introspection.get_master()
 
 cmd_msgs = {
         'wakeup'             : 'waking up camera computers',
@@ -60,7 +59,7 @@ def wakeup():
     """
     Wakes up camera computers using wake on lan. 
     """
-    mac_and_iface_list = admin_tools.get_slave_mac_and_iface()
+    mac_and_iface_list = mct_introspection.get_slave_mac_and_iface()
     for mac, iface in mac_and_iface_list:
         local('sudo etherwake -i {0} {1}'.format(iface,mac))
 
@@ -188,7 +187,7 @@ def list_slaves():
     """
     List slaves names and mac addresses
     """
-    slave_info = admin_tools.get_slave_info()
+    slave_info = mct_introspection.get_slave_info()
     for slave, info in slave_info.iteritems():
         print(slave,info)
 
@@ -197,7 +196,7 @@ def update_machine_def():
     Updates the ROS xml machine launch file using the the current machine_def.yaml
     machine definition file.
     """
-    machine_def = admin_tools.get_machine_def()
+    machine_def = mct_introspection.get_machine_def()
     mct_config = os.environ['MCT_CONFIG']
     mct_machine_file = os.path.join(mct_config,'machine','mct.machine')
     mct_xml_tools.launch.create_machine_launch(mct_machine_file,machine_def)
@@ -206,7 +205,7 @@ def list_machine_def():
     """
     Prints the current machine definition from the machine_def.yaml file.
     """
-    machine_def = admin_tools.get_machine_def()
+    machine_def = mct_introspection.get_machine_def()
     print('user', machine_def['user'])
     print('master', machine_def['mct_master'])
 

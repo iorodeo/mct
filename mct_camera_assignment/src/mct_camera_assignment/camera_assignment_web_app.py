@@ -13,12 +13,15 @@ import atexit
 import time
 import yaml
 
+import mct_introspection
 from mct_camera_tools import camera_inspector_master
 from mct_camera_tools import mjpeg_servers
+
 from mct_utilities import redis_tools
 from mct_utilities import json_tools
 from mct_utilities import iface_tools
-from mct_computer_admin import admin_tools
+
+DEVELOP = False
 
 # Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -313,7 +316,7 @@ def setup_redis_db():
     # Create db and add empty camera assignment
     db = redis.Redis('localhost',db=1)
 
-    machine_def = admin_tools.get_machine_def()
+    machine_def = mct_introspection.get_machine_def()
     ip_iface_ext = iface_tools.get_ip_addr(machine_def['mct_master']['iface-ext'])
     redis_tools.set_str(db,'ip_iface_ext',ip_iface_ext)
 
@@ -368,9 +371,34 @@ def read_camera_assignment():
     else:
         return None
 
+def start_cameras_and_mjpeg_servers():
+    """
+    Starts the cameras and mjpeg servers
+    """
+    if not DEVELOP: 
+        # Wait until camera inspectors are running and then start cameras
+        while not mct_introspection.camera_inspectors_ready():
+            time.sleep(0.2)
+        camera_inspector_master.start_cameras()
+
+        # Wait until the camera nodes are ready and then start the mjpeg servers
+        while not mct_introspection.camera_nodes_ready():
+            time.sleep(0.2)
+        mjpeg_servers.start_servers()
+
+def stop_cameras_and_mjpeg_servers():
+    """
+    Stops the cameras and mjpeg servers
+    """
+    if not DEVELOP:
+        mjpeg_servers.stop_servers()
+        camera_inspector_master.stop_cameras()
+
+
 # ----------------------------------------------------------------------------------
 if __name__ == '__main__':
 
+    start_cameras_and_mjpeg_servers()
     db = setup_redis_db()
     atexit.register(cleanup)
 
