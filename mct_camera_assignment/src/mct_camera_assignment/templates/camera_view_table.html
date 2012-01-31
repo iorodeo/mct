@@ -10,11 +10,39 @@
     }
 </script>
 
+<script type="text/javascript"> 
+    setTimeout(function() { 
+            Sijax.request('timer_update'); setTimeout(arguments.callee,500); 
+            }, 500); 
+</script>
+
+<script type="text/javascript">
+    function reload_page() {
+        var scale = document.getElementById('mjpeg_scale').value;
+        var url = window.location.href;
+        if (url.indexOf("?")>-1){
+            url = url.substr(0,url.indexOf("?"));
+        }
+        window.location.href = url + "?scale=" + scale;
+        return false;
+    }
+</script>
+
 {% endblock %}
 {% block content %}
 {{ super() }}
 <h1 style="color:blue" > MCT: Camera Assignment Tool </h1>
 <br>
+
+<form id="mjpeg_scale_form">
+    scale
+    <select name="mjpeg_scale" id="mjpeg_scale" onChange="reload_page()">
+        {% for val in scale_options %}
+        <option value="{{val}}" {%if val == scale %} selected="selected" {% endif %}> {{val}} </option>
+        {% endfor %}
+    </select>
+</form>
+
 <form id="camera_assignment_form">
     <table id="mjpeg_table">
         {% for camera_id, info in mjpeg_info_dict.iteritems() %}
@@ -23,8 +51,8 @@
         {% endif %}
             <td>
                 <div>
-                    <a href="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle">
-                        <img src="http://localhost:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width=320?height=240?quality=60" />
+                    <a href="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle">
+                        <img src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width={{image_width}}?height={{image_height}}?quality=60" />
                     </a>
                     <div> 
                         <select name="{{camera_id}}" id="select_{{camera_id}}" onchange="return formValuesRequest(this,'assignment_change');" >
@@ -51,12 +79,19 @@
 <br>
 <br>
 <button name="save_button" onclick="formValuesRequest(this,'assignment_save'); return false;"> Save </button> 
+<button name="load_button" onclick="formValuesRequest(this, 'assignment_load'); return false;"> Load </button>
 <button name="clear_button" onclick="formValuesRequest(this, 'clear_form'); return false;"> Clear </button>
 <button name="test" onclick="formValuesRequest(this,'test'); return false;"> test </button>
 <p> <b id="message" style="color:black"> </b>  </p>
 
 <table id="message_table" style="display:none">
 </table>
+
+
+<!-- Kludgey way to make more space at the bottom of the page --> 
+{% for i in range(0,15) %}
+<br>
+{% endfor %}
 
 {% endblock %}
 

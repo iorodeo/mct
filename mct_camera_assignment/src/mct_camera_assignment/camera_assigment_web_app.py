@@ -17,8 +17,8 @@ from mct_camera_tools import camera_inspector_master
 from mct_camera_tools import mjpeg_servers
 from mct_utilities import redis_tools
 from mct_utilities import json_tools
-
-DEVELOP = True
+from mct_utilities import iface_tools
+from mct_computer_admin import admin_tools
 
 # Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -36,17 +36,50 @@ def index():
         flask.g.sijax.register_callback('assignment_change', assignment_change_handler)
         flask.g.sijax.register_callback('clear_form', clear_form_handler)
         flask.g.sijax.register_callback('assignment_save', assignment_save_handler)
+        flask.g.sijax.register_callback('assignment_load', assignment_load_handler)
+        flask.g.sijax.register_callback('timer_update', timer_update_handler)
         flask.g.sijax.register_callback('test', test_handler)
         return flask.g.sijax.process_request()
 
     else:
+
+        scale_options = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2] 
+        scale = flask.request.args.get('scale','0.5')
+        try:
+            scale = float(scale)
+        except ValueError:
+            scale = 0.5 
+
+        if not scale in scale_options:
+            scale = scale_options[0]
+
+        # -------------------------------------------------------------------------
+        # Computer image width - Note, you will probably want to get this from the 
+        # Camera images directly.
+
+        image_width = int(640*scale)
+        image_height = int(480*scale)
+
+        # -------------------------------------------------------------------------
+
+        # Convert scale options and scale to strings 
+        scale_options = ['{0:1.2f}'.format(x) for x in scale_options]
+        scale = '{0:1.2f}'.format(scale)
+
         camera_assignment = redis_tools.get_dict(db,'camera_assignment')
-        mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
+        mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+        ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
         select_values = create_select_values(mjpeg_info_dict)
+
         render_dict = {
                 'mjpeg_info_dict'   : mjpeg_info_dict,
                 'camera_assignment' : camera_assignment,
                 'select_values'     : select_values,
+                'ip_iface_ext'      : ip_iface_ext,
+                'scale_options'     : scale_options,
+                'scale'             : scale,
+                'image_width'       : image_width,
+                'image_height'      : image_height,
                 }
 
         redis_tools.set_dict(db,'camera_assignment',camera_assignment)
@@ -56,12 +89,12 @@ def index():
 # Sijax request handlers
 # -----------------------------------------------------------------------------
 
-def assignment_change_handler(obj_response, formValues):
+def assignment_change_handler(obj_response, form_values):
     """
     Handles changes to the camera assignment
     """
     camera_assignment_old = redis_tools.get_dict(db,'camera_assignment')
-    camera_assignment_new = json_tools.decode_dict(formValues)
+    camera_assignment_new = json_tools.decode_dict(form_values)
     redis_tools.set_dict(db,'camera_assignment',camera_assignment_new)
     
     message_str = ''
@@ -73,36 +106,30 @@ def assignment_change_handler(obj_response, formValues):
     obj_response.html('#message', message_str)
     obj_response.attr('#message_table', 'style', 'display:none')
 
-def clear_form_handler(obj_response, formValues):
+def clear_form_handler(obj_response, form_values):
     """
     Handles requests to clear form
     """
-    camera_assignment = json_tools.decode_dict(formValues)
+    camera_assignment = json_tools.decode_dict(form_values)
     camera_assignment = {k : '--' for k in camera_assignment}
     redis_tools.set_dict(db,'camera_assignment', camera_assignment)
     
     # Update form
-    mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
     select_values = create_select_values(mjpeg_info_dict)
-    for camera_id in mjpeg_info_dict:
-        for value in select_values:
-            option_id = '#option_{0}_{1}'.format(camera_id,value)
-            if value == '--':
-                obj_response.attr(option_id,'selected','selected')
-            else:
-                obj_response.attr(option_id,'selected','')
+    set_camera_assignment(obj_response,camera_assignment,select_values)
 
     # Update message
     obj_response.attr('#message', 'style','color:black')
     obj_response.html('#message', 'Camera assignment cleared')
     obj_response.attr('#message_table', 'style', 'display:none')
 
-def assignment_save_handler(obj_response, formValues):
+def assignment_save_handler(obj_response, form_values):
     """
     Handles requests to save the current camera assignment. The assignment is 
     checked for unassigned guids and for duplicate assignments.
     """
-    camera_assignment = json_tools.decode_dict(formValues)
+    camera_assignment = json_tools.decode_dict(form_values)
 
     # Check for unassigned GUIDs
     unassigned = []
@@ -180,33 +207,77 @@ def assignment_save_handler(obj_response, formValues):
         obj_response.html('#message_table', table_data)
         obj_response.attr('#message_table', 'style', 'display:block')
 
-def test_handler(obj_response, formValues):
+def assignment_load_handler(obj_response, form_values):
+    """
+    Load camera assignment from file.
+    """
+    camera_assignment_old = redis_tools.get_dict(db,'camera_assignment')
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+    select_values = create_select_values(mjpeg_info_dict)
+
+    camera_assignment_new = read_camera_assignment()
+    camera_assignment = {}
+    for camera_id in camera_assignment_old:
+        try:
+            value = camera_assignment_new[camera_id]
+        except KeyError:
+            value = '--'
+        if not value in select_values:
+            value = '--'
+        camera_assignment[camera_id] = value
+
+    redis_tools.set_dict(db,'camera_assignment',camera_assignment)
+    set_camera_assignment(obj_response,camera_assignment,select_values)
+    obj_response.attr('#message', 'style','color:black')
+    obj_response.html('#message', 'Current camera assignment loaded')
+    obj_response.attr('#message_table', 'style', 'display:none')
+
+def timer_update_handler(obj_response):
+    """
+    Updates the camera assignment form to the latest values in the database. This function
+    is from a timer on the client and is used to keep multiple instances of the interface
+    in sync.
+    """
+
+    camera_assignment = redis_tools.get_dict(db,'camera_assignment')
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+    select_values = create_select_values(mjpeg_info_dict)
+    set_camera_assignment(obj_response, camera_assignment, select_values)
+
+def test_handler(obj_response, form_values):
     """
     Assign a test camera assignment - for development 
     """
     # Create a camera assignment
-    camera_assignment = json_tools.decode_dict(formValues)
+    camera_assignment = json_tools.decode_dict(form_values)
     cnt = 0
     test_camera_assignment = {}
     for k in camera_assignment:
         cnt += 1
         test_camera_assignment[k] = str(cnt)
 
-    # Set select values
-    mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
+    # Set camera assignment values
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
     select_values = create_select_values(mjpeg_info_dict)
-    for camera_id in mjpeg_info_dict:
-        for value in select_values:
-            option_id = '#option_{0}_{1}'.format(camera_id,value)
-            if value == test_camera_assignment[camera_id]:
-                obj_response.attr(option_id,'selected','selected')
-            else:
-                obj_response.attr(option_id,'selected','')
+    set_camera_assignment(obj_response, test_camera_assignment, select_values)
 
     redis_tools.set_dict(db,'camera_assignment', test_camera_assignment)
     obj_response.attr('#message', 'style','color:black')
     obj_response.html('#message', 'Created test assignment')
     obj_response.attr('#message_table', 'style', 'display:none')
+
+
+def set_camera_assignment(obj_response,camera_assignment,select_values):
+    """
+    Set the camera assignment values in the select form.
+    """
+    for camera_id, cur_value in camera_assignment.iteritems():
+        for value in select_values:
+            option_id = '#option_{0}_{1}'.format(camera_id,value)
+            if cur_value == value:
+                obj_response.attr(option_id,'selected','selected')
+            else:
+                obj_response.attr(option_id,'selected','')
 
 # Utility functions
 # ----------------------------------------------------------------------------------
@@ -225,8 +296,6 @@ def cleanup():
     Clean up temporary redis database
     """
     db.flushdb()
-    if not DEVELOP:
-        shutdown_cameras_and_servers()
 
 def create_empty_assignment(mjpeg_info_dict):
     """
@@ -237,43 +306,20 @@ def create_empty_assignment(mjpeg_info_dict):
         camera_assignment[k] = '--'
     return camera_assignment
 
-def start_cameras_and_servers():
-    """
-    Starts the cameras and mjpeg servers - not sure if this is a good idea in web app
-    might move it to separate ROS node or program.
-    """
-    print('starting cameras ... ',end='')
-    sys.stdout.flush()
-    camera_inspector_master.start_cameras()
-    time.sleep(5) # Wait for cameras to start
-    print('done')
-    print('starting mjpeg servers ... ')
-    sys.stdout.flush()
-    mjpeg_servers.start_servers()
-    print('done')
-    sys.stdout.flush()
-
-def shutdown_cameras_and_servers():
-    """
-    Shuts down the cameras and mjpeg servers. Ditto.
-    """
-    print('shutting down mjpeg servers ... ',end='')
-    sys.stdout.flush()
-    mjpeg_servers.stop_servers()
-    print('done')
-    print('shutting down cameras ... ', end='')
-    sys.stdout.flush()
-    camera_inspector_master.stop_cameras()
-    print('done')
-    sys.stdout.flush()
-
 def setup_redis_db():
     """
     Sets up the redis database for the camera assignemnt application
     """
     # Create db and add empty camera assignment
     db = redis.Redis('localhost',db=1)
+
+    machine_def = admin_tools.get_machine_def()
+    ip_iface_ext = iface_tools.get_ip_addr(machine_def['mct_master']['iface-ext'])
+    redis_tools.set_str(db,'ip_iface_ext',ip_iface_ext)
+
     mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
+    redis_tools.set_dict(db,'mjpeg_info_dict', mjpeg_info_dict)
+
     camera_assignment = create_empty_assignment(mjpeg_info_dict)
     redis_tools.set_dict(db,'camera_assignment',camera_assignment)
     return db
@@ -283,7 +329,6 @@ def write_camera_assignment(camera_assignment):
     Write camera assignment to mct configuration directory
     """
     # Create dictionary for yaml file
-    mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
     yaml_dict = {}
     for camera_id, value in camera_assignment.iteritems():
         camera_name = 'camera_{0}'.format(value)
@@ -299,18 +344,39 @@ def write_camera_assignment(camera_assignment):
         camera_name_list.sort
         yaml.dump(yaml_dict,f,default_flow_style=False)
 
+def read_camera_assignment():
+    """
+    Reads the current camera assignment from the camera assignment yaml file. If 
+    this file doesn't exist then None is returned.
+    """
+    config_dir = os.environ['MCT_CONFIG']
+    filename = os.path.join(config_dir, 'cameras', 'camera_assignment.yaml')
+    if os.path.isfile(filename):
+        try:
+            with open(filename) as f:
+                data = yaml.load(f)
+        except:
+            return None
+
+        camera_assignment = {}
+        for k, v in data.iteritems():
+            if 'camera_' in k:
+                guid = v['guid']
+                value = k.replace('camera_','')
+                camera_assignment[guid] = value
+        return camera_assignment 
+    else:
+        return None
 
 # ----------------------------------------------------------------------------------
 if __name__ == '__main__':
 
-
-    # Might this be better done from outside of the web app???
-    if not DEVELOP:
-        start_cameras_and_servers()
-
     db = setup_redis_db()
     atexit.register(cleanup)
 
-    app.debug = True
-    app.run()
+    if 0:
+        app.debug = True
+        app.run()
+    else:
+        app.run(host='0.0.0.0',port=5000)
 

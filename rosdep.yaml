@@ -31,6 +31,9 @@ ros_camera_drivers:
 ros_vision_opencv:
   ubuntu: ros-diamondback-vision-opencv
 
+python_netifaces:
+  ubuntu: python-netifaces
+
 pydc1394: 
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_pydc1394.py

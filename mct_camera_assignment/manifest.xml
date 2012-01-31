@@ -11,13 +11,15 @@
   <depend package="rospy"/>
   <depend package="mct_camera_tools"/>
   <depend package="mct_utilities"/>
+  <depend package="mct_computer_admin"/>
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>
   <rosdep name="flask" />
   <rosdep name="flask_sijax"/>
   <rosdep name="redis_server"/>
-  <rosped name="python_redis"/>
+  <rosdep name="python_redis"/>
+  <rosdep name="python_netifaces"/>
 
 </package>
 

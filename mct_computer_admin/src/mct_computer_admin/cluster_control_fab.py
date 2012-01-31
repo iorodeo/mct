@@ -208,11 +208,11 @@ def list_machine_def():
     """
     machine_def = admin_tools.get_machine_def()
     print('user', machine_def['user'])
-    print('master', machine_def['master'])
+    print('master', machine_def['mct_master'])
 
     slave_keys = machine_def.keys()
     slave_keys.remove('user')
-    slave_keys.remove('master')
+    slave_keys.remove('mct_master')
     slave_keys.sort()
     for key in slave_keys:
         print(key,machine_def[key])
