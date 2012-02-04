@@ -220,6 +220,20 @@ def get_master():
     machine_def = get_machine_def()
     return machine_def['mct_master']['address']
 
+def get_camera_assignment():
+    """
+    Reads the current camera assignment yaml file.
+    """
+    config_pkg = os.environ['MCT_CONFIG']
+    filename = os.path.join(config_pkg,'cameras', 'camera_assignment.yaml')
+    if os.path.isfile(filename):
+        with open(filename,'r') as f:
+            camera_assignment = yaml.load(f)
+    else:
+        camera_assignment = None
+    return camera_assignment
+
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -275,7 +289,7 @@ if __name__ == '__main__':
         num = get_number_of_camera_nodes()
         print('number of camera nodes: {0}'.format(num))
 
-    if 1:
+    if 0:
         num = get_number_of_camera_topics()
         print('number of camera topics: {0}'.format(num))
 
@@ -306,5 +320,12 @@ if __name__ == '__main__':
     if 0: 
         hosts = get_hosts()
         print('hosts:\n {0}'.format(hosts))
+
+    if 1:
+        camera_assignment = get_camera_assignment()
+        for k,v in camera_assignment.iteritems():
+            print(k)
+            for kk, vv in v.iteritems():
+                print('  ',kk,vv)
 
             

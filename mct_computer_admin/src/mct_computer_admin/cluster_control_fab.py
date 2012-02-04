@@ -20,22 +20,23 @@ host_list = mct_introspection.get_hosts()
 master = mct_introspection.get_master()
 
 cmd_msgs = {
-        'wakeup'             : 'waking up camera computers',
-        'push_setup'         : 'pushing setup to slave computers',
-        'shutdown'           : 'shutting down camera computers',
-        'list_slaves'        : 'listing slaves',
-        'rospack_profile'    : 'run rospack profile on all slave computers', 
-        'pull'               : 'pulling latest version of mct from repository on slave computers',
-        'pull_master'        : 'pulling laster version of mct form repository on master',
-        'pull_all'           : 'pull latest version of mct form repository for all computers in current machine',
-        'clone'              : 'clone new version of mct from repository of slave computers',
-        'clean'              : 'remove old version of mct',
-        'rosmake'            : 'use rosmake to build mct on slave computers',
-        'rosmake_preclean'   : 'use rosmake to build mct on slave computers',
-        'update_machine_def' : 'updating the ROS xml machine launch file',
-        'list_machine_def'   : 'listing current machine definition',
-        'list_cameras'       : 'listing cameras',
-        'test'               : 'test command for development',
+        'wakeup': 'waking up camera computers',
+        'push_setup': 'pushing setup to slave computers',
+        'shutdown': 'shutting down camera computers',
+        'list_slaves': 'listing slaves',
+        'rospack_profile': 'run rospack profile on all slave computers', 
+        'pull': 'pulling latest version of mct from repository on slave computers',
+        'pull_master': 'pulling laster version of mct form repository on master',
+        'pull_all': 'pull latest version of mct form repository for all computers in current machine',
+        'clone': 'clone new version of mct from repository of slave computers',
+        'clean': 'remove old version of mct',
+        'rosmake': 'use rosmake to build mct on slave computers',
+        'rosmake_preclean': 'use rosmake to build mct on slave computers',
+        'update_machine_def': 'updating the ROS xml machine launch file',
+        'list_machine_def': 'listing current machine definition',
+        'list_cameras': 'listing cameras',
+        'list_camera_assignment': 'listing camera assignment', 
+        'test': 'test command for development',
         }
 
 fab_cmds = [ 
@@ -228,6 +229,34 @@ def list_cameras():
         print('guid {0}, {1}'.format(k,v))
     print('\n')
     inspector_popen.send_signal(subprocess.signal.SIGINT) 
+
+def list_camera_assignment():
+    """
+    List the current camera assignment as given in the camera_assignment.yaml file.
+    """
+    camera_assignment = mct_introspection.get_camera_assignment()
+    if camera_assignment is not None:
+        camera_nums = camera_assignment.keys()
+
+        # Sort cameras in numerical order
+        def cmp_func(x,y):
+            num_x = int(x.replace('camera_', ''))
+            num_y = int(y.replace('camera_', ''))
+            if num_x > num_y:
+                return 1
+            elif num_x < num_y:
+                return -1
+            else:
+                return 0
+        camera_nums.sort(cmp=cmp_func) 
+        # Display camera assignment
+        for cam in camera_nums: 
+            print(cam)
+            for k,v in camera_assignment[cam].iteritems():
+                print('  {0}: {1}'.format(k,v))
+        print()
+    else:
+        print('\n camera assignment is None\n')
 
 
 def test(*args):

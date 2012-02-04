@@ -1,7 +1,11 @@
+import roslib
+roslib.load_manifest('mct_xml_tools')
+import rospy
 import os
 import os.path
 import jinja2
 import yaml
+import mct_introspection
 
 def create_inspector_launch(filename,machine_names):
     """
@@ -104,6 +108,44 @@ def create_mjpeg_server_launch(filename, mjpeg_info_dict):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def create_camera_launch(filename,camera_assignment,trigger=False):
+    """
+    Generates a camera launch file based on the current camera assignment.
+
+    Note, assumes that the camera yaml files have been added to the camera
+    assignment.
+    """
+    file_path, file_name = os.path.split(__file__)
+    template_dir = os.path.join(file_path, 'templates')
+    template_name = 'camera_launch.xml'
+    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file,
+            camera_assignment=camera_assignment,
+            trigger=trigger,
+            )
+
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
+def create_camera_yaml(directory,camera_assignment):
+    """
+    Creates the yaml files for the given camera assignment.
+
+    Also, adds the yaml file to the information dictionary for each camera in
+    the assignment.
+    """
+    for camera, info in camera_assignment.iteritems():
+        filename = os.path.join(directory, '{0}.yaml'.format(camera))
+        info['yaml_file'] = filename
+        with open(filename,'w') as f:
+            data = {'guid': info['guid'], 'frame_id': camera}
+            yaml.dump(data,f,default_flow_style=False)
+    return camera_assignment
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -144,7 +186,7 @@ if __name__ == '__main__':
         create_inspector_camera_yaml(tmp_dir,camera_dict)
         create_inspector_camera_launch(filename, camera_dict)
 
-    if 1:
+    if 0:
         filename = 'mjpeg_server.launch'
         mjpeg_info_dict = {
                 '00305300013f2ef3': {'camera_topic': '/mct_slave1/00305300013f2ef3/camera/image_raw', 'mjpeg_port': 8083, 'mjpeg_server': 'mjpeg_server_00305300013f2ef3'}, 
@@ -161,7 +203,14 @@ if __name__ == '__main__':
                 '0030530001412079': {'camera_topic': '/mct_slave2/0030530001412079/camera/image_raw', 'mjpeg_port': 8091, 'mjpeg_server': 'mjpeg_server_0030530001412079'}
                 }
         create_mjpeg_server_launch(filename,mjpeg_info_dict)
-       
 
+    if 1:
+        filename = 'camera.launch'
+        yaml_directory = './'
+        
+        camera_assignment = mct_introspection.get_camera_assignment()
+        create_camera_yaml(yaml_directory,camera_assignment)
+        create_camera_launch(filename,camera_assignment)
+       
 
 
