@@ -36,6 +36,7 @@ cmd_msgs = {
         'list_machine_def': 'listing current machine definition',
         'list_cameras': 'listing cameras',
         'list_camera_assignment': 'listing camera assignment', 
+        'create_camera_launch': 'creating camera launch files',
         'test': 'test command for development',
         }
 
@@ -257,6 +258,14 @@ def list_camera_assignment():
         print()
     else:
         print('\n camera assignment is None\n')
+
+def create_camera_launch():
+    """
+    Create camera launch files.
+    """
+    mct_xml_tools.launch.create_camera_yaml()
+    mct_xml_tools.launch.create_camera_launch(trigger=False)
+    mct_xml_tools.launch.create_camera_launch(trigger=True)
 
 
 def test(*args):
