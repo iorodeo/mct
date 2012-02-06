@@ -26,10 +26,13 @@ libdc1394-dev:
   ubuntu: libdc1394-22-dev
 
 ros_camera_drivers:
-  ubuntu: ros-diamondback-camera-drivers
+  ubuntu: ros-electric-camera-drivers
 
 ros_vision_opencv:
-  ubuntu: ros-diamondback-vision-opencv
+  ubuntu: ros-electric-vision-opencv
+
+ros_remote_lab:
+  ubuntu: ros-electric-remote-lab
 
 python_netifaces:
   ubuntu: python-netifaces

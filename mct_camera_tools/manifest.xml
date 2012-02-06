@@ -15,6 +15,7 @@
   <depend package="mct_introspection"/>
   <depend package="mct_utilities"/>
 
+  <rosdep name="ros_remote_lab"/>
   <rosdep name="bzr"/>
   <rosdep name="virtualenv"/>
   <rosdep name="pip" />
