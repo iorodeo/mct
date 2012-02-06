@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'camera_calibration' # this package name
+PKG = 'mct_camera_calibrator' # this package name
 import roslib; roslib.load_manifest(PKG)
 
 import rospy
@@ -56,7 +56,8 @@ import functools
 import cv
 
 import message_filters
-from camera_calibration.approxsync import ApproximateSynchronizer
+#from camera_calibration.approxsync import ApproximateSynchronizer
+from mct_camera_calibrator.approxsync import ApproximateSynchronizer
 
 ID_LOAD=101
 ID_SAVE=102
@@ -65,7 +66,8 @@ ID_EXIT=200
 
 # /wg/osx/rosCode/ros-pkg/ros-pkg/stacks/image_pipeline/image_view/preCalib
 
-from camera_calibration.calibrator import cvmat_iterator, MonoCalibrator, StereoCalibrator, ChessboardInfo
+#from camera_calibration.calibrator import cvmat_iterator, MonoCalibrator, StereoCalibrator, ChessboardInfo
+from mct_camera_calibrator.calibrator import cvmat_iterator, MonoCalibrator, StereoCalibrator, ChessboardInfo
 from std_msgs.msg import String
 from std_srvs.srv import Empty
 
