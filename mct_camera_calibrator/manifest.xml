@@ -1,0 +1,23 @@
+<package>
+  <description brief="mct_camera_calibrator">
+
+     mct_camera_calibrator
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_camera_calibrator</url>
+  <depend package="rospy"/>
+
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="std_srvs"/>
+  <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="message_filters"/>
+  <depend package="camera_calibration"/>
+
+</package>
+
+
