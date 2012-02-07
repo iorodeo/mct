@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import roslib
-roslib.load_manifest('mct_camera_assignment')
+roslib.load_manifest('mct_web_apps')
 import rospy
 import os
 import os.path

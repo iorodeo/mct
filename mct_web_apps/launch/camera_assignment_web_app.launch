@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_web_apps" type="camera_assignment_web_app.py" name="camera_assignmet_web_app" />
+</launch>

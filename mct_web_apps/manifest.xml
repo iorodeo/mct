@@ -1,5 +1,5 @@
 <package>
-  <description brief="mct_camera_assignment">
+  <description brief="mct_web_apps">
 
      mct_camera_assignment
 
@@ -7,7 +7,7 @@
   <author>Albert Lee</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/mct_camera_assignment</url>
+  <url>http://ros.org/wiki/mct_web_apps</url>
   <depend package="rospy"/>
   <depend package="mct_camera_tools"/>
   <depend package="mct_utilities"/>
