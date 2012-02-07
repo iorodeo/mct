@@ -209,9 +209,18 @@ class MCT_CalibrationNode(CalibrationNode):
     def redraw_monocular(self, drawable):
         rosimage = self.bridge.cv_to_imgmsg(drawable.scrib,'bgr8')
         self.cal_img_pub.publish(rosimage)
-        print 'handle_monocular, goodenough = {0}, len(self.c.db) = {1}'.format(self.c.goodenough,len(self.c.db))
-        for i, (label, lo, hi) in enumerate(drawable.params):
-            print ' {0}, {1}, {2}, {3}'.format(i,label,lo,hi)
+        if not self.c.calibrated: 
+            if self.c.goodenough:
+                print 'calibrating'
+                self.c.do_calibration()
+            else:
+                print 'handle_monocular, goodenough = {0}, len(self.c.db) = {1}'.format(self.c.goodenough,len(self.c.db))
+                for i, (label, lo, hi) in enumerate(drawable.params):
+                    print ' {0}, {1}, {2}, {3}'.format(i,label,lo,hi)
+        else:
+            print self.c.ost()
+
+
 
 # -----------------------------------------------------------------------------
 

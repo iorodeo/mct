@@ -115,7 +115,8 @@ def _get_corners(img, board, refine = True):
     mono = cv.CreateMat(h, w, cv.CV_8UC1)
     cv.CvtColor(img, mono, cv.CV_BGR2GRAY)
     #(ok, corners) = cv.FindChessboardCorners(mono, (board.n_cols, board.n_rows), cv.CV_CALIB_CB_ADAPTIVE_THRESH | cv.CV_CALIB_CB_NORMALIZE_IMAGE | 8)
-    (ok, corners) = cv.FindChessboardCorners(mono, (board.n_cols, board.n_rows), cv.CV_CALIB_CB_NORMALIZE_IMAGE | 8)
+    #(ok, corners) = cv.FindChessboardCorners(mono, (board.n_cols, board.n_rows), cv.CV_CALIB_CB_NORMALIZE_IMAGE | 8)
+    (ok, corners) = cv.FindChessboardCorners(mono, (board.n_cols, board.n_rows), 8)
     
     # If any corners are within BORDER pixels of the screen edge, reject the detection by setting ok to false
     BORDER = 8
