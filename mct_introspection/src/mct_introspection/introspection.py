@@ -263,7 +263,7 @@ if __name__ == '__main__':
             print(k,v)
             print()
 
-    if 0:
+    if 1:
         camera_topics = find_camera_topics()
         print('camera_topics:')
         for topic in camera_topics:
@@ -321,7 +321,7 @@ if __name__ == '__main__':
         hosts = get_hosts()
         print('hosts:\n {0}'.format(hosts))
 
-    if 1:
+    if 0:
         camera_assignment = get_camera_assignment()
         for k,v in camera_assignment.iteritems():
             print(k)

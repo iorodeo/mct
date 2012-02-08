@@ -19,7 +19,8 @@ from mct_msg_and_srv.srv import CommandStringResponse
 
 class Camera_Inspector_Master(object):
     """
-    Launches camera inspector nodes on all computers in the machine file.
+    Launches camera inspector nodes on all computers in the machine file. Launches cameras found 
+    on all machines.
     """
     def __init__(self):
         # Get location of machine file

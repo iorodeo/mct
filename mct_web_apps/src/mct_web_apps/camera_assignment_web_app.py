@@ -86,7 +86,7 @@ def index():
                 }
 
         redis_tools.set_dict(db,'camera_assignment',camera_assignment)
-        return flask.render_template('camera_view_table.html', **render_dict)
+        return flask.render_template('camera_assignment.html', **render_dict)
 
 
 # Sijax request handlers
