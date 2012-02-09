@@ -108,7 +108,7 @@ def create_mjpeg_server_launch(filename, mjpeg_info_dict):
     with open(filename,'w') as f:
         f.write(xml_str)
 
-def create_camera_launch(filename=None, camera_assignment=None,trigger=False):
+def create_camera_launch(filename, camera_assignment,trigger=False):
     """
     Generates a camera launch file based on the current camera assignment.
 
@@ -116,17 +116,6 @@ def create_camera_launch(filename=None, camera_assignment=None,trigger=False):
     have been added to the camera assignment.
     """
     config_pkg = os.environ['MCT_CONFIG']
-    if filename == None:
-        if trigger:
-            filename = os.path.join(config_pkg,'cameras','camera_trig.launch')
-        else:
-            filename = os.path.join(config_pkg,'cameras','camera.launch')
-
-    if camera_assignment==None:
-        camera_assignment = mct_introspection.get_camera_assignment()
-        for camera, info in camera_assignment.iteritems():
-            info['yaml_file'] = os.path.join(config_pkg,'cameras', '{0}.yaml'.format(camera))
-
     file_path, file_name = os.path.split(__file__)
     template_dir = os.path.join(file_path, 'templates')
     template_name = 'camera_launch.xml'
@@ -143,20 +132,13 @@ def create_camera_launch(filename=None, camera_assignment=None,trigger=False):
     with open(filename,'w') as f:
         f.write(xml_str)
 
-def create_camera_yaml(directory=None,camera_assignment=None):
+def create_camera_yaml(directory, camera_assignment):
     """
     Creates the yaml files for the given camera assignment.
 
     Also, adds the yaml file to the information dictionary for each camera in
     the assignment.
     """
-    if directory == None:
-        config_pkg = os.environ['MCT_CONFIG']
-        directory = os.path.join(config_pkg,'cameras')
-    
-    if camera_assignment==None:
-        camera_assignment = mct_introspection.get_camera_assignment()
-    
     for camera, info in camera_assignment.iteritems():
         filename = os.path.join(directory, '{0}.yaml'.format(camera))
         info['yaml_file'] = filename
@@ -224,17 +206,13 @@ if __name__ == '__main__':
                 }
         create_mjpeg_server_launch(filename,mjpeg_info_dict)
 
-    if 0:
+    if 1:
         filename = 'camera.launch'
         yaml_directory = './'
         camera_assignment = mct_introspection.get_camera_assignment()
         create_camera_yaml(directory=yaml_directory,camera_assignment=camera_assignment)
         create_camera_launch(filename=filename,camera_assignment=camera_assignment)
 
-    if 1:
-        create_camera_yaml()
-        create_camera_launch()
-        create_camera_launch(trigger=True)
        
 
 

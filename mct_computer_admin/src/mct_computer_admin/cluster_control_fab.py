@@ -263,9 +263,14 @@ def create_camera_launch():
     """
     Create camera launch files.
     """
-    mct_xml_tools.launch.create_camera_yaml()
-    mct_xml_tools.launch.create_camera_launch(trigger=False)
-    mct_xml_tools.launch.create_camera_launch(trigger=True)
+    config_pkg = os.environ['MCT_CONFIG']
+    directory = os.path.join(config_pkg,'cameras')
+    camera_assignment = mct_introspection.get_camera_assignment()
+    filename_norm = os.path.join(config_pkg,'cameras','camera.launch')
+    filename_trig = os.path.join(config_pkg,'cameras','camera_trig.launch')
+    mct_xml_tools.launch.create_camera_yaml(directory, camera_assignment)
+    mct_xml_tools.launch.create_camera_launch(filename_norm, camera_assignment, trigger=False)
+    mct_xml_tools.launch.create_camera_launch(filename_trig, camera_assignment, trigger=True)
 
 
 def test(*args):
