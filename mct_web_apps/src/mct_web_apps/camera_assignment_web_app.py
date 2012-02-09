@@ -382,7 +382,7 @@ def start_cameras_and_mjpeg_servers():
         camera_inspector_master.start_cameras()
 
         # Wait until the camera nodes are ready and then start the mjpeg servers
-        while not mct_introspection.camera_nodes_ready():
+        while not mct_introspection.camera_nodes_ready(mode='inspector'):
             time.sleep(0.2)
         mjpeg_servers.start_servers()
 

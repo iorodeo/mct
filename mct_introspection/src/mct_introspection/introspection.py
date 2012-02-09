@@ -145,13 +145,25 @@ def get_number_of_camera_topics(transport='image_raw'):
     camera_topics = find_camera_topics(transport=transport)
     return len(camera_topics)
 
-def camera_nodes_ready():
+def camera_nodes_ready(mode='inspector'):
     """
     Checks to see if the camera nodes are ready. The camera nodes are
     considered ready when the number of camera topics (with transport
-    raw_image) is equal to the number of cameras attached to the system.
+    raw_image) is equal to the number of cameras expected.
+
+    The number of cameras expected depends on the mode. If mode is
+    equal to 'inspector' then the number of cameras is equal to the number
+    of cameras found attached to the system. If mode is anything else then
+    the number of cameras is equal that given in the camera assignment file.
+
     """
-    number_of_cameras = get_number_of_cameras()
+    mode = mode.lower()
+    if mode == 'inspector':
+        number_of_cameras = get_number_of_cameras()
+    else:
+        camera_assignment = get_camera_assignment()
+        number_of_cameras = len(camera_assignment)
+        
     number_of_camera_topics = get_number_of_camera_topics()
     if number_of_cameras == number_of_camera_topics:
         return True
