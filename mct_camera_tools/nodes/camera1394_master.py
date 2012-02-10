@@ -15,6 +15,10 @@ import mct_introspection
 # Services
 from mct_msg_and_srv.srv import CommandString 
 from mct_msg_and_srv.srv import CommandStringResponse
+from mct_msg_and_srv.srv import SetCameraLaunchParam
+from mct_msg_and_srv.srv import SetCameraLaunchParamResponse
+from mct_msg_and_srv.srv import GetCameraLaunchParam
+from mct_msg_and_srv.srv import GetCameraLaunchParamResponse
 
 class Camera_Master(object):
     """
@@ -28,6 +32,8 @@ class Camera_Master(object):
         self.launch_file = os.path.join(self.tmp_dir,'camera.launch')
         self.camera_assignment = None
         self.camera_popen = None
+        self.frame_rate = 'default'
+        self.trigger = False
 
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera1394_master')
@@ -38,8 +44,45 @@ class Camera_Master(object):
                 self.handle_camera_srv,
                 )
 
+        self.set_param_srv = rospy.Service(
+                'camera_master_set_param',
+                SetCameraLaunchParam,
+                self.handle_set_param_srv,
+                )
+
+        self.get_param_srv = rospy.Service(
+                'camera_master_get_param',
+                GetCameraLaunchParam,
+                self.handle_get_param_srv,
+                )
+
     def run(self):
         rospy.spin()
+
+    def handle_set_param_srv(self,request):
+        """
+        Handles request to set the camera launch parameters
+        """
+        response = True
+        message = ''
+
+        frame_rate = request.frame_rate
+        trigger = request.trigger
+
+        allowed_frame_rates = mct_introspection.get_frame_rates()
+        if frame_rate in allowed_frame_rates:
+            self.frame_rate = frame_rate
+            self.trigger = trigger
+        else:
+            response = False
+            message = 'frame rate not in allowed values'
+        return SetCameraLaunchParamResponse(response,message)
+
+    def handle_get_param_srv(self,request):
+        """
+        Handles requests to get the current camera launch parameters
+        """
+        return GetCameraLaunchParamResponse(self.frame_rate, self.trigger)
 
     def handle_camera_srv(self,request):
         """
@@ -49,16 +92,14 @@ class Camera_Master(object):
         command = command.lower()
         response = True 
         message = '' 
-        if command in ('start', 'start_w_trig'):
+
+        if command == 'start':
             if self.camera_popen is None:
-                if command == 'start_w_trig':
-                    trigger=True
-                else:
-                    trigger=False
-                self.launch_camera_nodes(trigger=trigger)
+                self.launch_camera_nodes()
             else:
                 repsonse = False
                 message = 'camera nodes already started'
+
         elif command == 'stop':
             if self.camera_popen is not None:
                 print('stop')
@@ -71,7 +112,7 @@ class Camera_Master(object):
             message = 'uknown request: {0}'.format(request)
         return CommandStringResponse(response,message)
 
-    def launch_camera_nodes(self,trigger=True):
+    def launch_camera_nodes(self):
         """
         Creates launch and yaml files and launches camera nodes.
         """
@@ -83,7 +124,8 @@ class Camera_Master(object):
         mct_xml_tools.launch.create_camera_launch(
                 self.launch_file, 
                 self.camera_assignment,
-                trigger=trigger
+                frame_rate=self.frame_rate,
+                trigger=self.trigger,
                 )
         self.camera_popen = subprocess.Popen(['roslaunch',self.launch_file])
 

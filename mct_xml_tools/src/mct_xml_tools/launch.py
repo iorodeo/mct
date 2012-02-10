@@ -82,10 +82,16 @@ def create_inspector_camera_launch(filename, camera_dict):
     template_dir = os.path.join(file_path, 'templates')
     template_name = 'inspector_camera_launch.xml'
     machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    frame_rate_dict = mct_introspection.get_frame_rates()
+    frame_rate = frame_rate_dict['assignment']
 
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
-    xml_str = template.render(machine_file=machine_file, camera_dict=camera_dict)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            camera_dict=camera_dict,
+            frame_rate=frame_rate,
+            )
 
     with open(filename,'w') as f:
         f.write(xml_str)
@@ -108,7 +114,7 @@ def create_mjpeg_server_launch(filename, mjpeg_info_dict):
     with open(filename,'w') as f:
         f.write(xml_str)
 
-def create_camera_launch(filename, camera_assignment,trigger=False):
+def create_camera_launch(filename, camera_assignment, frame_rate='default', trigger=False):
     """
     Generates a camera launch file based on the current camera assignment.
 
@@ -120,6 +126,8 @@ def create_camera_launch(filename, camera_assignment,trigger=False):
     template_dir = os.path.join(file_path, 'templates')
     template_name = 'camera_launch.xml'
     machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    frame_rate_dict = mct_introspection.get_frame_rates()
+    frame_rate_value = frame_rate_dict[frame_rate]
 
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
@@ -127,6 +135,7 @@ def create_camera_launch(filename, camera_assignment,trigger=False):
             machine_file=machine_file,
             camera_assignment=camera_assignment,
             trigger=trigger,
+            frame_rate=frame_rate_value,
             )
 
     with open(filename,'w') as f:
@@ -168,7 +177,7 @@ if __name__ == '__main__':
             machine_def['mct_slave{0}'.format(i)] = {'address' : 'tabby{0}'.format(i)}
         create_machine_launch(filename,machine_def)
 
-    if 0:
+    if 1:
         filename = 'inspector_camera.launch'
         tmp_dir = '.'
         camera_dict = {
@@ -206,7 +215,7 @@ if __name__ == '__main__':
                 }
         create_mjpeg_server_launch(filename,mjpeg_info_dict)
 
-    if 1:
+    if 0:
         filename = 'camera.launch'
         yaml_directory = './'
         camera_assignment = mct_introspection.get_camera_assignment()

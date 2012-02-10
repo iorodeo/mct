@@ -13,6 +13,9 @@ import atexit
 import time
 import yaml
 
+import config
+import common_args
+
 import mct_introspection
 from mct_camera_tools import camera_inspector_master
 from mct_camera_tools import mjpeg_servers
@@ -45,25 +48,10 @@ def index():
         return flask.g.sijax.process_request()
 
     else:
-
-        scale_options = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2] 
-        scale = flask.request.args.get('scale','0.5')
-        try:
-            scale = float(scale)
-        except ValueError:
-            scale = 0.5 
-
-        if not scale in scale_options:
-            scale = scale_options[0]
-
-        # -------------------------------------------------------------------------
-        # Computer image width - Note, you will probably want to get this from the 
-        # Camera images directly.
-
-        image_width = int(640*scale)
-        image_height = int(480*scale)
-
-        # -------------------------------------------------------------------------
+        # Get scale and compute image width
+        scale, scale_options = common_args.get_scale(config,flask.request)
+        image_width = int(config.camera_image['width']*640*scale)
+        image_height = int(config.camera_image['height']*scale)
 
         # Convert scale options and scale to strings 
         scale_options = ['{0:1.2f}'.format(x) for x in scale_options]
@@ -314,7 +302,7 @@ def setup_redis_db():
     Sets up the redis database for the camera assignemnt application
     """
     # Create db and add empty camera assignment
-    db = redis.Redis('localhost',db=1)
+    db = redis.Redis('localhost',db=config.redis_db)
 
     machine_def = mct_introspection.get_machine_def()
     ip_iface_ext = iface_tools.get_ip_addr(machine_def['mct_master']['iface-ext'])

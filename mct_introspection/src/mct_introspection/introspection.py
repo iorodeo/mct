@@ -245,6 +245,21 @@ def get_camera_assignment():
         camera_assignment = None
     return camera_assignment
 
+def get_frame_rates():
+    """
+    Reads the frame_rates.yaml file and returns a dictionary of the allowed frame
+    rates.
+    """
+    config_pkg = os.environ['MCT_CONFIG']
+    filename = os.path.join(config_pkg,'cameras', 'frame_rates.yaml')
+    if os.path.isfile(filename):
+        with open(filename,'r') as f:
+            frame_rates = yaml.load(f)
+    else:
+        frame_rates = None
+    return frame_rates
+
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -275,7 +290,7 @@ if __name__ == '__main__':
             print(k,v)
             print()
 
-    if 1:
+    if 0:
         camera_topics = find_camera_topics()
         print('camera_topics:')
         for topic in camera_topics:
@@ -339,5 +354,11 @@ if __name__ == '__main__':
             print(k)
             for kk, vv in v.iteritems():
                 print('  ',kk,vv)
+    
+    if 1:
+
+        frame_rates = get_frame_rates()
+        for k,v in frame_rates.iteritems():
+            print(k,v)
 
             
