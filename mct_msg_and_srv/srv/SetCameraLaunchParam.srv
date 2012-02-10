@@ -1,0 +1,5 @@
+string frame_rate
+bool trigger
+---
+bool flag
+string message

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block head %}
+{{ super() }}
+<title> MCT: Camera Calibration Tool</title>
+
+<script type="text/javascript">
+    function reload_page() {
+        var scale = document.getElementById('mjpeg_scale').value;
+        var url = window.location.href;
+        if (url.indexOf("?")>-1){
+            url = url.substr(0,url.indexOf("?"));
+        }
+        window.location.href = url + "?scale=" + scale;
+        return false;
+    }
+</script>
+
+{% endblock %}
+{% block content %}
+{{ super() }}
+<h1 style="color:blue" > MCT: Camera Calibration Tool </h1>
+<br>
+
+<form id="mjpeg_scale_form">
+    scale
+    <select name="mjpeg_scale" id="mjpeg_scale" onChange="reload_page()">
+        {% for val in scale_options %}
+        <option value="{{val}}" {%if val == scale %} selected="selected" {% endif %}> {{val}} </option>
+        {% endfor %}
+    </select>
+</form>
+
+<form id="camera_view_form">
+    <table id="mjpeg_table">
+        {% for camera, info in mjpeg_info %}
+        {% if loop.index0%4 == 0 %}
+        <tr>
+        {% endif %}
+            <td>
+                <div>
+                    <a href="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle">
+                        <img src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width={{image_width}}?height={{image_height}}?quality=60" />
+                    </a>
+                </div>
+            </td>
+
+        {% if loop.index0%4 == 3 or loop.last%}
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+</form>
+
+
+{% for k,v in mjpeg_info %}
+{{k}}, {{v}} <br>
+{% endfor %}
+{% endblock %}
