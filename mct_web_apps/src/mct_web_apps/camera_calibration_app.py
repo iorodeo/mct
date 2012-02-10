@@ -43,8 +43,8 @@ def index():
     else:
         # Get scale and compute image width
         scale, scale_options = common_args.get_scale(config,flask.request)
-        image_width = int(config.camera_image['width']*640*scale)
-        image_height = int(config.camera_image['height']*scale)
+        image_width = int(config.camera_image['width']*float(scale))
+        image_height = int(config.camera_image['height']*float(scale))
 
         ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
         mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')

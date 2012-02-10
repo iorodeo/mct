@@ -38,9 +38,14 @@
         {% endif %}
             <td>
                 <div>
-                    <a href="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle">
+                    <div>
                         <img src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width={{image_width}}?height={{image_height}}?quality=60" />
-                    </a>
+                    </div>
+                    <div>
+                        <input type="radio" name="calibrate" value="{{camera}}" />
+                        {{ camera | title }}, &nbsp; &nbsp;
+                        Calibrated = No
+                    </div>
                 </div>
             </td>
 
@@ -51,8 +56,4 @@
     </table>
 </form>
 
-
-{% for k,v in mjpeg_info %}
-{{k}}, {{v}} <br>
-{% endfor %}
 {% endblock %}

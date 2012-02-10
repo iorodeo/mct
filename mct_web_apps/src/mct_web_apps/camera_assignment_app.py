@@ -50,12 +50,8 @@ def index():
     else:
         # Get scale and compute image width
         scale, scale_options = common_args.get_scale(config,flask.request)
-        image_width = int(config.camera_image['width']*640*scale)
-        image_height = int(config.camera_image['height']*scale)
-
-        # Convert scale options and scale to strings 
-        scale_options = ['{0:1.2f}'.format(x) for x in scale_options]
-        scale = '{0:1.2f}'.format(scale)
+        image_width = int(config.camera_image['width']*float(scale))
+        image_height = int(config.camera_image['height']*float(scale))
 
         camera_assignment = redis_tools.get_dict(db,'camera_assignment')
         mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
