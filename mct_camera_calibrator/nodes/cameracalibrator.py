@@ -56,7 +56,6 @@ import functools
 import cv
 
 import message_filters
-#from camera_calibration.approxsync import ApproximateSynchronizer
 from mct_camera_calibrator.approxsync import ApproximateSynchronizer
 
 ID_LOAD=101
@@ -64,19 +63,19 @@ ID_SAVE=102
 ID_BUTTON1=110
 ID_EXIT=200
 
-# /wg/osx/rosCode/ros-pkg/ros-pkg/stacks/image_pipeline/image_view/preCalib
+from mct_camera_calibrator.calibrator import cvmat_iterator 
+from mct_camera_calibrator.calibrator import MonoCalibrator 
+from mct_camera_calibrator.calibrator import StereoCalibrator 
+from mct_camera_calibrator.calibrator import ChessboardInfo
 
-#from camera_calibration.calibrator import cvmat_iterator, MonoCalibrator, StereoCalibrator, ChessboardInfo
-from mct_camera_calibrator.calibrator import cvmat_iterator, MonoCalibrator, StereoCalibrator, ChessboardInfo
+
 from std_msgs.msg import String
 from std_srvs.srv import Empty
-
-# WBD 
-# -----------------------------------------------------------------------------
 from sensor_msgs.msg import Image
 from cv_bridge.cv_bridge import CvBridge
 from cv_bridge.cv_bridge import CvBridgeError
-# -----------------------------------------------------------------------------
+from mct_msg_and_srv.srv import CommandString
+from mct_msg_and_srv.srv import CommandStringResponse
 
 class ConsumerThread(threading.Thread):
     def __init__(self, queue, function):
@@ -363,6 +362,8 @@ class OpenCVCalibrationNode(CalibrationNode):
             self.screendump(im)
 
 
+# -----------------------------------------------------------------------------
+
 def main():
     from optparse import OptionParser
     parser = OptionParser("%prog --size SIZE1 --square SQUARE1 [ --size SIZE2 --square SQUARE2 ]")
@@ -404,6 +405,7 @@ def main():
     node = MCT_CalibrationNode(boards, options.service_check, sync)
     rospy.spin()
 
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     try:
         main()

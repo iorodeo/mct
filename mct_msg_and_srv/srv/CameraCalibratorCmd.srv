@@ -1,0 +1,8 @@
+string command
+string camera
+string image
+string size
+string square
+---
+bool flag
+string message
