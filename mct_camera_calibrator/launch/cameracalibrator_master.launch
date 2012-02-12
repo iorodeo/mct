@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_camera_calibrator" type="cameracalibrator_master.py" name="cameracalibrator_master" machine="mct_master" required="true"/>
+</launch>
