@@ -1,5 +1,6 @@
 <launch>
     <include file="$(find mct_camera_tools)/launch/camera1394_master.launch" />
     <include file="$(find mct_camera_tools)/launch/mjpeg_manager.launch" />
+    <include file="$(find mct_camera_calibrator)/launch/cameracalibrator_master.launch" />
     <!-- <include file="$(find mct_web_apps)/launch/camera_calibration_app.launch"/>  -->
 </launch>

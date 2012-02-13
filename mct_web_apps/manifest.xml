@@ -12,6 +12,7 @@
   <depend package="mct_camera_tools"/>
   <depend package="mct_utilities"/>
   <depend package="mct_introspection"/>
+  <depend package="mct_camera_calibrator"/>
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>

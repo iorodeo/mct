@@ -12,6 +12,7 @@ class CameraCalibratorMaster(object):
 
     def __init__(self):
         self.calibrator_popen = None
+        self.mjpeg_popen = None
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('cameracalibrator_master')
         self.camera_srv = rospy.Service(
@@ -61,6 +62,7 @@ class CameraCalibratorMaster(object):
                 ]
         #print('popen list: {0}'.format(popen_list))
         self.calibrator_popen = subprocess.Popen(popen_list) 
+        self.mjpeg_popen = subprocess.Popen(['rosrun', 'mjpeg_server', 'mjpeg_server', '_port:=9000'])
 
     def kill_calibrator_node(self):
         """
@@ -68,7 +70,9 @@ class CameraCalibratorMaster(object):
         """
         #print('killing camera calibrator node')
         self.calibrator_popen.send_signal(subprocess.signal.SIGINT)
+        self.mjpeg_popen.send_signal(subprocess.signal.SIGINT)
         self.calibrator_popen = None
+        self.mjpeg_popen = None
 
     def run(self):
         rospy.spin()

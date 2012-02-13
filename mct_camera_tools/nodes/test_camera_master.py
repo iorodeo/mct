@@ -11,9 +11,6 @@ if __name__ == '__main__':
     if cmd == 'start':
         resp = camera_master.start_cameras()
         print(resp)
-    elif cmd == 'start_w_trig':
-        res = camera_master.start_cameras_w_trigger()
-        print(resp)
     elif cmd == 'stop':
         resp = camera_master.stop_cameras()
         print(resp)

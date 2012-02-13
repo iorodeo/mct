@@ -3,6 +3,13 @@
 {{ super() }}
 <title> MCT: Camera Calibration Tool</title>
 
+<script>
+    function formValuesRequest(obj,name) {
+        var values = Sijax.getFormValues('#camera_view_form');
+        Sijax.request(name,[values]);
+    }
+</script>
+
 <script type="text/javascript">
     function reload_page() {
         var scale = document.getElementById('mjpeg_scale').value;
@@ -39,12 +46,11 @@
             <td>
                 <div>
                     <div>
-                        <img src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width={{image_width}}?height={{image_height}}?quality=60" />
+                        <img id="{{camera}}" src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['camera_topic']}}_throttle?width={{image_width}}?height={{image_height}}?quality=60" />
                     </div>
                     <div>
-                        <input type="radio" name="calibrate" value="{{camera}}" />
+                        <input type="radio" name="selected_camera" value="{{camera}}" onClick="formValuesRequest(this,'radio_button_onclick');"/>
                         {{ camera | title }}, &nbsp; &nbsp;
-                        Calibrated = No
                     </div>
                 </div>
             </td>
@@ -55,5 +61,7 @@
         {% endfor %}
     </table>
 </form>
+
+<p id="develop"> </p>
 
 {% endblock %}
