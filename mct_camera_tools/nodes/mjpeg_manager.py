@@ -29,15 +29,15 @@ class MJPEG_Manager(object):
         self.mjpeg_start_port = rospy.get_param('mjpeg_start_port',8080)
 
         rospy.on_shutdown(self.clean_up)
-        rospy.init_node('mjpeg_manager')
+        rospy.init_node('camera_mjpeg_manager')
 
         self.mjpeg_servers_srv = rospy.Service(
-                'mjpeg_servers',
+                'camera_mjpeg_servers',
                 CommandString, 
                 self.handle_mjpeg_servers_srv
                 )
         self.mjpeg_servers_info_srv = rospy.Service(
-                'mjpeg_servers_info',
+                'camera_mjpeg_servers_info',
                 GetJSONString,
                 self.handle_mjpeg_servers_info_srv
                 )

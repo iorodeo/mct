@@ -9,8 +9,8 @@ from mct_msg_and_srv.srv import GetJSONString
 
 
 def mjpeg_servers_info_srv():
-    rospy.wait_for_service('mjpeg_servers_info')
-    proxy = rospy.ServiceProxy('mjpeg_servers_info',GetJSONString)
+    rospy.wait_for_service('camera_mjpeg_servers_info')
+    proxy = rospy.ServiceProxy('camera_mjpeg_servers_info',GetJSONString)
     try:
         response = proxy()
         mjpeg_info_dict = json.loads(response.json_string, object_hook=json_tools.decode_dict)

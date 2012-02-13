@@ -17,8 +17,8 @@ def mjpeg_servers_srv(cmd):
     cmd = cmd.lower()
     if not cmd in ('start', 'stop'):
         raise ValueError, "command must be 'start' or 'stop'"
-    rospy.wait_for_service('mjpeg_servers')
-    proxy = rospy.ServiceProxy('mjpeg_servers',CommandString)
+    rospy.wait_for_service('camera_mjpeg_servers')
+    proxy = rospy.ServiceProxy('camera_mjpeg_servers',CommandString)
     try:
         response = proxy(cmd)
         flag = response.flag
@@ -45,8 +45,8 @@ def mjpeg_servers_info_srv():
     Proxy for the mjpeg servers info service. Returns the mjpeg information
     dictionary mjpeg_info_dict or None if the mjpeg servers are not running. 
     """
-    rospy.wait_for_service('mjpeg_servers_info')
-    proxy = rospy.ServiceProxy('mjpeg_servers_info',GetJSONString)
+    rospy.wait_for_service('camera_mjpeg_servers_info')
+    proxy = rospy.ServiceProxy('camera_mjpeg_servers_info',GetJSONString)
     try:
         response = proxy()
         mjpeg_info_dict = json.loads(response.json_string, object_hook=json_tools.decode_dict)

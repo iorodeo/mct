@@ -1,4 +1,4 @@
 <launch>
     <include file="$(env MCT_CONFIG)/machine/mct.machine" />
-    <node pkg="mct_camera_tools" type="mjpeg_manager.py" name="mjpeg_manager" machine="mct_master"/>
+    <node pkg="mct_camera_tools" type="mjpeg_manager.py" name="camera_mjpeg_manager" machine="mct_master"/>
 </launch>
