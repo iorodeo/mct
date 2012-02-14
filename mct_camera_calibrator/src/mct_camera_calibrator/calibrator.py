@@ -577,6 +577,9 @@ class MonoCalibrator(Calibrator):
             for i in range(len(corners)):
                 corners[i] = (corners[i][0]*scale, corners[i][1]*scale)
         if not ok:
+            font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,1,1)
+            font_color = cv.CV_RGB(255,0,0)
+            cv.PutText(scrib, 'not ok', (100,100), font, font_color)
             rv.load_params(self.db)
             return rv
 

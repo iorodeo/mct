@@ -46,10 +46,14 @@
             <td>
                 <div>
                     <div>
-                        <img id="{{camera}}" src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['image_topic']}}?width={{image_width}}?height={{image_height}}?quality=60" />
+                        <a href="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['image_topic']}}">
+                            <img id="{{camera}}" src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['image_topic']}}?width={{image_width}}?height={{image_height}}?quality=60" />
+                        </a>
                     </div>
                     <div>
-                        {{ camera | title }}, &nbsp; &nbsp;
+                        {{ camera | title }} 
+                        &nbsp; 
+                        <button type="button"> reset </button>
                     </div>
                 </div>
             </td>
