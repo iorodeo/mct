@@ -10,7 +10,7 @@ import os.path
 import tempfile
 import subprocess
 
-import mct_xml_tools
+import mct_xml_tools.launch as launch
 import mct_introspection
 
 # Services
@@ -64,24 +64,23 @@ class CameraCalibratorMaster(object):
         chess boardi, chessboard_size = 'NxM',  and the square dimension in (m), e.g., 
         chessboard_square='0.0254'.
         """
-        print('starting camera calibrator nodes')
-        image_topics = mct_introspection.find_camera_image_topics(transport='image_raw')
-        print('chessboard size', chessboard_size)
-        print('chessboard square', chessboard_square)
-        print('image_topics', image_topics)
-
-        #mct_xml_tools.create_calibrator_launch(self.launch_file, image_topics, chessboard_size, chessboard_square) 
-
-
-        #camera_topics = [val.replace('/image_raw','') for val in image_topics]
-        #camera_and_image_topics = zip(camera_topics,image_topics)
-        #print(camera_and_image_topics)
+        if self.calibrator_popen is None:
+            image_topics = mct_introspection.find_camera_image_topics(transport='image_raw')
+            launch.create_camera_calibrator_launch(
+                    self.launch_file, 
+                    image_topics, 
+                    chessboard_size, 
+                    chessboard_square
+                    ) 
+            self.calibrator_popen = subprocess.Popen(['roslaunch', self.launch_file])
 
     def kill_calibrator_nodes(self):
         """
         Kill camera calibrator node subprocess.
-        """
-        print('killing camera calibrator node')
+        """ 
+        if self.calibrator_popen is not None:
+            self.calibrator_popen.send_signal(subprocess.signal.SIGINT)
+            self.calibrator_popen = None
 
     def run(self):
         rospy.spin()

@@ -157,6 +157,32 @@ def create_camera_yaml(directory, camera_assignment):
             yaml.dump(data,f,default_flow_style=False)
     return camera_assignment
 
+def create_camera_calibrator_launch(filename, image_topics, chessboard_size, chessboard_square):
+    """
+    Create launch file for camera calibrators.
+    """
+    file_path, file_name = os.path.split(__file__)
+    template_dir = os.path.join(file_path, 'templates')
+    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    template_name = 'camera_calibrator_launch.xml'
+
+    # Pack up calibrator data
+    camera_names = [val.split('/')[2] for val in image_topics]
+    camera_topics = [val.replace('/image_raw','') for val in image_topics]
+    machines = [val.split('/')[1] for val in image_topics]
+    calibrator_data = zip(camera_names, camera_topics, image_topics, machines)
+
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file,
+            calibrator_data=calibrator_data,
+            chessboard_size=chessboard_size,
+            chessboard_square=chessboard_square,
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -177,7 +203,7 @@ if __name__ == '__main__':
             machine_def['mct_slave{0}'.format(i)] = {'address' : 'tabby{0}'.format(i)}
         create_machine_launch(filename,machine_def)
 
-    if 1:
+    if 0:
         filename = 'inspector_camera.launch'
         tmp_dir = '.'
         camera_dict = {
@@ -221,6 +247,27 @@ if __name__ == '__main__':
         camera_assignment = mct_introspection.get_camera_assignment()
         create_camera_yaml(directory=yaml_directory,camera_assignment=camera_assignment)
         create_camera_launch(filename=filename,camera_assignment=camera_assignment)
+
+    if 1:
+        filename = 'camera_calibrator.launch'
+        image_topics = [
+                '/mct_slave2/camera_10/camera/image_raw', 
+                '/mct_slave2/camera_12/camera/image_raw', 
+                '/mct_slave1/camera_9/camera/image_raw', 
+                '/mct_slave2/camera_7/camera/image_raw', 
+                '/mct_slave2/camera_5/camera/image_raw', 
+                '/mct_master/camera_8/camera/image_raw', 
+                '/mct_master/camera_6/camera/image_raw', 
+                '/mct_slave1/camera_1/camera/image_raw', 
+                '/mct_slave1/camera_2/camera/image_raw', 
+                '/mct_master/camera_11/camera/image_raw', 
+                '/mct_master/camera_3/camera/image_raw', 
+                '/mct_slave1/camera_4/camera/image_raw'
+                ]
+        chessboard_size = '8x6'
+        chessboard_square = '0.0254'
+        create_camera_calibrator_launch(filename,image_topics,chessboard_size,chessboard_square)
+
 
        
 
