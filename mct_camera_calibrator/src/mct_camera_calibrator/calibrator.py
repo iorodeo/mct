@@ -554,11 +554,6 @@ class MonoCalibrator(Calibrator):
         """
         Returns a MonoDrawable message with image data
         """
-        # WBD ---------------------------------------------------
-        font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,1,1,0,2)
-        font_color = cv.CV_RGB(255,0,0)
-        # -------------------------------------------------------
-
         rv = MonoDrawable()
 
         rgb = self.mkgray(msg)
@@ -577,21 +572,11 @@ class MonoCalibrator(Calibrator):
         (ok, corners, b) = self.get_corners(scrib, refine = False)
         good = [ (corners, b) ]
 
-        # WBD -------------------------------------------------------------
-        cv.PutText(scrib, 'ok = {0}'.format(ok), (10,30), font, font_color)
-        # -----------------------------------------------------------------
-
         # Scale corners back to full size image
         if corners:
-            # WBD ---------------------------------------------------------------------------------
-            cv.PutText(scrib, 'len(corners) = {0}'.format(len(corners)), (10,60), font, font_color)
-            # -------------------------------------------------------------------------------------
             for i in range(len(corners)):
                 corners[i] = (corners[i][0]*scale, corners[i][1]*scale)
         if not ok:
-            # WBD ----------------------------------------------------------
-            cv.PutText(scrib, 'get corners fail', (10,60), font, font_color)
-            # --------------------------------------------------------------
             rv.load_params(self.db)
             return rv
 
@@ -621,14 +606,13 @@ class MonoCalibrator(Calibrator):
         if any(is_min) or any(is_max):
             self.db[str(is_min + is_max)] = (params, rgb)
             
-        #if self.calibrated:
-        #    rgb_remapped = self.remap(rgb)
-        #    cv.Resize(rgb_remapped, scrib)
+        if self.calibrated:
+            rgb_remapped = self.remap(rgb)
+            cv.Resize(rgb_remapped, scrib)
             
         self.compute_goodenough()
 
         rv.load_params(self.db)
-
 
         return rv
 

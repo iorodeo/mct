@@ -205,20 +205,35 @@ class MCT_CalibrationNode(CalibrationNode):
         self.bridge = CvBridge()
         self.cal_img_pub = rospy.Publisher('image_calibrator',Image)
 
+        self.font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,1,1,0,2)
+        self.font_color = cv.CV_RGB(255,0,0)
+
     def redraw_monocular(self, drawable):
-        rosimage = self.bridge.cv_to_imgmsg(drawable.scrib,'bgr8')
-        self.cal_img_pub.publish(rosimage)
+
         if not self.c.calibrated: 
             if self.c.goodenough:
-                print 'calibrating'
-                self.c.do_calibration()
+                cv.PutText(drawable.scrib, 'Good Enough', (10,30), self.font, self.font_color)
             else:
-                print 'handle_monocular, goodenough = {0}, len(self.c.db) = {1}'.format(self.c.goodenough,len(self.c.db))
-                for i, (label, lo, hi) in enumerate(drawable.params):
-                    print ' {0}, {1}, {2}, {3}'.format(i,label,lo,hi)
-        else:
-            print self.c.ost()
+                if drawable.params:
+                    for i, (label, lo, hi) in enumerate(drawable.params):
+                        for j, item in enumerate((label, lo, hi)):
+                            if type(item) == float:
+                                msg = '{0:1.2f}'.format(item)
+                            else:
+                                msg = '{0}'.format(item)
+                            cv.PutText(drawable.scrib, msg, (10+100*j,30*(i+1)), self.font, self.font_color)
+                else:
+                    cv.PutText(drawable.scrib, 'No Data', (10,30), self.font, self.font_color)
 
+            #print 'handle_monocular, goodenough = {0}, len(self.c.db) = {1}'.format(self.c.goodenough,len(self.c.db))
+            #for i, (label, lo, hi) in enumerate(drawable.params):
+            #    print ' {0}, {1}, {2}, {3}'.format(i,label,lo,hi)
+        else:
+            cv.PutText(drawable.scrib, 'Calibrated', (10,30), self.font, self.font_color)
+            #print self.c.ost()
+
+        rosimage = self.bridge.cv_to_imgmsg(drawable.scrib,'bgr8')
+        self.cal_img_pub.publish(rosimage)
 
 
 # -----------------------------------------------------------------------------
