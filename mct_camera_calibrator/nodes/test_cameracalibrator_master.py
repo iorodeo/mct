@@ -15,9 +15,9 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if cmd == 'start':
-        size = '8x6'
-        square = '0.0254'
-        calibrator_master.start(size,square)
+        chessboard_size = '8x6'
+        chessboard_square = '0.0254'
+        calibrator_master.start(chessboard_size,chessboard_square)
     else:
         calibrator_master.stop()
         

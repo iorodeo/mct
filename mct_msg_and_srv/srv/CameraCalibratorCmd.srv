@@ -1,6 +1,6 @@
 string command
-string size
-string square
+string chessboard_size
+string chessboard_square
 ---
 bool flag
 string message

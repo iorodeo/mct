@@ -203,7 +203,7 @@ class MCT_CalibrationNode(CalibrationNode):
     def __init__(self,*args,**kwargs):
         super(MCT_CalibrationNode,self).__init__(*args,**kwargs)
         self.bridge = CvBridge()
-        self.cal_img_pub = rospy.Publisher('image_calibration',Image)
+        self.cal_img_pub = rospy.Publisher('image_calibrator',Image)
 
     def redraw_monocular(self, drawable):
         rosimage = self.bridge.cv_to_imgmsg(drawable.scrib,'bgr8')

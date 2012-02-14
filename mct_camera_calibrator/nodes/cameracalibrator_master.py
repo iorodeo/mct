@@ -40,9 +40,9 @@ class CameraCalibratorMaster(object):
         if command == 'start':
             # Start calibration node
             if self.calibrator_popen is None:
-                size = req.size
-                square = req.square
-                self.start_calibrator_nodes(size,square)
+                chessboard_size = req.chessboard_size
+                chessboard_square = req.chessboard_square
+                self.start_calibrator_nodes(chessboard_size,chessboard_square)
             else:
                 flag = False
                 message = 'calibrator node already running'
@@ -58,15 +58,24 @@ class CameraCalibratorMaster(object):
             message = 'unknown command string {0}'.format(command)
         return CameraCalibratorCmdResponse(flag,message)
 
-    def start_calibrator_nodes(self,size,square):
+    def start_calibrator_nodes(self,chessboard_size,chessboard_square):
         """
-        Start camera calibrator node as subprocess.
+        Start camera calibrator nodes as launch subprocess given the size of the calibration 
+        chess boardi, chessboard_size = 'NxM',  and the square dimension in (m), e.g., 
+        chessboard_square='0.0254'.
         """
         print('starting camera calibrator nodes')
         image_topics = mct_introspection.find_camera_image_topics(transport='image_raw')
-        camera_topics = [val.replace('/image_raw','') for val in image_topics]
-        camera_and_image_topics = zip(camera_topics,image_topics)
-        print(camera_and_image_topics)
+        print('chessboard size', chessboard_size)
+        print('chessboard square', chessboard_square)
+        print('image_topics', image_topics)
+
+        #mct_xml_tools.create_calibrator_launch(self.launch_file, image_topics, chessboard_size, chessboard_square) 
+
+
+        #camera_topics = [val.replace('/image_raw','') for val in image_topics]
+        #camera_and_image_topics = zip(camera_topics,image_topics)
+        #print(camera_and_image_topics)
 
     def kill_calibrator_nodes(self):
         """
