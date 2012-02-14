@@ -18,6 +18,8 @@
   <depend package="message_filters"/>
   <depend package="image_geometry"/>
   <depend package="mct_msg_and_srv"/>
+  <depend package="mct_xml_tools"/>
+  <depend package="mct_introspection"/>
 
   <!-- <depend package="camera_calibration"/> -->
 

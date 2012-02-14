@@ -65,18 +65,18 @@ def find_cameras(add_machine=True, add_info=False):
             camera_dict.update(camera_dict_temp)
     return camera_dict
 
-def find_camera_topics(transport='image_raw'):
+def find_camera_image_topics(transport='image_raw'):
     """
     Finds a list of all active camera topics
     """
     topic_list = rospy.get_published_topics()
-    camera_topic_list = []
+    image_topic_list = []
     for topic in topic_list:
         topic_name, topic_type= topic
         topic_name_split = topic_name.split('/')
         if (topic_name_split[-1] == transport) and ('camera' in topic_name_split):
-            camera_topic_list.append(topic_name)
-    return camera_topic_list
+            image_topic_list.append(topic_name)
+    return image_topic_list
         
 
 def add_machine2camera_dict(input_dict, machine):
@@ -138,12 +138,12 @@ def get_number_of_camera_nodes():
     node_list = [node for node in node_list if 'camera' and 'node' in node]
     return len(node_list)
 
-def get_number_of_camera_topics(transport='image_raw'):
+def get_number_of_camera_image_topics(transport='image_raw'):
     """
     Returns the number of camera topics
     """
-    camera_topics = find_camera_topics(transport=transport)
-    return len(camera_topics)
+    topics = find_camera_image_topics(transport=transport)
+    return len(topics)
 
 def camera_nodes_ready(mode='inspector'):
     """
@@ -164,8 +164,8 @@ def camera_nodes_ready(mode='inspector'):
         camera_assignment = get_camera_assignment()
         number_of_cameras = len(camera_assignment)
         
-    number_of_camera_topics = get_number_of_camera_topics()
-    if number_of_cameras == number_of_camera_topics:
+    number_of_camera_image_topics = get_number_of_camera_image_topics()
+    if number_of_cameras == number_of_camera_image_topics:
         return True
     else:
         return False
@@ -290,10 +290,10 @@ if __name__ == '__main__':
             print(k,v)
             print()
 
-    if 0:
-        camera_topics = find_camera_topics()
-        print('camera_topics:')
-        for topic in camera_topics:
+    if 1:
+        topic_list = find_camera_image_topics()
+        print('camera_image_topics:')
+        for topic in topic_list:
             print(topic)
 
     if 0:
@@ -317,7 +317,7 @@ if __name__ == '__main__':
         print('number of camera nodes: {0}'.format(num))
 
     if 0:
-        num = get_number_of_camera_topics()
+        num = get_number_of_camera_image_topics()
         print('number of camera topics: {0}'.format(num))
 
     if 0:
@@ -355,7 +355,7 @@ if __name__ == '__main__':
             for kk, vv in v.iteritems():
                 print('  ',kk,vv)
     
-    if 1:
+    if 0:
 
         frame_rates = get_frame_rates()
         for k,v in frame_rates.iteritems():

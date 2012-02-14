@@ -9,8 +9,8 @@ def cameracalibrator_control(command,camera,image,size,square):
     """
     Wrapper for camera calbrator service proxy.
     """
-    rospy.wait_for_service('cameracalibrator_control')
-    proxy = rospy.ServiceProxy('cameracalibrator_control',CameraCalibratorCmd)
+    rospy.wait_for_service('cameracalibrator_master')
+    proxy = rospy.ServiceProxy('cameracalibrator_master',CameraCalibratorCmd)
     try:
         response = proxy(command,camera,image,size,square)
     except rospy.ServiceException, e:
@@ -19,12 +19,12 @@ def cameracalibrator_control(command,camera,image,size,square):
     return response
 
 
-def start(camera, image, size, square):
+def start(size, square):
     """
     Start camera calibrator given the camera, image, target size (e.g. '8x6'), and
     target sqaure size in m (e.g. '0.254'). 
     """
-    cameracalibrator_control('start', camera, image, size, square)
+    cameracalibrator_control('start', size, square)
 
 def stop():
     """

@@ -8,7 +8,7 @@ import os.path
 import tempfile
 import subprocess
 import json
-from mct_introspection import find_camera_topics
+from mct_introspection import find_camera_image_topics
 from mct_xml_tools.launch import create_mjpeg_server_launch
 
 # Services
@@ -91,8 +91,8 @@ class MJPEG_Manager(object):
         """
         Creates the mjpeg server launch file and launches the mjpeg server nodes.
         """
-        camera_topics = find_camera_topics()
-        self.mjpeg_info_dict = self.create_mjpeg_info_dict(camera_topics)
+        topics = find_camera_image_topics()
+        self.mjpeg_info_dict = self.create_mjpeg_info_dict(topics)
         create_mjpeg_server_launch(self.server_launch_file,self.mjpeg_info_dict)
         self.server_popen = subprocess.Popen(['roslaunch',self.server_launch_file])
         self.server_running = True
@@ -114,21 +114,21 @@ class MJPEG_Manager(object):
         if os.path.isfile(self.server_launch_file):
             os.remove(self.server_launch_file)
 
-    def create_mjpeg_info_dict(self, camera_topics):
+    def create_mjpeg_info_dict(self, topic_list):
         """
         Creates the mjpeg server information dictionary which gives a mapping
         from the camera name to a dictionary contaiing the camera topic, the
         mjpeg server name, and the mjpeg server port number.
         """
         mjpeg_info_dict = {}
-        for i, topic in enumerate(camera_topics):
+        for i, topic in enumerate(topic_list):
             camera_name = topic.split('/')[2]
             camera_computer = topic.split('/')[1]
             mjpeg_server_name = 'mjpeg_server_{0}'.format(camera_name)
             mjpeg_server_port = self.mjpeg_start_port + i
             info = {
-                    'camera_topic'    : topic,
-                    'camera_computer' : camera_computer,
+                    'image_topic'     : topic,
+                    'computer'        : camera_computer,
                     'mjpeg_server'    : mjpeg_server_name,
                     'mjpeg_port'      : mjpeg_server_port,
                     }

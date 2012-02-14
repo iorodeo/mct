@@ -3,7 +3,7 @@
     
     <include file="{{machine_file}}" />
     {% for camera_name, info in mjpeg_info_dict.iteritems() %}
-    <node pkg="topic_tools" type="throttle" name="throttler_{{camera_name}}" args="messages {{info['camera_topic']}} 10.0" machine="mct_master">
+    <node pkg="topic_tools" type="throttle" name="throttler_{{camera_name}}" args="messages {{info['image_topic']}} 10.0" machine="mct_master">
     </node>
     {% endfor %}
 

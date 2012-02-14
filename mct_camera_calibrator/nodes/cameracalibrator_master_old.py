@@ -5,30 +5,18 @@ roslib.load_manifest('mct_camera_calibrator')
 import rospy
 import subprocess
 
-import os
-import os.path
-import tempfile
-import subprocess
-
-import mct_xml_tools
-import mct_introspection
-
-# Services
 from mct_msg_and_srv.srv import CameraCalibratorCmd
 from mct_msg_and_srv.srv import CameraCalibratorCmdResponse
 
 class CameraCalibratorMaster(object):
 
     def __init__(self):
-
-        self.tmp_dir = tempfile.gettempdir()
-        self.launch_file = os.path.join(self.tmp_dir,'camera_calibrator.launch')
         self.calibrator_popen = None
-
+        self.mjpeg_popen = None
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('cameracalibrator_master')
         self.camera_srv = rospy.Service(
-                'cameracalibrator_master',
+                'cameracalibrator_control',
                 CameraCalibratorCmd,
                 self.handle_calibrator_srv,
                 )
@@ -40,16 +28,14 @@ class CameraCalibratorMaster(object):
         if command == 'start':
             # Start calibration node
             if self.calibrator_popen is None:
-                size = req.size
-                square = req.square
-                self.start_calibrator_nodes(size,square)
+                self.start_calibrator_node(req)
             else:
                 flag = False
                 message = 'calibrator node already running'
         elif command == 'stop':
             # Stop calilbration node
             if self.calibrator_popen is not None:
-                self.kill_calibrator_nodes()
+                self.kill_calibrator_node()
             else:
                 flag = False
                 message = 'calibrator node is not running'
@@ -58,28 +44,42 @@ class CameraCalibratorMaster(object):
             message = 'unknown command string {0}'.format(command)
         return CameraCalibratorCmdResponse(flag,message)
 
-    def start_calibrator_nodes(self,size,square):
+    def start_calibrator_node(self,req):
         """
         Start camera calibrator node as subprocess.
         """
-        print('starting camera calibrator nodes')
-        image_topics = mct_introspection.find_camera_image_topics(transport='image_raw')
-        camera_topics = [val.replace('/image_raw','') for val in image_topics]
-        camera_and_image_topics = zip(camera_topics,image_topics)
-        print(camera_and_image_topics)
+        #print('starting camera calibrator node')
+        popen_list = [
+                'rosrun',
+                'mct_camera_calibrator',
+                'cameracalibrator.py',
+                '--size',
+                '{0}'.format(req.size),
+                '--square',
+                '{0}'.format(req.square),
+                'camera:={0}'.format(req.camera),
+                'image:={0}'.format(req.image),
+                ]
+        #print('popen list: {0}'.format(popen_list))
+        self.calibrator_popen = subprocess.Popen(popen_list) 
+        self.mjpeg_popen = subprocess.Popen(['rosrun', 'mjpeg_server', 'mjpeg_server', '_port:=9000'])
 
-    def kill_calibrator_nodes(self):
+    def kill_calibrator_node(self):
         """
         Kill camera calibrator node subprocess.
         """
-        print('killing camera calibrator node')
+        #print('killing camera calibrator node')
+        self.calibrator_popen.send_signal(subprocess.signal.SIGINT)
+        self.mjpeg_popen.send_signal(subprocess.signal.SIGINT)
+        self.calibrator_popen = None
+        self.mjpeg_popen = None
 
     def run(self):
         rospy.spin()
 
     def clean_up(self):
         if self.calibrator_popen is not None:
-            self.kill_calibrator_nodes()
+            self.kill_calibrator_node()
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':

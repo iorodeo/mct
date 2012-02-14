@@ -67,35 +67,7 @@ def index():
 # ---------------------------------------------------------------------------------
 
 def radio_button_onclick_handler(obj_response, form_values):
-    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
-    ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
-    scale = redis_tools.get_str(db,'scale')
-
-    cal_camera = str(form_values['selected_camera'])
-    cal_image_topic = mjpeg_info_dict[cal_camera]['camera_topic']
-    cal_camera_topic = '/'.join(cal_image_topic.split('/')[:-1])
-    cal_mjpeg_port = mjpeg_info_dict[cal_camera]['mjpeg_port'] + 1000
-
-    # Stop currently running image calibrator and start new version on selected camera.
-    calibrator_master.stop()
-    calibrator_master.start(cal_camera_topic, cal_image_topic, '8x6','0.0254')
-
-    # Get img src for camera calibration
-    image_width, image_height = get_image_size(scale)
-    mjpeg_options = '?width={0}?height={1}?quality={2}'.format(image_width,image_height,60)
-
-    for camera_name, camera_info in mjpeg_info_dict.iteritems():
-        mjpeg_port = camera_info['mjpeg_port']
-        if camera_name == cal_camera:
-            img_src = 'http://{0}:{1}/stream?topic=/image_calibration{2}'.format(ip_iface_ext, mjpeg_port, mjpeg_options)
-            temp = img_src
-        else:
-            image_raw = camera_info['camera_topic']
-            img_src = 'http://{0}:{1}/stream?topic={2}_throttle{3}'.format(ip_iface_ext, mjpeg_port, image_raw, mjpeg_options)
-        obj_response.attr('#{0}'.format(camera_name),'src', img_src)
-
-    obj_response.html('#develop','image: {0} <br>camera: {1} <br>scale: {2} <br>cal mjpeg_port: {3} <br>temp: {4}'.format(cal_image_topic, cal_camera_topic, scale, cal_mjpeg_port, temp))
-
+    pass 
 
 # Utility functions
 # ----------------------------------------------------------------------------------

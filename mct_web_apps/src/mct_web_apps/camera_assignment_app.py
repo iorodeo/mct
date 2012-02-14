@@ -319,7 +319,7 @@ def write_camera_assignment(camera_assignment):
     yaml_dict = {}
     for camera_id, value in camera_assignment.iteritems():
         camera_name = 'camera_{0}'.format(value)
-        computer = mjpeg_info_dict[camera_id]['camera_computer']
+        computer = mjpeg_info_dict[camera_id]['computer']
         yaml_dict[camera_name] = {'guid': camera_id, 'computer': computer}
 
     # Write yaml file to 'camera_assignment.yaml' in cameras section of mct configuration
