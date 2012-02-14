@@ -40,8 +40,8 @@ flask_sijax.Sijax(app)
 def index():
 
     if flask.g.sijax.is_sijax_request:
-        flask.g.sijax.register_callback('radio_button_onclick', radio_button_onclick_handler)
-        return flask.g.sijax.process_request()
+        pass
+
     else:
         # Get scale and compute image width
         scale, scale_options = common_args.get_scale(config,flask.request)
@@ -66,8 +66,6 @@ def index():
 # Sijax request handlers
 # ---------------------------------------------------------------------------------
 
-def radio_button_onclick_handler(obj_response, form_values):
-    pass 
 
 # Utility functions
 # ----------------------------------------------------------------------------------
@@ -107,6 +105,8 @@ def setup_redis_db():
     db = redis.Redis('localhost',db=config.redis_db)
 
     mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
+    for camera, info in mjpeg_info_dict.iteritems():
+        info['image_topic'] = info['image_topic'].replace('image_raw','image_calibrator')
     redis_tools.set_dict(db,'mjpeg_info_dict', mjpeg_info_dict)
 
     machine_def = mct_introspection.get_machine_def()
@@ -117,6 +117,7 @@ def setup_redis_db():
     redis_tools.set_str(db,'scale', scale_default)
 
     return db
+
 
 def start_cameras_and_mjpeg_servers():
     """

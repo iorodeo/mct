@@ -46,10 +46,9 @@
             <td>
                 <div>
                     <div>
-                        <img id="{{camera}}" src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['image_topic']}}_throttle?width={{image_width}}?height={{image_height}}?quality=60" />
+                        <img id="{{camera}}" src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['image_topic']}}?width={{image_width}}?height={{image_height}}?quality=60" />
                     </div>
                     <div>
-                        <input type="radio" name="selected_camera" value="{{camera}}" onClick="formValuesRequest(this,'radio_button_onclick');"/>
                         {{ camera | title }}, &nbsp; &nbsp;
                     </div>
                 </div>

@@ -30,4 +30,4 @@ def stop():
     """
     Stop the currently running camera calibrator.
     """
-    cameracalibrator_master_srv('stop', '', '', '', '')
+    cameracalibrator_master_srv('stop', '', '')
