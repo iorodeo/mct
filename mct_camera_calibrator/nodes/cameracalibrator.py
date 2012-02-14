@@ -206,13 +206,21 @@ class MCT_CalibrationNode(CalibrationNode):
         self.cal_img_pub = rospy.Publisher('image_calibrator',Image)
 
         self.font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,1,1,0,2)
-        self.font_color = cv.CV_RGB(255,0,0)
+        self.font_color_red = cv.CV_RGB(255,0,0)
+        self.font_color_green = cv.CV_RGB(0,255,0)
+        self.font_color_blue = cv.CV_RGB(0,0,255)
 
     def redraw_monocular(self, drawable):
 
         if not self.c.calibrated: 
             if self.c.goodenough:
-                cv.PutText(drawable.scrib, 'Good Enough', (10,30), self.font, self.font_color)
+                cv.PutText(
+                        drawable.scrib, 
+                        'Good Enough', 
+                        (10,30), 
+                        self.font, 
+                        self.font_color_green
+                        )
             else:
                 if drawable.params:
                     for i, (label, lo, hi) in enumerate(drawable.params):
@@ -221,9 +229,20 @@ class MCT_CalibrationNode(CalibrationNode):
                                 msg = '{0:1.2f}'.format(item)
                             else:
                                 msg = '{0}'.format(item)
-                            cv.PutText(drawable.scrib, msg, (10+100*j,30*(i+1)), self.font, self.font_color)
+                            cv.PutText(
+                                    drawable.scrib, 
+                                    msg, 
+                                    (10+100*j, 30*(i+1)), 
+                                    self.font, 
+                                    self.font_color_red
+                                    )
                 else:
-                    cv.PutText(drawable.scrib, 'No Data', (10,30), self.font, self.font_color)
+                    cv.PutText(
+                            drawable.scrib, 
+                            'No Data', (10,30), 
+                            self.font, 
+                            self.font_color_blue
+                            )
 
             #print 'handle_monocular, goodenough = {0}, len(self.c.db) = {1}'.format(self.c.goodenough,len(self.c.db))
             #for i, (label, lo, hi) in enumerate(drawable.params):
