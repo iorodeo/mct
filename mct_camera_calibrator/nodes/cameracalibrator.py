@@ -218,7 +218,7 @@ class MCT_CalibrationNode(CalibrationNode):
 
         if not self.c.calibrated: 
             if self.c.goodenough:
-                text_data = [ ('Good Enough',), ('Qty', '{0}'.format(len(self.c.db)))]
+                text_data = [('Qty', '{0}'.format(len(self.c.db))),  ('Good Enough',)]
                 self.add_progress_text(drawable.scrib,text_data,self.font_color_green)
             else:
                 if drawable.params:
