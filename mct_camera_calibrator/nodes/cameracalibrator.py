@@ -208,51 +208,42 @@ class MCT_CalibrationNode(CalibrationNode):
         self.font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,1,1,0,2)
         self.font_color_red = cv.CV_RGB(255,0,0)
         self.font_color_green = cv.CV_RGB(0,255,0)
-        self.font_color_blue = cv.CV_RGB(0,0,255)
+        self.font_color_blue = cv.CV_RGB(80,80,255)
+        self.x_start = 10
+        self.y_start = 30
+        self.x_step = 140
+        self.y_step = 32
 
     def redraw_monocular(self, drawable):
 
         if not self.c.calibrated: 
             if self.c.goodenough:
-                cv.PutText(
-                        drawable.scrib, 
-                        'Good Enough', 
-                        (10,30), 
-                        self.font, 
-                        self.font_color_green
-                        )
+                text_data = [ ('Good Enough',), ('Qty', '{0}'.format(len(self.c.db)))]
+                self.add_progress_text(drawable.scrib,text_data,self.font_color_green)
             else:
                 if drawable.params:
-                    for i, (label, lo, hi) in enumerate(drawable.params):
-                        for j, item in enumerate((label, lo, hi)):
-                            if type(item) == float:
-                                msg = '{0:1.2f}'.format(item)
-                            else:
-                                msg = '{0}'.format(item)
-                            cv.PutText(
-                                    drawable.scrib, 
-                                    msg, 
-                                    (10+100*j, 30*(i+1)), 
-                                    self.font, 
-                                    self.font_color_red
-                                    )
+                    text_data =  [('Qty', '{0}'.format(len(self.c.db)) )] + list(drawable.params)
+                    self.add_progress_text(drawable.scrib,text_data,self.font_color_red)
                 else:
-                    cv.PutText(
-                            drawable.scrib, 
-                            'No Data', (10,30), 
-                            self.font, 
-                            self.font_color_blue
-                            )
+                    text_data = [('No Data',)]
+                    self.add_progress_text(drawable.scrib,text_data,self.font_color_red)
 
-            #print 'handle_monocular, goodenough = {0}, len(self.c.db) = {1}'.format(self.c.goodenough,len(self.c.db))
-            #for i, (label, lo, hi) in enumerate(drawable.params):
-            #    print ' {0}, {1}, {2}, {3}'.format(i,label,lo,hi)
         else:
-            cv.PutText(drawable.scrib, 'Calibrated', (10,30), self.font, self.font_color)
+            cv.PutText(drawable.scrib, 'Calibrated', (10,30), self.font, self.font_color_green)
             #print self.c.ost()
 
         rosimage = self.bridge.cv_to_imgmsg(drawable.scrib,'bgr8')
         self.cal_img_pub.publish(rosimage)
+
+    def add_progress_text(self, img, text_data, font_color): 
+        for i, values in enumerate(text_data): 
+            for j, item in enumerate(values): 
+                if type(item) == float: 
+                    msg = '{0:1.2f}'.format(item) 
+                else: 
+                    msg = '{0}'.format(item) 
+                pos = (self.x_start + j*self.x_step, self.y_start + i*self.y_step)
+                cv.PutText(img, msg, pos, self.font, font_color)
 
 
 # -----------------------------------------------------------------------------
