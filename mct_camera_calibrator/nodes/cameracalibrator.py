@@ -229,7 +229,8 @@ class MCT_CalibrationNode(CalibrationNode):
                     self.add_progress_text(drawable.scrib,text_data,self.font_color_red)
 
         else:
-            cv.PutText(drawable.scrib, 'Calibrated', (10,30), self.font, self.font_color_green)
+            text_data = [('Calbrated',)]
+            self.add_progress_text(drawable.scrib,text_data,self.font_color_green)
             #print self.c.ost()
 
         rosimage = self.bridge.cv_to_imgmsg(drawable.scrib,'bgr8')
