@@ -32,50 +32,49 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# WBD. 
+# ---------------------------------------------------------------------
+#
+# In order to support the functionaliry required by the MCT application 
+# this nodes has been modified form the original version developed by 
+# Willow Garage. In general the OpenCV based user interface has been 
+# removed. Instead calibration progress images are published - which 
+# meant to be viewed as mjpeg stream from a web browser. In addition
+# 'calibrate' and get calibration services have been added.
+# ---------------------------------------------------------------------
+
 PKG = 'mct_camera_calibrator' # this package name
 import roslib; roslib.load_manifest(PKG)
 
 import rospy
-import sensor_msgs.msg
-import sensor_msgs.srv
-import cv_bridge
 
 import math
 import os
 import sys
-import operator
 import time
 import Queue
 import threading
 import tarfile
-import pickle
-import random
-import StringIO
 import functools
-
 import cv
-
 import message_filters
+from cv_bridge.cv_bridge import CvBridge
+
 from mct_camera_calibrator.approxsync import ApproximateSynchronizer
-
-ID_LOAD=101
-ID_SAVE=102
-ID_BUTTON1=110
-ID_EXIT=200
-
 from mct_camera_calibrator.calibrator import cvmat_iterator 
 from mct_camera_calibrator.calibrator import MonoCalibrator 
 from mct_camera_calibrator.calibrator import StereoCalibrator 
 from mct_camera_calibrator.calibrator import ChessboardInfo
 
-
-from std_msgs.msg import String
-from std_srvs.srv import Empty
-from sensor_msgs.msg import Image
-from cv_bridge.cv_bridge import CvBridge
-from cv_bridge.cv_bridge import CvBridgeError
+# Messages and Services
+import sensor_msgs.msg
+import sensor_msgs.srv
+from mct_msg_and_srv.srv import GetBool
+from mct_msg_and_srv.srv import GetBoolResponse
 from mct_msg_and_srv.srv import CommandString
 from mct_msg_and_srv.srv import CommandStringResponse
+from mct_msg_and_srv.srv import GetJSONString
+from mct_msg_and_srv.srv import GetJSONStringResponse
 
 class ConsumerThread(threading.Thread):
     def __init__(self, queue, function):
@@ -117,9 +116,20 @@ class CalibrationNode(object):
         msub = message_filters.Subscriber('image', sensor_msgs.msg.Image)
         msub.registerCallback(self.queue_monocular)
         
-        self.set_camera_info_service = rospy.ServiceProxy("%s/set_camera_info" % rospy.remap_name("camera"), sensor_msgs.srv.SetCameraInfo)
-        self.set_left_camera_info_service = rospy.ServiceProxy("%s/set_camera_info" % rospy.remap_name("left_camera"), sensor_msgs.srv.SetCameraInfo)
-        self.set_right_camera_info_service = rospy.ServiceProxy("%s/set_camera_info" % rospy.remap_name("right_camera"), sensor_msgs.srv.SetCameraInfo)
+        self.set_camera_info_service = rospy.ServiceProxy(
+                "%s/set_camera_info" % rospy.remap_name("camera"), 
+                sensor_msgs.srv.SetCameraInfo
+                )
+
+        self.set_left_camera_info_service = rospy.ServiceProxy(
+                "%s/set_camera_info" % rospy.remap_name("left_camera"), 
+                sensor_msgs.srv.SetCameraInfo
+                )
+
+        self.set_right_camera_info_service = rospy.ServiceProxy(
+                "%s/set_camera_info" % rospy.remap_name("right_camera"), 
+                sensor_msgs.srv.SetCameraInfo
+                )
 
         self.q_mono = Queue.Queue()
         self.q_stereo = Queue.Queue()
@@ -201,9 +211,11 @@ class CalibrationNode(object):
 class MCT_CalibrationNode(CalibrationNode):
 
     def __init__(self,*args,**kwargs):
+        self.lock = threading.Lock()
+        self.calibrate = False
         super(MCT_CalibrationNode,self).__init__(*args,**kwargs)
         self.bridge = CvBridge()
-        self.cal_img_pub = rospy.Publisher('image_calibrator',Image)
+        self.cal_img_pub = rospy.Publisher('image_calibrator', sensor_msgs.msg.Image)
 
         self.font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,1,1,0,2)
         self.font_color_red = cv.CV_RGB(255,0,0)
@@ -214,9 +226,62 @@ class MCT_CalibrationNode(CalibrationNode):
         self.x_step = 140
         self.y_step = 32
 
-    def redraw_monocular(self, drawable):
+        # Set up sevices
+        self.good_enough_srv = rospy.Service(
+                'good_enough',
+                GetBool,
+                self.handle_good_enough_srv,
+                )
 
+        self.calibrate_srv = rospy.Service(
+                'calibrate',
+                GetBool,
+                self.handle_calibrate_srv,
+                )
+
+        self.get_calibration_srv = rospy.Service(
+                'get_calibration',
+                GetJSONString,
+                self.handle_get_calibration_srv,
+                )
+
+    def handle_good_enough_srv(self,req):
+        """
+        Handles requests for the calibrators good_enough flag which indicates whether
+        or not sufficient data has been aquired for calibrating the camera.
+        """
+        with self.lock:
+            good_enough = self.c.goodenough
+        return GetBoolResponse(good_enough)
+
+    def handle_calibrate_srv(self,req):
+        """
+        Handles requests for calibrating the cameras associated with the calibrator.
+        """
+        with self.lock:
+            if self.c.goodenough:
+                self.calibrate = True
+                flag = True
+            else:
+                flag = False
+        return GetBoolResponse(flag) 
+
+    def handle_get_calibration_srv(self,req):
+        """
+        Handles requests for the camera calibration parameters.
+        """
+        pass
+
+    def redraw_monocular(self, drawable):
+        """
+        Redraw calibratoin image callback.
+        """
         if not self.c.calibrated: 
+
+            with self.lock:
+                if self.calibrate and self.c.goodenough:
+                    self.c.do_calibration()
+
             if self.c.goodenough:
                 text_data = [('Qty', '{0}'.format(len(self.c.db))),  ('Good Enough',)]
                 self.add_progress_text(drawable.scrib,text_data,self.font_color_green)
@@ -229,7 +294,7 @@ class MCT_CalibrationNode(CalibrationNode):
                     self.add_progress_text(drawable.scrib,text_data,self.font_color_red)
 
         else:
-            text_data = [('Calbrated',)]
+            text_data = [('Calibrated',)]
             self.add_progress_text(drawable.scrib,text_data,self.font_color_green)
             #print self.c.ost()
 
@@ -237,6 +302,11 @@ class MCT_CalibrationNode(CalibrationNode):
         self.cal_img_pub.publish(rosimage)
 
     def add_progress_text(self, img, text_data, font_color): 
+        """
+        Adds progress text to calibration image, img. The text to be added
+        consists of a list of tuples where each tuple is a row of text to be
+        added.
+        """
         for i, values in enumerate(text_data): 
             for j, item in enumerate(values): 
                 if type(item) == float: 
@@ -250,143 +320,143 @@ class MCT_CalibrationNode(CalibrationNode):
 # -----------------------------------------------------------------------------
 
 
-class OpenCVCalibrationNode(CalibrationNode):
-    """ Calibration node with an OpenCV Gui """
-
-    def __init__(self, *args):
-
-        CalibrationNode.__init__(self, *args)
-        cv.NamedWindow("display")
-        self.font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.20, 1, thickness = 2)
-        #self.button = cv.LoadImage("%s/button.jpg" % roslib.packages.get_pkg_dir(PKG))
-        cv.SetMouseCallback("display", self.on_mouse)
-        cv.CreateTrackbar("scale", "display", 0, 100, self.on_scale)
-
-    def on_mouse(self, event, x, y, flags, param):
-        if event == cv.CV_EVENT_LBUTTONDOWN and self.displaywidth < x:
-            if self.c.goodenough:
-                if 180 <= y < 280:
-                    self.c.do_calibration()
-            if self.c.calibrated:
-                if 280 <= y < 380:
-                    self.c.do_save()
-                elif 380 <= y < 480:
-                    # Only shut down if we set camera info correctly, #3993
-                    if self.do_upload():
-                        rospy.signal_shutdown('Quit')
-                        
-                        
-
-    def waitkey(self):
-        k = cv.WaitKey(6)
-        if k in [27, ord('q')]:
-            rospy.signal_shutdown('Quit')
-        return k
-
-    def on_scale(self, scalevalue):
-        self.c.set_scale(scalevalue / 100.0)
-
-
-    def button(self, dst, label, enable):
-        cv.Set(dst, (255, 255, 255))
-        size = cv.GetSize(dst)
-        if enable:
-            color = cv.RGB(155, 155, 80)
-        else:
-            color = cv.RGB(224, 224, 224)
-        cv.Circle(dst, (size[0] / 2, size[1] / 2), min(size) / 2, color, -1)
-        ((w, h), _) = cv.GetTextSize(label, self.font)
-        cv.PutText(dst, label, ((size[0] - w) / 2, (size[1] + h) / 2), self.font, (255,255,255))
-
-    def buttons(self, display):
-        x = self.displaywidth
-        self.button(cv.GetSubRect(display, (x,180,100,100)), "CALIBRATE", self.c.goodenough)
-        self.button(cv.GetSubRect(display, (x,280,100,100)), "SAVE", self.c.calibrated)
-        self.button(cv.GetSubRect(display, (x,380,100,100)), "COMMIT", self.c.calibrated)
-
-    def y(self, i):
-        """Set up right-size images"""
-        return 30 + 40 * i
-        
-    def screendump(self, im):
-        i = 0
-        while os.access("/tmp/dump%d.png" % i, os.R_OK):
-            i += 1
-        cv.SaveImage("/tmp/dump%d.png" % i, im)
-
-    def redraw_monocular(self, drawable):
-        width, height = cv.GetSize(drawable.scrib)
-
-        display = cv.CreateMat(max(480, height), width + 100, cv.CV_8UC3)
-        cv.Zero(display)
-        cv.Copy(drawable.scrib, cv.GetSubRect(display, (0,0,width,height)))
-        cv.Set(cv.GetSubRect(display, (width,0,100,height)), (255, 255, 255))
-
-
-        self.buttons(display)
-        if not self.c.calibrated:
-            if len(drawable.params) != 0:
-                 for i, (label, lo, hi) in enumerate(drawable.params):
-                    (w,_),_ = cv.GetTextSize(label, self.font)
-                    cv.PutText(display, label, (width + (100 - w) / 2, self.y(i)), self.font, (0,0,0))
-                    cv.Line(display,
-                            (int(width + lo * 100), self.y(i) + 20),
-                            (int(width + hi * 100), self.y(i) + 20),
-                            (0,0,0),
-                            4)
-
-        else:
-            cv.PutText(display, "lin.", (width, self.y(0)), self.font, (0,0,0))
-            linerror = drawable.linear_error
-            if linerror < 0:
-                msg = "?"
-            else:
-                msg = "%.2f" % linerror
-                print "linear", linerror
-            cv.PutText(display, msg, (width, self.y(1)), self.font, (0,0,0))
-
-        self.show(display)
-
-    def redraw_stereo(self, drawable):
-        width, height = cv.GetSize(drawable.lscrib)
-
-        display = cv.CreateMat(max(480, height), 2 * width + 100, cv.CV_8UC3)
-        cv.Zero(display)
-        cv.Copy(drawable.lscrib, cv.GetSubRect(display, (0,0,width,height)))
-        cv.Copy(drawable.rscrib, cv.GetSubRect(display, (width,0,width,height)))
-        cv.Set(cv.GetSubRect(display, (2 * width,0,100,height)), (255, 255, 255))
-
-        self.buttons(display)
-
-        if not self.c.calibrated:
-            if len(drawable.params) != 0:
-                for i, (label, lo, hi) in enumerate(drawable.params):
-                    (label_width,_),_ = cv.GetTextSize(label, self.font)
-                    cv.PutText(display, label, (2 * width + (100 - label_width) / 2, self.y(i)), self.font, (0,0,0))
-                    cv.Line(display,
-                            (int(2 * width + lo * 100), self.y(i) + 20),
-                            (int(2 * width + hi * 100), self.y(i) + 20),
-                            (0,0,0),
-                            4)
-
-        else:
-            cv.PutText(display, "epi.", (2 * width, self.y(0)), self.font, (0,0,0))
-            if drawable.epierror == -1:
-                msg = "?"
-            else:
-                msg = "%.2f" % drawable.epierror
-            cv.PutText(display, msg, (2 * width, self.y(1)), self.font, (0,0,0))
-            if drawable.epierror > -1:
-                cv.PutText(display, "dim", (2 * width, self.y(2)), self.font, (0,0,0))
-                cv.PutText(display, "%.3f" % drawable.dim, (2 * width, self.y(3)), self.font, (0,0,0))
-
-        self.show(display)
-
-    def show(self, im):
-        cv.ShowImage("display", im)
-        if self.waitkey() == ord('s'):
-            self.screendump(im)
-
+#class OpenCVCalibrationNode(CalibrationNode):
+#    """ Calibration node with an OpenCV Gui """
+#
+#    def __init__(self, *args):
+#
+#        CalibrationNode.__init__(self, *args)
+#        cv.NamedWindow("display")
+#        self.font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.20, 1, thickness = 2)
+#        #self.button = cv.LoadImage("%s/button.jpg" % roslib.packages.get_pkg_dir(PKG))
+#        cv.SetMouseCallback("display", self.on_mouse)
+#        cv.CreateTrackbar("scale", "display", 0, 100, self.on_scale)
+#
+#    def on_mouse(self, event, x, y, flags, param):
+#        if event == cv.CV_EVENT_LBUTTONDOWN and self.displaywidth < x:
+#            if self.c.goodenough:
+#                if 180 <= y < 280:
+#                    self.c.do_calibration()
+#            if self.c.calibrated:
+#                if 280 <= y < 380:
+#                    self.c.do_save()
+#                elif 380 <= y < 480:
+#                    # Only shut down if we set camera info correctly, #3993
+#                    if self.do_upload():
+#                        rospy.signal_shutdown('Quit')
+#                        
+#                        
+#
+#    def waitkey(self):
+#        k = cv.WaitKey(6)
+#        if k in [27, ord('q')]:
+#            rospy.signal_shutdown('Quit')
+#        return k
+#
+#    def on_scale(self, scalevalue):
+#        self.c.set_scale(scalevalue / 100.0)
+#
+#
+#    def button(self, dst, label, enable):
+#        cv.Set(dst, (255, 255, 255))
+#        size = cv.GetSize(dst)
+#        if enable:
+#            color = cv.RGB(155, 155, 80)
+#        else:
+#            color = cv.RGB(224, 224, 224)
+#        cv.Circle(dst, (size[0] / 2, size[1] / 2), min(size) / 2, color, -1)
+#        ((w, h), _) = cv.GetTextSize(label, self.font)
+#        cv.PutText(dst, label, ((size[0] - w) / 2, (size[1] + h) / 2), self.font, (255,255,255))
+#
+#    def buttons(self, display):
+#        x = self.displaywidth
+#        self.button(cv.GetSubRect(display, (x,180,100,100)), "CALIBRATE", self.c.goodenough)
+#        self.button(cv.GetSubRect(display, (x,280,100,100)), "SAVE", self.c.calibrated)
+#        self.button(cv.GetSubRect(display, (x,380,100,100)), "COMMIT", self.c.calibrated)
+#
+#    def y(self, i):
+#        """Set up right-size images"""
+#        return 30 + 40 * i
+#        
+#    def screendump(self, im):
+#        i = 0
+#        while os.access("/tmp/dump%d.png" % i, os.R_OK):
+#            i += 1
+#        cv.SaveImage("/tmp/dump%d.png" % i, im)
+#
+#    def redraw_monocular(self, drawable):
+#        width, height = cv.GetSize(drawable.scrib)
+#
+#        display = cv.CreateMat(max(480, height), width + 100, cv.CV_8UC3)
+#        cv.Zero(display)
+#        cv.Copy(drawable.scrib, cv.GetSubRect(display, (0,0,width,height)))
+#        cv.Set(cv.GetSubRect(display, (width,0,100,height)), (255, 255, 255))
+#
+#
+#        self.buttons(display)
+#        if not self.c.calibrated:
+#            if len(drawable.params) != 0:
+#                 for i, (label, lo, hi) in enumerate(drawable.params):
+#                    (w,_),_ = cv.GetTextSize(label, self.font)
+#                    cv.PutText(display, label, (width + (100 - w) / 2, self.y(i)), self.font, (0,0,0))
+#                    cv.Line(display,
+#                            (int(width + lo * 100), self.y(i) + 20),
+#                            (int(width + hi * 100), self.y(i) + 20),
+#                            (0,0,0),
+#                            4)
+#
+#        else:
+#            cv.PutText(display, "lin.", (width, self.y(0)), self.font, (0,0,0))
+#            linerror = drawable.linear_error
+#            if linerror < 0:
+#                msg = "?"
+#            else:
+#                msg = "%.2f" % linerror
+#                print "linear", linerror
+#            cv.PutText(display, msg, (width, self.y(1)), self.font, (0,0,0))
+#
+#        self.show(display)
+#
+#    def redraw_stereo(self, drawable):
+#        width, height = cv.GetSize(drawable.lscrib)
+#
+#        display = cv.CreateMat(max(480, height), 2 * width + 100, cv.CV_8UC3)
+#        cv.Zero(display)
+#        cv.Copy(drawable.lscrib, cv.GetSubRect(display, (0,0,width,height)))
+#        cv.Copy(drawable.rscrib, cv.GetSubRect(display, (width,0,width,height)))
+#        cv.Set(cv.GetSubRect(display, (2 * width,0,100,height)), (255, 255, 255))
+#
+#        self.buttons(display)
+#
+#        if not self.c.calibrated:
+#            if len(drawable.params) != 0:
+#                for i, (label, lo, hi) in enumerate(drawable.params):
+#                    (label_width,_),_ = cv.GetTextSize(label, self.font)
+#                    cv.PutText(display, label, (2 * width + (100 - label_width) / 2, self.y(i)), self.font, (0,0,0))
+#                    cv.Line(display,
+#                            (int(2 * width + lo * 100), self.y(i) + 20),
+#                            (int(2 * width + hi * 100), self.y(i) + 20),
+#                            (0,0,0),
+#                            4)
+#
+#        else:
+#            cv.PutText(display, "epi.", (2 * width, self.y(0)), self.font, (0,0,0))
+#            if drawable.epierror == -1:
+#                msg = "?"
+#            else:
+#                msg = "%.2f" % drawable.epierror
+#            cv.PutText(display, msg, (2 * width, self.y(1)), self.font, (0,0,0))
+#            if drawable.epierror > -1:
+#                cv.PutText(display, "dim", (2 * width, self.y(2)), self.font, (0,0,0))
+#                cv.PutText(display, "%.3f" % drawable.dim, (2 * width, self.y(3)), self.font, (0,0,0))
+#
+#        self.show(display)
+#
+#    def show(self, im):
+#        cv.ShowImage("display", im)
+#        if self.waitkey() == ord('s'):
+#            self.screendump(im)
+#
 
 # -----------------------------------------------------------------------------
 

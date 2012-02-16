@@ -260,6 +260,21 @@ def get_frame_rates():
     return frame_rates
 
 
+def get_camera_calibrator_nodes():
+    """
+    Returns a list of the currently running camera calibrator nodes
+    """
+    node_list = get_nodes()
+    calibrator_nodes = [node for node in node_list if 'camera_calibrator' in node]
+    return calibrator_nodes
+
+def get_camera_calibrate_services():
+    """
+    Returns a list of the camera calibrate services.
+    """
+    srv_list = get_services()
+    cal_list = [srv for srv in srv_list if ('calibrate' in srv) and  ('camera' in srv)]
+    return cal_list
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -290,7 +305,7 @@ if __name__ == '__main__':
             print(k,v)
             print()
 
-    if 1:
+    if 0:
         topic_list = find_camera_image_topics()
         print('camera_image_topics:')
         for topic in topic_list:
@@ -360,5 +375,15 @@ if __name__ == '__main__':
         frame_rates = get_frame_rates()
         for k,v in frame_rates.iteritems():
             print(k,v)
+
+    if 0:
+
+        node_list = get_camera_calibrator_nodes()
+        for node in node_list:
+            print(node)
+
+    if 1:
+        srv_list = get_camera_calibrate_services()
+        print(srv_list)
 
             
