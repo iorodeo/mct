@@ -73,8 +73,8 @@ from mct_msg_and_srv.srv import GetBool
 from mct_msg_and_srv.srv import GetBoolResponse
 from mct_msg_and_srv.srv import CommandString
 from mct_msg_and_srv.srv import CommandStringResponse
-from mct_msg_and_srv.srv import GetJSONString
-from mct_msg_and_srv.srv import GetJSONStringResponse
+from mct_msg_and_srv.srv import GetString
+from mct_msg_and_srv.srv import GetStringResponse
 
 class ConsumerThread(threading.Thread):
     def __init__(self, queue, function):
@@ -232,7 +232,7 @@ class MCT_CalibrationNode(CalibrationNode):
 
         self.get_calibration_srv = rospy.Service(
                 'get_calibration',
-                GetJSONString,
+                GetString,
                 self.handle_get_calibration_srv,
                 )
 
@@ -261,7 +261,12 @@ class MCT_CalibrationNode(CalibrationNode):
         """
         Handles requests for the camera calibration parameters.
         """
-        pass
+        with self.lock:
+            if self.c.calibrated:
+                ost_txt = self.c.ost()
+            else:
+                ost_txt = ''
+        return GetStringResponse(ost_txt)
 
     def redraw_monocular(self, drawable):
         """
