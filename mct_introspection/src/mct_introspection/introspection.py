@@ -77,7 +77,7 @@ def find_camera_image_topics(transport='image_raw'):
         if (topic_name_split[-1] == transport) and ('camera' in topic_name_split):
             image_topic_list.append(topic_name)
     return image_topic_list
-        
+
 
 def add_machine2camera_dict(input_dict, machine):
     """

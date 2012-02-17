@@ -19,6 +19,7 @@ import mct_introspection
 from mct_camera_tools import camera_master
 from mct_camera_tools import mjpeg_servers
 from mct_camera_calibrator import calibrator_master
+from mct_camera_calibrator import calibration
 
 from mct_utilities import redis_tools
 from mct_utilities import json_tools
@@ -40,7 +41,11 @@ flask_sijax.Sijax(app)
 def index():
 
     if flask.g.sijax.is_sijax_request:
-        pass
+        flask.g.sijax.register_callback('calibrate_button_onclick', calibrate_button_handler)
+        flask.g.sijax.register_callback('save_button_onclick', save_button_handler)
+        flask.g.sijax.register_callback('reset_button_ok', reset_button_ok_handler)
+        flask.g.sijax.register_callback('reset_button_cancel', reset_button_cancel_handler)
+        return flask.g.sijax.process_request()
 
     else:
         # Get scale and compute image width
@@ -66,6 +71,18 @@ def index():
 # Sijax request handlers
 # ---------------------------------------------------------------------------------
 
+def calibrate_button_handler(obj_response):
+
+    obj_response.html('#develop', 'calibrating')
+
+def save_button_handler(obj_response):
+    obj_response.html('#develop', 'saving')
+
+def reset_button_ok_handler(obj_response):
+    obj_response.html('#develop', 'resetting')
+
+def reset_button_cancel_handler(obj_response):
+    obj_response.html('#develop', 'reset canceled')
 
 # Utility functions
 # ----------------------------------------------------------------------------------

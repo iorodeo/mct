@@ -71,8 +71,8 @@ import sensor_msgs.msg
 import sensor_msgs.srv
 from mct_msg_and_srv.srv import GetBool
 from mct_msg_and_srv.srv import GetBoolResponse
-from mct_msg_and_srv.srv import CommandString
-from mct_msg_and_srv.srv import CommandStringResponse
+#from mct_msg_and_srv.srv import CommandString
+#from mct_msg_and_srv.srv import CommandStringResponse
 from mct_msg_and_srv.srv import GetString
 from mct_msg_and_srv.srv import GetStringResponse
 
@@ -218,20 +218,21 @@ class MCT_CalibrationNode(CalibrationNode):
         self.y_step = 32
 
         # Set up sevices
+        node_name= rospy.get_name()
         self.good_enough_srv = rospy.Service(
-                'good_enough',
+                '{0}/good_enough'.format(node_name),
                 GetBool,
                 self.handle_good_enough_srv,
                 )
 
         self.calibrate_srv = rospy.Service(
-                'calibrate',
+                '{0}/calibrate'.format(node_name),
                 GetBool,
                 self.handle_calibrate_srv,
                 )
 
         self.get_calibration_srv = rospy.Service(
-                'get_calibration',
+                '{0}/get_calibration'.format(node_name),
                 GetString,
                 self.handle_get_calibration_srv,
                 )
@@ -266,6 +267,13 @@ class MCT_CalibrationNode(CalibrationNode):
                 ost_txt = self.c.ost()
             else:
                 ost_txt = ''
+
+        if ost_txt:
+            # Add actuall camera name to calibration
+            camera_topic = rospy.remap_name('camera')
+            camera_name= camera_topic.split('/')[2]
+            ost_txt = ost_txt.replace('narrow_stereo/left',camera_name)
+            
         return GetStringResponse(ost_txt)
 
     def redraw_monocular(self, drawable):

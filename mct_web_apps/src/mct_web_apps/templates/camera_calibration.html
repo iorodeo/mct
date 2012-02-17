@@ -4,9 +4,20 @@
 <title> MCT: Camera Calibration Tool</title>
 
 <script>
-    function formValuesRequest(obj,name) {
-        var values = Sijax.getFormValues('#camera_view_form');
-        Sijax.request(name,[values]);
+    function buttonRequest(name) {
+        Sijax.request(name);
+    }
+</script>
+
+<script>
+    function resetButtonRequest() {
+        var ans = confirm('Reset camera calibration?');
+        if (ans) {
+            buttonRequest('reset_button_ok');
+        }
+        else{
+            buttonRequest('reset_button_cancel');
+        }
     }
 </script>
 
@@ -62,6 +73,11 @@
         {% endfor %}
     </table>
 </form>
+
+<button onclick="buttonRequest('calibrate_button_onclick'); return false;"> Calibrate </button>
+<button onclick="buttonRequest('save_button_onclick'); return false;"> Save </button>
+&nbsp;&nbsp;
+<button onclick="resetButtonRequest(); return false;"> Reset </button> 
 
 <p id="develop"> </p>
 
