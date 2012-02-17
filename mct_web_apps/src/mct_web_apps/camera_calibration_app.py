@@ -18,15 +18,15 @@ import common_args
 import mct_introspection
 from mct_camera_tools import camera_master
 from mct_camera_tools import mjpeg_servers
+from mct_camera_calibrator import calibrator_services
 from mct_camera_calibrator import calibrator_master
-from mct_camera_calibrator import calibration
 
 from mct_utilities import redis_tools
 from mct_utilities import json_tools
 from mct_utilities import iface_tools
 
 DEVELOP = True 
-DEBUG = False 
+DEBUG = True 
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -73,12 +73,37 @@ def index():
 
 def calibrate_button_handler(obj_response):
 
-    obj_response.html('#develop', 'calibrating')
+    calibrator_list = mct_introspection.get_camera_calibrator_nodes()
+    out_list = ['calibrated:']
+    for calibrator in calibrator_list:
+        good_enough = calibrator_service.good_enough(calibrator)
+        if good_enough:
+            calibrator_service.calibrate(calibrator)
+            camera_name = camera_name_from_calibrator(calibrator)
+            out_list.append(camera_name)
+    out_str = '<br>'.join(out_list)
+
+    obj_response.html('#develop', out_str)
 
 def save_button_handler(obj_response):
+
+    calibrator_list = mct_introspection.get_camera_calibrator_nodes()
+    cal_data = {}
+    for calibrator in calibrator_list:
+        camera_name = camera_name_from_calibrator(calibrator)
+        cal_ost_str = calibrator_service.get_calibration()
+        cal_data[camera_name] = cal_ost_str
+
     obj_response.html('#develop', 'saving')
 
 def reset_button_ok_handler(obj_response):
+    calibrator_master.stop()
+
+    # ------------------------------------------------
+    # Need to replace these with values from dialog
+    calibrator_master.start('8x6', '0.0254')
+    # ------------------------------------------------
+
     obj_response.html('#develop', 'resetting')
 
 def reset_button_cancel_handler(obj_response):
@@ -86,6 +111,9 @@ def reset_button_cancel_handler(obj_response):
 
 # Utility functions
 # ----------------------------------------------------------------------------------
+
+def camera_name_from_calibrator(calibrator):
+    return calibrator.split('/')[2]
 
 def get_image_size(scale): 
     image_width = int(config.camera_image['width']*float(scale))

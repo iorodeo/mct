@@ -46,6 +46,23 @@
         <option value="{{val}}" {%if val == scale %} selected="selected" {% endif %}> {{val}} </option>
         {% endfor %}
     </select>
+    &nbsp;
+    &nbsp;
+    chessboard
+    <select>
+        <option> 8 </option>
+        <option> 9 </option>
+    </select>
+    x
+    <select>
+        <option>6</option>
+        <option>7</option>
+    </select>
+    &nbsp;
+    &nbsp;
+    square
+    <input type="text"> </input>
+
 </form>
 
 <form id="camera_view_form">
@@ -74,10 +91,13 @@
     </table>
 </form>
 
-<button onclick="buttonRequest('calibrate_button_onclick'); return false;"> Calibrate </button>
-<button onclick="buttonRequest('save_button_onclick'); return false;"> Save </button>
-&nbsp;&nbsp;
-<button onclick="resetButtonRequest(); return false;"> Reset </button> 
+<form>
+    <button onclick="buttonRequest('calibrate_button_onclick'); return false;"> Calibrate </button>
+    <button onclick="buttonRequest('save_button_onclick'); return false;"> Save </button>
+    &nbsp;&nbsp;
+    <button onclick="resetButtonRequest(); return false;"> Reset </button> 
+</form>
+
 
 <p id="develop"> </p>
 
