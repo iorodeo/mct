@@ -37,7 +37,6 @@
 {% block content %}
 {{ super() }}
 <h1 style="color:blue" > MCT: Camera Calibration Tool </h1>
-<br>
 
 <form id="mjpeg_scale_form">
     scale
@@ -46,26 +45,13 @@
         <option value="{{val}}" {%if val == scale %} selected="selected" {% endif %}> {{val}} </option>
         {% endfor %}
     </select>
-    &nbsp;
-    &nbsp;
-    &nbsp;
-    &nbsp;
-    chessboard
-    <select>
-        <option> 8 </option>
-        <option> 9 </option>
-    </select>
-    &times; 
-    <select>
-        <option>6</option>
-        <option>7</option>
-    </select>
-    &nbsp;
-    &nbsp;
-    &nbsp;
-    &nbsp;
-    square
-    <input type="text"> </input>
+    &nbsp; &nbsp;
+    &nbsp; &nbsp;
+    &nbsp; &nbsp;
+    &nbsp; &nbsp;
+    chessboard {{target_info['chessboard']}}, 
+    &nbsp; &nbsp;
+    square {{target_info['square']}} (m)
 
 </form>
 

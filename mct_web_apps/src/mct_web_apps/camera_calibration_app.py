@@ -57,6 +57,7 @@ def index():
         ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
         mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
         mjpeg_info = sorted(mjpeg_info_dict.items(), cmp=mjpeg_info_cmp)
+        target_info = redis_tools.get_dict(db,'target_info')
 
         render_dict = {
                 'scale'             : scale,
@@ -65,6 +66,7 @@ def index():
                 'image_height'      : image_height,
                 'ip_iface_ext'      : ip_iface_ext,
                 'mjpeg_info'        : mjpeg_info,
+                'target_info'       : target_info,
                 }
 
         return flask.render_template('camera_calibration.html',**render_dict)
@@ -101,15 +103,12 @@ def save_button_handler(obj_response):
 
 def reset_button_ok_handler(obj_response):
     calibrator_master.stop()
-
-    # ------------------------------------------------
-    # Need to replace these with values from dialog
-    calibrator_master.start('8x6', '0.0254')
-    # ------------------------------------------------
-
-    obj_response.html('#develop', 'resetting')
+    target_info = redis_tools.get_dict(db, 'target_info')
+    obj_response.html('#develop', str(type(target_info['square'])))
+    calibrator_master.start(target_info['chessboard'], target_info['square'])
 
 def reset_button_cancel_handler(obj_response):
+    target_info = redis_tools.get_dict(db, 'target_info')
     obj_response.html('#develop', 'reset canceled')
 
 # Utility functions
@@ -173,6 +172,9 @@ def setup_redis_db():
 
     scale_default = config.camera_view_table['scale_default']
     redis_tools.set_str(db,'scale', scale_default)
+
+    target_info = file_tools.read_target_info()
+    redis_tools.set_dict(db, 'target_info', target_info)
 
     return db
 
