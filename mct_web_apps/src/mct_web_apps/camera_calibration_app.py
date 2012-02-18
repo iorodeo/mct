@@ -24,6 +24,7 @@ from mct_camera_calibrator import calibrator_master
 from mct_utilities import redis_tools
 from mct_utilities import json_tools
 from mct_utilities import iface_tools
+from mct_utilities import file_tools
 
 DEVELOP = True 
 DEBUG = True 
@@ -88,13 +89,15 @@ def calibrate_button_handler(obj_response):
 def save_button_handler(obj_response):
 
     calibrator_list = mct_introspection.get_camera_calibrator_nodes()
-    cal_data = {}
+    calibration_dict = {}
     for calibrator in calibrator_list:
         camera_name = camera_name_from_calibrator(calibrator)
-        cal_ost_str = calibrator_service.get_calibration()
-        cal_data[camera_name] = cal_ost_str
+        cal_ost_str = calibrator_service.get_calibration(calibrator)
+        if cal_ost_str:
+            calibration_dict[camera_name] = cal_ost_str
 
-    obj_response.html('#develop', 'saving')
+    obj_response.html('#develop', str(calibration_dict))
+    write_camera_calibration(calibration_dict)
 
 def reset_button_ok_handler(obj_response):
     calibrator_master.stop()
@@ -112,7 +115,17 @@ def reset_button_cancel_handler(obj_response):
 # Utility functions
 # ----------------------------------------------------------------------------------
 
+def write_camera_calibration(calibration_dict):
+    """
+    Writes the camera calibration to file.
+    """
+    for camera_name, cal_ost_str in calibration_dict.iteritems():
+        file_tools.write_camera_calibration(camera_name,cal_ost_str)
+
 def camera_name_from_calibrator(calibrator):
+    """
+    Returns the name of the camera associated with the given camera calibrator.
+    """
     return calibrator.split('/')[2]
 
 def get_image_size(scale): 
