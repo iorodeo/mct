@@ -18,7 +18,7 @@ import common_args
 import mct_introspection
 from mct_camera_tools import camera_master
 from mct_camera_tools import mjpeg_servers
-from mct_camera_calibrator import calibrator_services
+from mct_camera_calibrator import calibrator_service
 from mct_camera_calibrator import calibrator_master
 
 from mct_utilities import redis_tools
