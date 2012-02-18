@@ -276,6 +276,19 @@ def get_camera_calibrate_services():
     cal_list = [srv for srv in srv_list if ('calibrate' in srv) and  ('camera' in srv)]
     return cal_list
 
+def get_camera_calibration_files(fullpath=True):
+    """
+    Returns a list of the camera calibration yaml files in the calibration directory of
+    the mct configuration.
+    """
+    config_pkg = os.environ['MCT_CONFIG']
+    calibration_dir = os.path.join(config_pkg,'calibration')
+    file_list = os.listdir(calibration_dir)
+    file_list = [f for f in file_list if 'camera_' in f]
+    if fullpath:
+        file_list = [os.path.join(calibration_dir,f) for f in file_list]
+    return file_list
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -382,8 +395,14 @@ if __name__ == '__main__':
         for node in node_list:
             print(node)
 
-    if 1:
+    if 0:
         srv_list = get_camera_calibrate_services()
         print(srv_list)
+
+    if 1:
+
+        file_list = get_camera_calibration_files()
+        for f in file_list:
+            print(f)
 
             
