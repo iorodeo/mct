@@ -26,7 +26,7 @@ from mct_utilities import json_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
-DEVELOP = True 
+DEVELOP = False 
 DEBUG = True 
 
 ## Setup application w/ sijax
@@ -267,6 +267,8 @@ def start_cameras_and_mjpeg_servers():
         while not mct_introspection.camera_nodes_ready(mode='calibration'):
             time.sleep(0.2)
         mjpeg_servers.start_servers()
+        target_info = file_tools.read_target_info()
+        calibrator_master.start(target_info['chessboard'], target_info['square'])
 
 def stop_cameras_and_mjpeg_servers():
     """
