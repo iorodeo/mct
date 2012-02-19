@@ -7,7 +7,9 @@ import os.path
 import yaml
 import json
 import subprocess
+
 from mct_utilities import json_tools
+from mct_utilities import file_tools
 
 # Services
 from mct_msg_and_srv.srv import GetJSONString 
@@ -289,6 +291,23 @@ def get_camera_calibration_files(fullpath=True):
         file_list = [os.path.join(calibration_dir,f) for f in file_list]
     return file_list
 
+def get_camera_calibration_info():
+    """
+    Returns dictionary of information regarding the existing camera calibration
+    files.
+    """
+    cal_files = get_camera_calibration_files(fullpath=True)
+    cal_info = {}
+    for f in cal_files:
+        # Get camera name
+        f_name = os.path.split(f)[-1]
+        camera, dummy = os.path.splitext(f_name)
+        # Get last modified time
+        f_time = file_tools.get_last_modified_time(f)
+        cal_info[camera] = {'file': f, 'modified': f_time}
+    return cal_info
+
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -399,10 +418,14 @@ if __name__ == '__main__':
         srv_list = get_camera_calibrate_services()
         print(srv_list)
 
-    if 1:
+    if 0:
 
         file_list = get_camera_calibration_files()
         for f in file_list:
             print(f)
+
+    if 1:
+        cal_info = get_camera_calibration_info()
+        print(cal_info)
 
             

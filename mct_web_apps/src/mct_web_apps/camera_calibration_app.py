@@ -46,6 +46,7 @@ def index():
         flask.g.sijax.register_callback('save_button_onclick', save_button_handler)
         flask.g.sijax.register_callback('reset_button_ok', reset_button_ok_handler)
         flask.g.sijax.register_callback('reset_button_cancel', reset_button_cancel_handler)
+        flask.g.sijax.register_callback('timer_update', timer_update_handler)
         return flask.g.sijax.process_request()
 
     else:
@@ -59,6 +60,10 @@ def index():
         mjpeg_info = sorted(mjpeg_info_dict.items(), cmp=mjpeg_info_cmp)
         target_info = redis_tools.get_dict(db,'target_info')
 
+        # Get list of current camera calibration files
+        calibration_info = get_camera_calibration_info()
+            
+
         render_dict = {
                 'scale'             : scale,
                 'scale_options'     : scale_options,
@@ -67,6 +72,7 @@ def index():
                 'ip_iface_ext'      : ip_iface_ext,
                 'mjpeg_info'        : mjpeg_info,
                 'target_info'       : target_info,
+                'calibration_info'  : calibration_info,
                 }
 
         return flask.render_template('camera_calibration.html',**render_dict)
@@ -75,21 +81,48 @@ def index():
 # ---------------------------------------------------------------------------------
 
 def calibrate_button_handler(obj_response):
+    """
+    Callback for when the calibrate button is clicked. Calls the calibration service
+    for cameracalibrator nodes which have sufficient data for calibration.
+    """
 
+    # Get list of cameras to calibrate
     calibrator_list = mct_introspection.get_camera_calibrator_nodes()
-    out_list = ['calibrated:']
+    cal_list = []
     for calibrator in calibrator_list:
         good_enough = calibrator_service.good_enough(calibrator)
         if good_enough:
             calibrator_service.calibrate(calibrator)
             camera_name = camera_name_from_calibrator(calibrator)
-            out_list.append(camera_name)
-    out_str = '<br>'.join(out_list)
+            cal_list.append(camera_name)
 
-    obj_response.html('#develop', out_str)
+    # Create table data for calibrations created
+    table_data = []
+    for camera_name in cal_list:
+        table_data.append('<tr> <td>')
+        table_data.append(camera_name)
+        table_data.append('</td> </tr>')
+    table_data = '\n'.join(table_data)
+
+
+    # Send object reponse to browser
+    if cal_list:
+        obj_response.html('#message', 'Calibrated cameras:')
+        obj_response.html('#message_table', table_data)
+        obj_response.attr('#message_table', 'style', 'display:block')
+    else:
+        obj_response.html('#message', 'No cameras ready for calibration')
+        obj_response.attr('#message_table', 'style', 'display:none')
+
 
 def save_button_handler(obj_response):
+    """
+    Callback for when the save button is pressed. Retrieves the calibration
+    data from the calibrator nodes and writes it to the mct_config/calibration
+    directory.
+    """
 
+    # Get dictionary of calibrations and save
     calibrator_list = mct_introspection.get_camera_calibrator_nodes()
     calibration_dict = {}
     for calibrator in calibrator_list:
@@ -97,22 +130,65 @@ def save_button_handler(obj_response):
         cal_ost_str = calibrator_service.get_calibration(calibrator)
         if cal_ost_str:
             calibration_dict[camera_name] = cal_ost_str
-
-    obj_response.html('#develop', str(calibration_dict))
     write_camera_calibration(calibration_dict)
 
+    # Create table data for calibrations saved. 
+    table_data = []
+    for camera_name in calibration_dict:
+        table_data.append('<tr> <td>')
+        table_data.append(camera_name)
+        table_data.append('</td> </tr>')
+    table_data = '\n'.join(table_data)
+
+    # Send object reponse to browser
+    if calibration_dict:
+        obj_response.html('#message', 'Saved calibrations for cameras:')
+        obj_response.html('#message_table', table_data)
+        obj_response.attr('#message_table', 'style', 'display:block')
+    else:
+        obj_response.html('#message', 'Unable to save - no cameras are calibrated')
+        obj_response.attr('#message_table', 'style', 'display:none')
+
 def reset_button_ok_handler(obj_response):
+    """
+    Callback for when the user clicks the reset button and answers in the
+    affirmative. Requests that the calbirator_master node stop and re-start the
+    individual camera calibrator nodes.
+    """
     calibrator_master.stop()
     target_info = redis_tools.get_dict(db, 'target_info')
     obj_response.html('#develop', str(type(target_info['square'])))
     calibrator_master.start(target_info['chessboard'], target_info['square'])
+    obj_response.html('#message', 'Resetting camera calibrators')
+    obj_response.attr('#message_table', 'style', 'display:none')
 
 def reset_button_cancel_handler(obj_response):
+    """
+    Callback for when the user clicks the cancel button and answers in the negative. 
+    """
     target_info = redis_tools.get_dict(db, 'target_info')
-    obj_response.html('#develop', 'reset canceled')
+    obj_response.html('#message', 'Reset canceled')
+    obj_response.attr('#message_table', 'style', 'display:none')
+
+def timer_update_handler(obj_response):
+    """
+    Callback for the timer update function. Resets the modified times for the camera 
+    calibration files.
+    """
+    calibration_info = get_camera_calibration_info()
+    for camera, info in calibration_info.iteritems():
+        obj_response.html('#{0}_modified_time'.format(camera),info['modified'])
 
 # Utility functions
 # ----------------------------------------------------------------------------------
+
+def get_camera_calibration_info(): 
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+    calibration_info = mct_introspection.get_camera_calibration_info()
+    for camera in mjpeg_info_dict:
+        if not camera in calibration_info:
+            calibration_info[camera] = {'modified': ''}
+    return calibration_info
 
 def write_camera_calibration(calibration_dict):
     """

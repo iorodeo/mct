@@ -88,7 +88,7 @@ def get_last_modified_time(filename):
     Returns the last modified time for the given file.
     """
     t_secs = os.path.getmtime(filename)
-    t_struct = time.gmtime(t_secs)
+    t_struct = time.localtime(t_secs)
     t_string = time.strftime('%m/%d/%y-%H:%M:%S', t_struct) 
     return t_string 
 
