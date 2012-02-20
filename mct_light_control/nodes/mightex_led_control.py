@@ -20,7 +20,7 @@ class MightexLedControl(object):
 
     def __init__(self):
         self.lock = threading.Lock()
-        self.port = rospy.get_param('port', '/dev/ttyUSB1')
+        self.port = rospy.get_param('port', '/dev/mightex-serial')
         self.default_imax = rospy.get_param('default_led_imax',1000)
 
         # Create device object and initialize
