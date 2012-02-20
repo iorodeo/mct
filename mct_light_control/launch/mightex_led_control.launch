@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_light_control" type="mightex_led_control.py" name="mightex_led_control" machine="mct_master"/>
+</launch>
