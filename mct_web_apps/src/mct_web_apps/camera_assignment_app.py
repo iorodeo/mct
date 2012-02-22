@@ -26,6 +26,7 @@ from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
 DEVELOP = False
+DEBUG = False
 
 # Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -379,7 +380,7 @@ if __name__ == '__main__':
     db = setup_redis_db()
     atexit.register(cleanup)
 
-    if 1:
+    if DEBUG:
         app.debug = True
         app.run()
     else:
