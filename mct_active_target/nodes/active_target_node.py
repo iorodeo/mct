@@ -3,10 +3,12 @@ import roslib
 roslib.load_manifest('mct_active_target')
 import rospy
 import time
-from mct_active_target import ActiveTarget
+from mct_active_target import ActiveTargetDev
 
 from mct_msg_and_srv.srv import ActiveTargetCmd
 from mct_msg_and_srv.srv import ActiveTargetCmdResponse
+from mct_msg_and_srv.srv import ActiveTargetInfo
+from mct_msg_and_srv.srv import ActiveTargetInfoResponse
 
 class ActiveTargetNode(object):
 
@@ -17,15 +19,32 @@ class ActiveTargetNode(object):
         self.baudrate = rospy.get_param('active_target_baudrate', 9600)
 
         # Open device
-        self.dev = ActiveTarget(port=self.port,baudrate=self.baudrate)
+        self.dev = ActiveTargetDev(port=self.port,baudrate=self.baudrate)
         self.dev.off()
 
         rospy.init_node('active_target')
-        self.trigger_cmd_srv = rospy.Service(
+
+        # Setup services
+        self.cmd_srv = rospy.Service(
                 'active_target_cmd',
                 ActiveTargetCmd,
                 self.handle_cmd
                 )
+        self.info_srv = rospy.Service(
+                'active_target_info',
+                ActiveTargetInfo,
+                self.handle_info
+                )
+
+    def handle_info(self,req):
+        """
+        Handles request for infomartion regarding the active calibration
+        target.
+        """
+        n = self.dev.ledArraySize[0]
+        m = self.dev.ledArraySize[1]
+        max_power = self.dev.maxPowerInt
+        return ActiveTargetInfoResponse(n,m,max_power)
 
     def handle_cmd(self,req):
         """
