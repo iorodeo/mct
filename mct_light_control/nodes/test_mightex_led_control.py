@@ -13,7 +13,7 @@ if __name__ == '__main__':
     cmd = sys.argv[1]
     cmd = cmd.lower()
 
-    if cmd == 'seti':
+    if cmd == 'iset':
         # Set current commands
         chan = int(sys.argv[2])
         value = int(sys.argv[3])
