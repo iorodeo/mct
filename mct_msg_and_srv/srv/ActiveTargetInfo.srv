@@ -1,0 +1,4 @@
+---
+int32 array_size_n 
+int32 array_size_m
+int32 max_power

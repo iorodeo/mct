@@ -1,0 +1,15 @@
+<package>
+  <description brief="mct_blob_finder">
+
+     mct_blob_finder
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_blob_finder</url>
+  <depend package="rospy"/>
+
+</package>
+
+
