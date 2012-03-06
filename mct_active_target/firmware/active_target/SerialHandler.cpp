@@ -20,13 +20,14 @@ void SerialHandler::switchYard() {
     uint8_t cmd = readInt(0);
 
     switch (cmd) {
-        case cmdOff:
-            Serial << "cmdOff" << endl;
+
+        case CMD_OFF:   
+            //Serial << "cmdOff" << endl;
             sysState.setModeOff();
             break;
 
-        case cmdSingleLed:
-            Serial << "cmdSetLed" << endl;
+        case CMD_SINGLE_LED:    
+            //Serial << "cmdSetLed" << endl;
             {
                 uint8_t i;
                 uint8_t j;
@@ -34,19 +35,19 @@ void SerialHandler::switchYard() {
                 i = (uint8_t) readInt(1);
                 j = (uint8_t) readInt(2);
                 newLedPower = (uint8_t) readInt(3);
-                Serial << "i,j: " << i << "," << j << "  led power: " << newLedPower << endl;
+                //Serial << "i,j: " << i << "," << j << "  led power: " << newLedPower << endl;
                 sysState.setModeSingleLed(i,j,newLedPower);
             }
             break;
 
-        case cmdPattern:
-            Serial << "cmdPattern" << endl;
+        case CMD_PATTERN:
+           // Serial << "cmdPattern" << endl;
             sysState.setModePattern();
             break;
 
         default:
             // We shouldn't be here - same as off.
-            Serial << "default - unknown cmd" << endl;
+            //Serial << "default - unknown cmd" << endl;
             break;
     }
 }

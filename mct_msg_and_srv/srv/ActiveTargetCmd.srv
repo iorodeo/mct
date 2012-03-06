@@ -1,0 +1,7 @@
+string command
+int32 ind0 
+int32 ind1 
+int32 power 
+--- 
+bool status
+string message 

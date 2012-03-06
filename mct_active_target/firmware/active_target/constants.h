@@ -7,36 +7,32 @@
 #include "WProgram.h"
 #endif
 
-const long baudrate = 9600;
+// Led array size parameters
+enum {LED_ARRAY_N=7};
+enum {LED_ARRAY_M=7};
 
-// Timer and pwm 
-const long timerPeriod = 20;
-const uint8_t timerCountMax = 50;
-
-// Led Array data
-const uint8_t ledArrayN = 7; 
-const uint8_t ledArrayM = 7;
-const uint8_t ledArray[ledArrayN][ledArrayM] = 
-{ 
-    { 51, 28, 13, 43, 16, 36,  6, },
-    {  8, 49, 26, 23, 40,  2, 33, },
-    { 31, 10, 47, 44, 17, 37,  5, },
-    { 52, 29, 12, 24, 41, 14, 34, },
-    {  7, 50, 27, 45, 18, 38,  4, },
-    { 32,  9, 48, 25, 42, 15, 35, },
-    { 53, 30, 11, 46, 22, 39,  3  }
+// Serial Comand IDs
+enum {
+    CMD_OFF        = 0,
+    CMD_SINGLE_LED = 1,
+    CMD_PATTERN    = 2,
 };
 
+extern const long baudrate;
 
-// Serial Comand ids
-const uint8_t cmdOff = 0;
-const uint8_t cmdSingleLed = 1;
-const uint8_t cmdPattern = 2;
+// Timer and pwm 
+extern const long timerPeriod;
+extern const uint8_t timerCountMax;
+
+// Led Array data
+extern const uint8_t ledArrayN; 
+extern const uint8_t ledArrayM; 
+extern const uint8_t ledArray[LED_ARRAY_N][LED_ARRAY_M];
 
 // Operating modes
-const uint8_t modeOff = 0;
-const uint8_t modeSingleLed = 1;
-const uint8_t modePattern = 2;
+extern const uint8_t modeOff;
+extern const uint8_t modeSingleLed;
+extern const uint8_t modePattern;
 
 #endif
 
