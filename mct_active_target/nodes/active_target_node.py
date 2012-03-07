@@ -15,7 +15,7 @@ class ActiveTargetNode(object):
     def __init__(self):
 
         # Get device parameters
-        self.port = rospy.get_param('active_target_port','/dev/ttyUSB2')
+        self.port = rospy.get_param('active_target_port','/dev/ttyUSB0')
         self.baudrate = rospy.get_param('active_target_baudrate', 9600)
 
         # Open device

@@ -70,7 +70,7 @@ ContourPolygon = types.ListType
 #this is some weird creepy magic in boost::python, but i had no ability
 #to export a function named "Label" (expect it collided with some keyword)
 def Label(img, imgOut, blobs):
-  return _cvblob.LabelBlobs(img, imgOut, blobs)
+  return LabelBlobs(img, imgOut, blobs)
 
 #these were just a little too painful to wrapper for what they actually do
 #compared to just implementing it in python.  Might bite you if you have

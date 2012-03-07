@@ -4,12 +4,17 @@
      mct_blob_finder
 
   </description>
-  <author>Albert Lee</author>
+  <author>Will Dickson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mct_blob_finder</url>
+
   <depend package="rospy"/>
-  <rosdep name="checkinstall"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="sensor_msgs"/>
+
+  <rosdep name="ubuntu_checkinstall"/>
   <rosdep name="cvblob"/>
 
 </package>

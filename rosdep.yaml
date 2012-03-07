@@ -34,7 +34,7 @@ ros_vision_opencv:
 ros_remote_lab:
   ubuntu: ros-electric-remote-lab
 
-checkinstall:
+ubunbtu_checkinstall:
   ubuntu: checkinstall
 
 python_netifaces:
