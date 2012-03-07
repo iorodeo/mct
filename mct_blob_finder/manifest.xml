@@ -9,6 +9,8 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mct_blob_finder</url>
   <depend package="rospy"/>
+  <rosdep name="checkinstall"/>
+  <rosdep name="cvblob"/>
 
 </package>
 

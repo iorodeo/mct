@@ -60,3 +60,7 @@ flask_sijax:
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_flask_sijax.py
 
+cvblob:
+  ubuntu: |
+    python $MCT_INSTALL_SCRIPTS/install_cvblob.py
+
