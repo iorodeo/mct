@@ -8,6 +8,11 @@
 #  the non-native types, and adding a couple helper functions
 #  the real "guts" of this project is in _cvblob.so
 #
+#  LICENSE: GNU lesser GPL, the same license as cvblob 
+#  http://www.gnu.org/licenses/lgpl.html
+#
+#  WBD: modified slightly for use in ROS package.
+# -------------------------------------------------------------------------
 
 import cv
 from _cvblob import *

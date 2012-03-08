@@ -15,6 +15,9 @@ C++ side of Python interface for the cvblob library
 This shared object is loaded by __init__.py and provides most of the
 direct wrapper calls.  
 
+LICENSE: GNU lesser GPL, the same license as cvblob 
+http://www.gnu.org/licenses/lgpl.html
+
 ****************************************************************/
 
 //First some macros, which will help us get from boost::python types
