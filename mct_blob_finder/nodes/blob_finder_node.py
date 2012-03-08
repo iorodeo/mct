@@ -86,24 +86,25 @@ class BlobFinderNode(object):
 
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
         raw_image = cv.GetImage(cv_image)
+        thresh_image = cv.CreateImage(cv.GetSize(raw_image),raw_image.depth, raw_image.channels)
 
         # Find blobs in image
-        cv.Threshold(raw_image, raw_image, threshold, 255, cv.CV_THRESH_BINARY)
+        cv.Threshold(raw_image, thresh_image, threshold, 255, cv.CV_THRESH_BINARY)
         label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
 
         blobs = cvblob.Blobs()
-        result = cvblob.Label(raw_image, label_image, blobs)
+        result = cvblob.Label(thresh_image, label_image, blobs)
 
         # Filter blobs by area
         if self.filter_by_area:
             cvblob.FilterByArea(blobs,self.min_area,self.max_area)
 
         blob_image = cv.CreateImage(cv.GetSize(raw_image), cv.IPL_DEPTH_8U, 3)
-        cv.Zero(blob_image)
-        cvblob.RenderBlobs(label_image, blobs, raw_image, blob_image, self.blob_mask, 1.0)
+        cv.CvtColor(raw_image,blob_image,cv.CV_GRAY2BGR)
 
-        rosimage = self.bridge.cv_to_imgmsg(blob_image,encoding="passthrough")
-        self.image_pub.publish(rosimage)
+        cvblob.RenderBlobs(label_image, blobs, raw_image, blob_image, self.blob_mask, 1.0)
+        blob_rosimage = self.bridge.cv_to_imgmsg(blob_image,encoding="passthrough")
+        self.image_pub.publish(blob_rosimage)
 
         # Create the blob data message and publish
         blob_data_msg = BlobData()
