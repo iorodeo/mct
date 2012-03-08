@@ -1,2 +1,2 @@
 import cvblob
-from set_param import * 
+from param_srv import * 

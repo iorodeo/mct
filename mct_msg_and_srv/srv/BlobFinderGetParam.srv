@@ -1,0 +1,5 @@
+---
+uint32 threshold
+bool filter_by_area
+uint32 min_area
+uint32 max_area

@@ -14,10 +14,13 @@ from mct_blob_finder import cvblob
 # Messages
 from sensor_msgs.msg import Image
 from mct_msg_and_srv.msg import BlobData
+from mct_msg_and_srv.msg import Blob
 
 # Services
-from mct_msg_and_srv.srv import BlobFinderParam
-from mct_msg_and_srv.srv import BlobFinderParamResponse
+from mct_msg_and_srv.srv import BlobFinderSetParam
+from mct_msg_and_srv.srv import BlobFinderSetParamResponse
+from mct_msg_and_srv.srv import BlobFinderGetParam
+from mct_msg_and_srv.srv import BlobFinderGetParamResponse
 
 class BlobFinderNode(object):
 
@@ -25,7 +28,10 @@ class BlobFinderNode(object):
         self.topic = topic
         self.lock = threading.Lock()
         self.bridge = CvBridge()
-        self.threshold = 100
+        self.threshold = 150
+        self.filter_by_area = True 
+        self.min_area = 0
+        self.max_area = 200
 
         self.blob_mask  = cvblob.CV_BLOB_RENDER_COLOR 
         self.blob_mask |= cvblob.CV_BLOB_RENDER_CENTROID 
@@ -35,20 +41,41 @@ class BlobFinderNode(object):
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_blobs', Image)
         self.blob_data_pub = rospy.Publisher('blob_data', BlobData)
-        self.param_srv = rospy.Service( 
-                'blob_finder_param', 
-                BlobFinderParam, 
-                self.handle_param_srv
+        self.set_param_srv = rospy.Service( 
+                'blob_finder_set_param', 
+                BlobFinderSetParam, 
+                self.handle_set_param_srv
+                )
+        self.get_param_srv = rospy.Service( 
+                'blob_finder_get_param', 
+                BlobFinderGetParam, 
+                self.handle_get_param_srv
                 )
 
-    def handle_param_srv(self, req):
+    def handle_set_param_srv(self, req):
         """
         Handles requests to set the blob finder's parameters. Currently this
         is just the threshold used for binarizing the image.
         """
         with self.lock:
             self.threshold = req.threshold
-        return BlobFinderParamResponse(True,'')
+            self.filter_by_area = req.filter_by_area
+            self.min_area = req.min_area
+            self.max_area = req.max_area
+        return BlobFinderSetParamResponse(True,'')
+
+    def handle_get_param_srv(self,req):
+        """
+        Handles requests for the blob finders parameters
+        """
+        with self.lock:
+            threshold = self.threshold
+            filter_by_area = self.filter_by_area
+            min_area = self.min_area
+            max_area = self.max_area
+        resp_args = (threshold, filter_by_area, min_area, max_area)
+        return  BlobFinderGetParamResponse(*resp_args)
+
 
     def image_callback(self,data):
         """
@@ -59,10 +86,17 @@ class BlobFinderNode(object):
 
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
         raw_image = cv.GetImage(cv_image)
+
+        # Find blobs in image
         cv.Threshold(raw_image, raw_image, threshold, 255, cv.CV_THRESH_BINARY)
         label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
+
         blobs = cvblob.Blobs()
         result = cvblob.Label(raw_image, label_image, blobs)
+
+        # Filter blobs by area
+        if self.filter_by_area:
+            cvblob.FilterByArea(blobs,self.min_area,self.max_area)
 
         blob_image = cv.CreateImage(cv.GetSize(raw_image), cv.IPL_DEPTH_8U, 3)
         cv.Zero(blob_image)
@@ -71,21 +105,26 @@ class BlobFinderNode(object):
         rosimage = self.bridge.cv_to_imgmsg(blob_image,encoding="passthrough")
         self.image_pub.publish(rosimage)
 
-        blob_data = BlobData()
-        blob_data.header = data.header
-        blob_data.number_of_blobs = len(blobs.keys())
+        # Create the blob data message and publish
+        blob_data_msg = BlobData()
+        blob_data_msg.header = data.header
+        blob_data_msg.number_of_blobs = len(blobs.keys())
+
         for k in blobs:
+            blob_msg = Blob()
             centroid = cvblob.Centroid(blobs[k])
-            blob_data.centroid_x.append(centroid[0])
-            blob_data.centroid_y.append(centroid[1])
+            blob_msg.centroid_x = centroid[0]
+            blob_msg.centroid_y = centroid[1]
             angle = cvblob.Angle(blobs[k])
-            blob_data.angle.append(angle)
-            blob_data.area.append(blobs[k].area)
-            blob_data.min_x.append(blobs[k].minx)
-            blob_data.max_x.append(blobs[k].maxx)
-            blob_data.min_y.append(blobs[k].miny)
-            blob_data.max_y.append(blobs[k].maxy)
-        self.blob_data_pub.publish(blob_data)
+            blob_msg.angle = angle
+            blob_msg.area = blobs[k].area
+            blob_msg.min_x = blobs[k].minx
+            blob_msg.max_x = blobs[k].maxx
+            blob_msg.min_y = blobs[k].miny
+            blob_msg.max_y = blobs[k].maxy
+            blob_data_msg.blob.append(blob_msg)
+
+        self.blob_data_pub.publish(blob_data_msg)
 
     def run(self):
         rospy.spin()
