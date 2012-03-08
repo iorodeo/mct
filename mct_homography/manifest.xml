@@ -1,0 +1,15 @@
+<package>
+  <description brief="mct_homography">
+
+     mct_homography
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_homography</url>
+  <depend package="rospy"/>
+
+</package>
+
+
