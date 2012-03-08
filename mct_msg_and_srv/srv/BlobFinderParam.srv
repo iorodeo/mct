@@ -1,0 +1,4 @@
+uint32 threshold
+---
+bool status
+string message

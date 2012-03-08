@@ -15,6 +15,10 @@ from mct_blob_finder import cvblob
 from sensor_msgs.msg import Image
 from mct_msg_and_srv.msg import BlobData
 
+# Services
+from mct_msg_and_srv.srv import BlobFinderParam
+from mct_msg_and_srv.srv import BlobFinderParamResponse
+
 class BlobFinderNode(object):
 
     def __init__(self,topic=None):
@@ -28,16 +32,34 @@ class BlobFinderNode(object):
         #self.blob_mask |= cvblob.CV_BLOB_RENDER_BOUNDING_BOX 
 
         rospy.init_node('blob_finder')
-
-        self.image_sub = rospy.Subscriber(self.topic,Image,self.image_handler)
+        self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_blobs', Image)
         self.blob_data_pub = rospy.Publisher('blob_data', BlobData)
+        self.param_srv = rospy.Service( 
+                'blob_finder_param', 
+                BlobFinderParam, 
+                self.handle_param_srv
+                )
 
-    def image_handler(self,data):
+    def handle_param_srv(self, req):
+        """
+        Handles requests to set the blob finder's parameters. Currently this
+        is just the threshold used for binarizing the image.
+        """
+        with self.lock:
+            self.threshold = req.threshold
+        return BlobFinderParamResponse(True,'')
+
+    def image_callback(self,data):
+        """
+        Callback for image topic subscription - finds blobs in image.
+        """
+        with self.lock:
+            threshold = self.threshold
 
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
         raw_image = cv.GetImage(cv_image)
-        cv.Threshold(raw_image, raw_image, self.threshold, 255, cv.CV_THRESH_BINARY)
+        cv.Threshold(raw_image, raw_image, threshold, 255, cv.CV_THRESH_BINARY)
         label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
         blobs = cvblob.Blobs()
         result = cvblob.Label(raw_image, label_image, blobs)
