@@ -13,6 +13,7 @@
   <depend package="opencv2"/>
   <depend package="cv_bridge"/>
   <depend package="sensor_msgs"/>
+  <depend package="mct_msg_and_srv"/>
 
   <rosdep name="ubuntu_checkinstall"/>
   <rosdep name="cvblob"/>
