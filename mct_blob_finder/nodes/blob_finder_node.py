@@ -4,12 +4,10 @@ import roslib
 roslib.load_manifest('mct_blob_finder')
 import rospy
 import threading
-import cv
-import cv2
 import sys
 from cv_bridge.cv_bridge import CvBridge 
-from cv_bridge.cv_bridge import CvBridgeError
 from mct_blob_finder import cvblob
+from mct_blob_finder import BlobFinder
 
 # Messages
 from sensor_msgs.msg import Image
@@ -28,14 +26,12 @@ class BlobFinderNode(object):
         self.topic = topic
         self.lock = threading.Lock()
         self.bridge = CvBridge()
-        self.threshold = 150
-        self.filter_by_area = True 
-        self.min_area = 0
-        self.max_area = 200
 
-        self.blob_mask  = cvblob.CV_BLOB_RENDER_COLOR 
-        self.blob_mask |= cvblob.CV_BLOB_RENDER_CENTROID 
-        #self.blob_mask |= cvblob.CV_BLOB_RENDER_BOUNDING_BOX 
+        self.blobFinder = BlobFinder()
+        self.blobFinder.threshold = 150
+        self.blobFinder.filter_by_area = False
+        self.blobFinder.min_area = 0
+        self.blobFinder.max_area = 200
 
         rospy.init_node('blob_finder')
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
@@ -58,10 +54,10 @@ class BlobFinderNode(object):
         is just the threshold used for binarizing the image.
         """
         with self.lock:
-            self.threshold = req.threshold
-            self.filter_by_area = req.filter_by_area
-            self.min_area = req.min_area
-            self.max_area = req.max_area
+            self.blobFinder.threshold = req.threshold
+            self.blobFinder.filter_by_area = req.filter_by_area
+            self.blobFinder.min_area = req.min_area
+            self.blobFinder.max_area = req.max_area
         return BlobFinderSetParamResponse(True,'')
 
     def handle_get_param_srv(self,req):
@@ -69,10 +65,10 @@ class BlobFinderNode(object):
         Handles requests for the blob finders parameters
         """
         with self.lock:
-            threshold = self.threshold
-            filter_by_area = self.filter_by_area
-            min_area = self.min_area
-            max_area = self.max_area
+            threshold = self.blobFinder.threshold
+            filter_by_area = self.blobFinder.filter_by_area
+            min_area = self.blobFinder.min_area
+            max_area = self.blobFinder.max_area
         resp_args = (threshold, filter_by_area, min_area, max_area)
         return  BlobFinderGetParamResponse(*resp_args)
 
@@ -82,28 +78,10 @@ class BlobFinderNode(object):
         Callback for image topic subscription - finds blobs in image.
         """
         with self.lock:
-            threshold = self.threshold
+            blobs, blobs_image = self.blobFinder.findBlobs(data)
 
-        cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
-        raw_image = cv.GetImage(cv_image)
-        thresh_image = cv.CreateImage(cv.GetSize(raw_image),raw_image.depth, raw_image.channels)
-
-        # Find blobs in image
-        cv.Threshold(raw_image, thresh_image, threshold, 255, cv.CV_THRESH_BINARY)
-        label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
-
-        blobs = cvblob.Blobs()
-        result = cvblob.Label(thresh_image, label_image, blobs)
-
-        # Filter blobs by area
-        if self.filter_by_area:
-            cvblob.FilterByArea(blobs,self.min_area,self.max_area)
-
-        blob_image = cv.CreateImage(cv.GetSize(raw_image), cv.IPL_DEPTH_8U, 3)
-        cv.CvtColor(raw_image,blob_image,cv.CV_GRAY2BGR)
-
-        cvblob.RenderBlobs(label_image, blobs, raw_image, blob_image, self.blob_mask, 1.0)
-        blob_rosimage = self.bridge.cv_to_imgmsg(blob_image,encoding="passthrough")
+        # Publish image of blobs
+        blob_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
         self.image_pub.publish(blob_rosimage)
 
         # Create the blob data message and publish
