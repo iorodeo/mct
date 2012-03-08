@@ -6,7 +6,6 @@ import rospy
 import threading
 import sys
 from cv_bridge.cv_bridge import CvBridge 
-from mct_blob_finder import cvblob
 from mct_blob_finder import BlobFinder
 
 # Messages
@@ -78,7 +77,7 @@ class BlobFinderNode(object):
         Callback for image topic subscription - finds blobs in image.
         """
         with self.lock:
-            blobs, blobs_image = self.blobFinder.findBlobs(data)
+            blobs_list, blobs_image = self.blobFinder.findBlobs(data)
 
         # Publish image of blobs
         blob_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
@@ -87,22 +86,12 @@ class BlobFinderNode(object):
         # Create the blob data message and publish
         blob_data_msg = BlobData()
         blob_data_msg.header = data.header
-        blob_data_msg.number_of_blobs = len(blobs.keys())
-
-        for k in blobs:
+        blob_data_msg.number_of_blobs = len(blobs_list)
+        for b in blobs_list:
             blob_msg = Blob()
-            centroid = cvblob.Centroid(blobs[k])
-            blob_msg.centroid_x = centroid[0]
-            blob_msg.centroid_y = centroid[1]
-            angle = cvblob.Angle(blobs[k])
-            blob_msg.angle = angle
-            blob_msg.area = blobs[k].area
-            blob_msg.min_x = blobs[k].minx
-            blob_msg.max_x = blobs[k].maxx
-            blob_msg.min_y = blobs[k].miny
-            blob_msg.max_y = blobs[k].maxy
+            for k, v in b.iteritems():
+                setattr(blob_msg,k,v)
             blob_data_msg.blob.append(blob_msg)
-
         self.blob_data_pub.publish(blob_data_msg)
 
     def run(self):
