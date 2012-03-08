@@ -5,7 +5,7 @@ roslib.load_manifest('mct_blob_finder')
 import rospy
 import threading
 import sys
-from cv_bridge.cv_bridge import CvBridge 
+
 from mct_blob_finder import BlobFinder
 
 # Messages
@@ -24,7 +24,6 @@ class BlobFinderNode(object):
     def __init__(self,topic=None):
         self.topic = topic
         self.lock = threading.Lock()
-        self.bridge = CvBridge()
 
         self.blobFinder = BlobFinder()
         self.blobFinder.threshold = 150
@@ -77,11 +76,10 @@ class BlobFinderNode(object):
         Callback for image topic subscription - finds blobs in image.
         """
         with self.lock:
-            blobs_list, blobs_image = self.blobFinder.findBlobs(data)
+            blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
 
         # Publish image of blobs
-        blob_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
-        self.image_pub.publish(blob_rosimage)
+        self.image_pub.publish(blobs_rosimage)
 
         # Create the blob data message and publish
         blob_data_msg = BlobData()

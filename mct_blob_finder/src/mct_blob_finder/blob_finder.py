@@ -5,8 +5,6 @@ import rospy
 import cv
 import cvblob
 from cv_bridge.cv_bridge import CvBridge 
-from cv_bridge.cv_bridge import CvBridgeError
-
 
 class BlobFinder(object):
     """
@@ -51,6 +49,7 @@ class BlobFinder(object):
         blobs_image = cv.CreateImage(cv.GetSize(raw_image), cv.IPL_DEPTH_8U, 3)
         cv.CvtColor(raw_image,blobs_image,cv.CV_GRAY2BGR)
         cvblob.RenderBlobs(label_image, blobs, raw_image, blobs_image, self.blob_mask, 1.0)
+        blobs_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
 
         # Convert blobs data structure to dictionary
         blobs_list = []
@@ -67,4 +66,4 @@ class BlobFinder(object):
             blob_dict['max_y'] = blobs[k].maxy
             blobs_list.append(blob_dict)
 
-        return blobs_list, blobs_image
+        return blobs_list, blobs_rosimage
