@@ -28,6 +28,7 @@ from mct_utilities import file_tools
 
 DEVELOP = False 
 DEBUG = True 
+TARGET_TYPE = 'chessboard'
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -158,7 +159,7 @@ def reset_button_ok_handler(obj_response):
     calibrator_master.stop()
     target_info = redis_tools.get_dict(db, 'target_info')
     obj_response.html('#develop', str(type(target_info['square'])))
-    calibrator_master.start(target_info['chessboard'], target_info['square'])
+    calibrator_master.start(target_info['size'], target_info['square'])
     obj_response.html('#message', 'Resetting camera calibrators')
     obj_response.attr('#message_table', 'style', 'display:none')
 
@@ -249,7 +250,7 @@ def setup_redis_db():
     scale_default = config.camera_view_table['scale_default']
     redis_tools.set_str(db,'scale', scale_default)
 
-    target_info = file_tools.read_target_info()
+    target_info = file_tools.read_target_info(TARGET_TYPE)
     redis_tools.set_dict(db, 'target_info', target_info)
 
     return db
@@ -267,8 +268,8 @@ def start_cameras_and_mjpeg_servers():
         while not mct_introspection.camera_nodes_ready(mode='calibration'):
             time.sleep(0.2)
         mjpeg_servers.start_servers()
-        target_info = file_tools.read_target_info()
-        calibrator_master.start(target_info['chessboard'], target_info['square'])
+        target_info = file_tools.read_target_info(TARGET_TYPE)
+        calibrator_master.start(target_info['size'], target_info['square'])
 
 def stop_cameras_and_mjpeg_servers():
     """

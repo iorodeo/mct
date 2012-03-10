@@ -17,6 +17,8 @@ from std_srvs.srv import Empty
 from std_srvs.srv import EmptyResponse
 from mct_msg_and_srv.srv import GetMatrix
 from mct_msg_and_srv.srv import GetMatrixResponse
+from mct_msg_and_srv.srv import GetBool
+from mct_msg_and_srv.srv import GetBoolResponse
 
 # Messages
 from sensor_msgs.msg import Image
@@ -93,8 +95,8 @@ class HomographyCalibratorNode(object):
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
 
         # Publications - blobs image and calibration progress image
-        self.image_blobs_pub = rospy.Publisher('image_blobs', Image)
-        self.image_calib_pub = rospy.Publisher('image_calibration', Image)
+        self.image_blobs_pub = rospy.Publisher('image_homography_blobs', Image)
+        self.image_calib_pub = rospy.Publisher('image_homography_calibration', Image)
 
         # Services
         node_name = rospy.get_name()
@@ -108,6 +110,12 @@ class HomographyCalibratorNode(object):
                 '{0}/get_matrix'.format(node_name),
                 GetMatrix,
                 self.handle_get_matrix_srv
+                )
+
+        self.is_calibrated_srv = rospy.Service(
+                '{0}/is_calibrated'.format(node_name),
+                GetBool,
+                self.handle_is_calibrated_srv
                 )
 
     def handle_start_srv(self,req):
@@ -135,6 +143,16 @@ class HomographyCalibratorNode(object):
         else:
             data = self.homography_matrix.reshape((9,))
         return GetMatrixResponse(3,3,data)
+
+    def handle_is_calibrated_srv(self,req):
+        """
+        Handles requests for whether or not the homography calibration has been completed.
+        """
+        if self.homography_matrix is not None:
+            value = True
+        else:
+            value = False
+        return GetBoolResponse(value)
 
 
     def image_callback(self,data):
@@ -212,6 +230,7 @@ class HomographyCalibratorNode(object):
             else:
                 self.state = WAITING
                 self.image_info = 'not enough data'
+                self.homography_matrix = None
 
     def run(self):
         """

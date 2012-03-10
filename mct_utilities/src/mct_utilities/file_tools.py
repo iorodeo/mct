@@ -35,6 +35,19 @@ def read_camera_assignment():
     else:
         return None
 
+def get_camera_calibration_files(fullpath=True):
+    """
+    Returns a list of the camera calibration yaml files in the calibration directory of
+    the mct configuration.
+    """
+    config_pkg = os.environ['MCT_CONFIG']
+    calibration_dir = os.path.join(config_pkg,'cameras', 'calibrations')
+    file_list = os.listdir(calibration_dir)
+    file_list = [f for f in file_list if 'camera_' in f]
+    if fullpath:
+        file_list = [os.path.join(calibration_dir,f) for f in file_list]
+    return file_list
+
 def write_camera_calibration(camera_name, cal_ost_str):
     """
     Writes the camera calibration given the camera name and calibration ost
@@ -45,10 +58,10 @@ def write_camera_calibration(camera_name, cal_ost_str):
     files.
     """
     config_dir = os.environ['MCT_CONFIG']
-    calibration_dir = os.path.join(config_dir,'calibration')
+    calibration_dir = os.path.join(config_dir,'cameras', 'calibrations')
     if not os.path.isdir(calibration_dir):
         os.mkdir(calibration_dir)
-    basename = os.path.join(config_dir,'calibration', camera_name)
+    basename = os.path.join(config_dir,'cameras','calibrations', camera_name)
     filename_ost = '{0}.ini'.format(basename)
     filename_yaml = '{0}.yaml'.format(basename)
 
@@ -70,14 +83,13 @@ def write_camera_calibration(camera_name, cal_ost_str):
             f.write(line)
         f.write('\n\n')
         
-    
-def read_target_info():
+def read_target_info(name):
     """
     Reads the current target information form the target .yaml file.
     """
     config_dir = os.environ['MCT_CONFIG']
-    calibration_dir = os.path.join(config_dir,'calibration')
-    filename = os.path.join(calibration_dir,'target.yaml')
+    targets_dir = os.path.join(config_dir, 'targets')
+    filename = os.path.join(targets_dir,'{0}.yaml'.format(name))
     with open(filename,'r') as f: 
         target_info = yaml.load(f)
     target_info['square'] = str(target_info['square'])
@@ -103,5 +115,8 @@ if __name__ == '__main__':
         t = get_last_modified_time('/home/albert/ros/mct_config/calibration/camera_1.yaml')
         print(t)
 
-
+    if 0:
+        file_list = get_camera_calibration_files()
+        for f in file_list:
+            print(f)
 
