@@ -58,11 +58,11 @@ class HomographyCalibratorNode(object):
         self.led_n_max = target_info[0] 
         self.led_m_max = target_info[1]
         self.led_max_power = target_info[2]
+        self.led_space_x = 2.5*0.0254
+        self.led_space_y = 2.5*0.0254
         self.led_n = 0
         self.led_m = 0
         self.led_power = 10 
-        self.led_space_x = 1.5*0.0254
-        self.led_space_y = 1.5*0.0254
         self.number_of_leds = self.led_n_max*self.led_m_max
         mct_active_target.off()
 

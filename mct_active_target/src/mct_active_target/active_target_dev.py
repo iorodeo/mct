@@ -1,8 +1,7 @@
+from __future__ import print_function
 import serial
 import time
 
-MAX_POWER_INT = 50 
-LED_ARRAY_SIZE = (7,7)
 RESET_SLEEP_DT = 2
 
 class ActiveTargetDev(serial.Serial):
@@ -11,10 +10,12 @@ class ActiveTargetDev(serial.Serial):
     target.
     """
 
-    def __init__(self,*arg,**kwarg):
-        super(ActiveTargetDev,self).__init__(*arg,**kwarg)
-        self.ledArraySize = LED_ARRAY_SIZE
-        self.maxPowerInt = MAX_POWER_INT
+    def __init__(self,target_info):
+        port, baudrate, square, ledArraySize, maxPowerInt,  = self.extract_info(target_info)
+        super(ActiveTargetDev,self).__init__(port=port, baudrate=baudrate)
+        self.ledArraySize = ledArraySize
+        self.maxPowerInt = maxPowerInt
+        self.square = square
         time.sleep(RESET_SLEEP_DT)
 
     def sendCmd(self,cmd):
@@ -48,16 +49,29 @@ class ActiveTargetDev(serial.Serial):
         cmd = '[2]'
         self.sendCmd(cmd)
 
+    def extract_info(self,target_info):
+        port = target_info['port']
+        baudrate = target_info['baudrate']
+        square = target_info['square']
+        ledArraySize = tuple([int(x) for x in target_info['size'].split('x')])
+        maxPowerInt = target_info['max_power']
+        return port, baudrate, square, ledArraySize, maxPowerInt
+
+        
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+    import roslib
+    roslib.load_manifest('mct_active_target')
+    import rospy
+    from mct_utilities import file_tools
 
-    port = '/dev/ttyUSB2'
-    baudrate = 9600
-    dev = ActiveTargetDev(port=port,baudrate=baudrate)
+    target_info = file_tools.read_target_info('active')
+    dev = ActiveTargetDev(target_info)
 
-    if 1:
+    if 0:
         dev.led(5,3,10)
-    else: 
+    if 1:
         dev.pattern()
 
     raw_input('to quit press enter')

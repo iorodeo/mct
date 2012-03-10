@@ -4,6 +4,7 @@ roslib.load_manifest('mct_active_target')
 import rospy
 import time
 from mct_active_target import ActiveTargetDev
+from mct_utilities import file_tools
 
 from mct_msg_and_srv.srv import ActiveTargetCmd
 from mct_msg_and_srv.srv import ActiveTargetCmdResponse
@@ -14,15 +15,12 @@ class ActiveTargetNode(object):
 
     def __init__(self):
 
-        # Get device parameters
-        self.port = rospy.get_param('active_target_port','/dev/active-target')
-        self.baudrate = rospy.get_param('active_target_baudrate', 9600)
-
         # Open device
-        self.dev = ActiveTargetDev(port=self.port,baudrate=self.baudrate)
+        target_info = file_tools.read_target_info('active')
+        self.dev = ActiveTargetDev(target_info)
         self.dev.off()
-
         rospy.init_node('active_target')
+        rospy.on_shutdown(self.shutdown)
 
         # Setup services
         self.cmd_srv = rospy.Service(
@@ -35,6 +33,12 @@ class ActiveTargetNode(object):
                 ActiveTargetInfo,
                 self.handle_info
                 )
+
+    def run(self):
+        rospy.spin()
+
+    def shutdown(self):
+        self.dev.off()
 
     def handle_info(self,req):
         """
@@ -78,8 +82,6 @@ class ActiveTargetNode(object):
             message = 'error: unkown command: {0}'.format(command)
         return ActiveTargetCmdResponse(status,message)
 
-    def run(self):
-        rospy.spin()
 
 
 # -----------------------------------------------------------------------------

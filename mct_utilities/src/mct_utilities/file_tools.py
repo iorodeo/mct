@@ -107,12 +107,18 @@ def get_last_modified_time(filename):
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    if 0:
-        target_info = read_target_info()
-        print(target_info)
-
     if 1:
-        t = get_last_modified_time('/home/albert/ros/mct_config/calibration/camera_1.yaml')
+        target_info = read_target_info('chessboard')
+        print('chessboard')
+        print(target_info)
+        print()
+        target_info = read_target_info('active')
+        print('active')
+        print(target_info)
+        print()
+
+    if 0:
+        t = get_last_modified_time('/home/albert/ros/mct_config/cameras/calibrations/camera_1.yaml')
         print(t)
 
     if 0:
