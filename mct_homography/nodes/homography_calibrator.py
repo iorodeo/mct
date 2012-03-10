@@ -12,10 +12,14 @@ import mct_active_target
 from mct_blob_finder import BlobFinder
 from cv_bridge.cv_bridge import CvBridge 
 
-# Messages
-from sensor_msgs.msg import Image
+# Services
 from std_srvs.srv import Empty
 from std_srvs.srv import EmptyResponse
+from mct_msg_and_srv.srv import GetMatrix
+from mct_msg_and_srv.srv import GetMatrixResponse
+
+# Messages
+from sensor_msgs.msg import Image
 
 WAITING = 0
 WORKING = 1
@@ -76,7 +80,7 @@ class HomographyCalibratorNode(object):
         self.blobFinder.max_area = 200
 
         # Initialize homography matrix and number of points required to solve for it
-        self.homography_matirx = None
+        self.homography_matrix = None
         self.num_points_required = 10
 
         # Set font and initial image information
@@ -93,10 +97,17 @@ class HomographyCalibratorNode(object):
         self.image_calib_pub = rospy.Publisher('image_calibration', Image)
 
         # Services
+        node_name = rospy.get_name()
         self.start_srv = rospy.Service(
-                'homography_calibrator_start',
+                '{0}/start'.format(node_name),
                 Empty,
                 self.handle_start_srv
+                )
+
+        self.get_matrix_srv = rospy.Service(
+                '{0}/get_matrix'.format(node_name),
+                GetMatrix,
+                self.handle_get_matrix_srv
                 )
 
     def handle_start_srv(self,req):
@@ -113,6 +124,18 @@ class HomographyCalibratorNode(object):
             self.led_n = 0
             self.led_m = 0
         return EmptyResponse()
+
+    def handle_get_matrix_srv(self,req):
+        """
+        Returns the homography matrix. If the homography matrix has not yet be computed the 
+        identity matirx is returned.
+        """
+        if self.homography_matrix is None:
+            data = [1,0,0, 0,1,0, 0,0,1]
+        else:
+            data = self.homography_matrix.reshape((9,))
+        return GetMatrixResponse(3,3,data)
+
 
     def image_callback(self,data):
         """
