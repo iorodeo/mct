@@ -27,7 +27,7 @@ from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
 DEVELOP = False 
-DEBUG = True 
+DEBUG = False 
 TARGET_TYPE = 'chessboard'
 
 ## Setup application w/ sijax

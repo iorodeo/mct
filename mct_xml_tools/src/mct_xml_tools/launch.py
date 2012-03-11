@@ -241,14 +241,14 @@ if __name__ == '__main__':
                 }
         create_mjpeg_server_launch(filename,mjpeg_info_dict)
 
-    if 0:
+    if 1:
         filename = 'camera.launch'
         yaml_directory = './'
         camera_assignment = mct_introspection.get_camera_assignment()
         create_camera_yaml(directory=yaml_directory,camera_assignment=camera_assignment)
         create_camera_launch(filename=filename,camera_assignment=camera_assignment)
 
-    if 1:
+    if 0:
         filename = 'camera_calibrator.launch'
         image_topics = [
                 '/mct_slave2/camera_10/camera/image_raw', 
