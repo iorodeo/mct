@@ -28,6 +28,9 @@ def set_led(i,j,power):
 def off():
     active_target_cmd('off')
 
+def all():
+    active_target_cmd('all')
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':

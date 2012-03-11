@@ -45,6 +45,10 @@ void SerialHandler::switchYard() {
             sysState.setModePattern();
             break;
 
+        case CMD_ALL:   
+            sysState.setModeAll();
+            break;
+
         default:
             // We shouldn't be here - same as off.
             //Serial << "default - unknown cmd" << endl;

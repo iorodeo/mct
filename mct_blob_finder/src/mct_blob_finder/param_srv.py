@@ -7,19 +7,21 @@ import rospy
 from mct_msg_and_srv.srv import BlobFinderSetParam
 from mct_msg_and_srv.srv import BlobFinderGetParam
 
-def set_param(threshold, filter_by_area, min_area, max_area, service='/blob_finder_set_param'):
+def set_param(node_name, threshold, filter_by_area, min_area, max_area):
     """
     Sets the blob finder parameters.
     """
+    service = '{0}/set_param'.format(node_name)
     rospy.wait_for_service(service)
     proxy = rospy.ServiceProxy(service,BlobFinderSetParam)
     resp = proxy(threshold, filter_by_area, min_area, max_area)
     return resp.status, resp.message
 
-def get_param(service='/blob_finder_get_param'):
+def get_param(node_name):
     """
     Gets the blob finders parametes
     """
+    service = '{0}/get_param'.format(node_name)
     rospy.wait_for_service(service)
     proxy = rospy.ServiceProxy(service,BlobFinderGetParam)
     resp = proxy()
@@ -33,12 +35,12 @@ if __name__ == "__main__":
     min_area = 0
     max_area = 100
 
-    status, message = set_param(threshold,filter_by_area,min_area,max_area)
+    status, message = set_param('/blob_finder', threshold,filter_by_area,min_area,max_area)
     print(status)
     print(message)
     print()
 
-    threshold, filter_by_area, min_area, max_area = get_param()
+    threshold, filter_by_area, min_area, max_area = get_param('/blob_finder')
     print('threshold', threshold)
     print('filter_by_area', filter_by_area)
     print('min_area', min_area)

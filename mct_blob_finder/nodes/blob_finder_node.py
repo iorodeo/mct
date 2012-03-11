@@ -35,13 +35,14 @@ class BlobFinderNode(object):
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_blobs', Image)
         self.blob_data_pub = rospy.Publisher('blob_data', BlobData)
+        node_name = rospy.get_name()
         self.set_param_srv = rospy.Service( 
-                'blob_finder_set_param', 
+                '{0}/set_param'.format(node_name), 
                 BlobFinderSetParam, 
                 self.handle_set_param_srv
                 )
         self.get_param_srv = rospy.Service( 
-                'blob_finder_get_param', 
+                '{0}/get_param'.format(node_name), 
                 BlobFinderGetParam, 
                 self.handle_get_param_srv
                 )

@@ -61,10 +61,12 @@ class ActiveTargetNode(object):
         command = req.command.lower()
         status = True
         message = ''
-        if command == 'off':
+        if command == 'off' or command == 'alloff':
             self.dev.off()
         elif command == 'pattern':
             self.dev.pattern()
+        elif command == 'all' or command == 'allon':
+            self.dev.all()
         elif command == 'led':
             if req.ind0 < 0 or req.ind0 >= self.dev.ledArraySize[0]:
                 status = False

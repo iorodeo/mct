@@ -14,6 +14,7 @@ class State {
         void setModeSingleLed(uint8_t newLedPin, uint8_t newLedPower);
         void setModeSingleLed(uint8_t i, uint8_t j, uint8_t newLedPower);
         void setModePattern();
+        void setModeAll();
         void updateTimerCount();
         void updateSingleLedOutput();
 };

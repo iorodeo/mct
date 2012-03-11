@@ -49,6 +49,10 @@ class ActiveTargetDev(serial.Serial):
         cmd = '[2]'
         self.sendCmd(cmd)
 
+    def all(self):
+        cmd = '[3]'
+        self.sendCmd(cmd)
+
     def extract_info(self,target_info):
         port = target_info['port']
         baudrate = target_info['baudrate']

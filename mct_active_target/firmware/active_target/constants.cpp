@@ -25,3 +25,4 @@ const uint8_t ledArray[LED_ARRAY_N][LED_ARRAY_M] =
 const uint8_t modeOff = 0;
 const uint8_t modeSingleLed = 1;
 const uint8_t modePattern = 2;
+const uint8_t modeAll = 3;

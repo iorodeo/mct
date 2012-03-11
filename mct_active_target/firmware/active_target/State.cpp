@@ -62,6 +62,17 @@ void State::setModePattern() {
     }
 }
 
+void State::setModeAll() {
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        mode = modeAll;
+    }
+    for (int i=0; i<ledArrayN; i++) {
+        for (int j=0; j<ledArrayM; j++) {
+            digitalWrite(ledArray[i][j],HIGH);
+        }
+    }
+}
+
 void State::updateTimerCount() {
     timerCount++;
     if (timerCount >= timerCountMax) {
