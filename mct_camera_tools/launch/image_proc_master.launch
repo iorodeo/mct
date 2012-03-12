@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_camera_tools" type="image_proc_master.py" name="image_proc_master" machine="mct_master" required="true"/>
+</launch>

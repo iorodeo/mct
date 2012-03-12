@@ -206,7 +206,29 @@ def create_image_proc_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def create_homography_calibrator_launch(filename):
+    """
+    Creates launch file for homography calibrators
+    """
+    template_name = 'homography_calibrator_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
 
+    # Get list of pairs (namespace, rectified images)
+    image_rect_list = mct_introspection.find_camera_image_topics(transport='image_rect')
+    launch_list = []
+    for topic in image_rect_list:
+        print(topic)
+        topic_split = topic.split('/')
+        namespace = '/'.join(topic_split[:4])
+        launch_list.append((namespace,topic))
+
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(machine_file=machine_file, launch_list=launch_list)
+    with open(filename,'w') as f:
+        f.write(xml_str)
     
 
 # -----------------------------------------------------------------------------
@@ -294,9 +316,13 @@ if __name__ == '__main__':
         chessboard_square = '0.0254'
         create_camera_calibrator_launch(filename,image_topics,chessboard_size,chessboard_square)
 
-    if 1:
+    if 0:
         filename = 'image_proc.launch'
         create_image_proc_launch(filename)
+
+    if 1:
+        filename = 'homography_calibrator.launch'
+        create_homography_calibrator_launch(filename)
 
 
 
