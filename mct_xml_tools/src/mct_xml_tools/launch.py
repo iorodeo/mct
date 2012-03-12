@@ -212,6 +212,7 @@ def create_homography_calibrator_launch(filename):
     """
     template_name = 'homography_calibrator_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
+    params_file = mct_utilities.file_tools.homography_calibrator_params_file
 
     # Get list of pairs (namespace, rectified images)
     image_rect_list = mct_introspection.find_camera_image_topics(transport='image_rect')
@@ -222,11 +223,14 @@ def create_homography_calibrator_launch(filename):
         namespace = '/'.join(topic_split[:4])
         launch_list.append((namespace,topic))
 
-
     # Create xml launch file
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
-    xml_str = template.render(machine_file=machine_file, launch_list=launch_list)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            params_file=params_file,
+            launch_list=launch_list
+            )
     with open(filename,'w') as f:
         f.write(xml_str)
     

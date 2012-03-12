@@ -3,7 +3,9 @@
     <include file="{{machine_file}}" />
     {% for namespace, image_topic in launch_list %}
     <group ns="{{namespace}}">
-        <node pkg="mct_homography" type="homography_calibrator.py" name="homography_calibrator" args="{{image_topic}}" />
+        <node pkg="mct_homography" type="homography_calibrator.py" name="homography_calibrator" args="{{image_topic}}" >
+            <rosparam command="load" file="{{params_file}}"/>
+        </node>
     </group>
     {% endfor %} 
 </launch>

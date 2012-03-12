@@ -10,6 +10,7 @@ import sys
 import threading
 import mct_active_target
 from mct_blob_finder import BlobFinder
+from mct_utilities import file_tools
 from cv_bridge.cv_bridge import CvBridge 
 
 # Services
@@ -48,26 +49,36 @@ class HomographyCalibratorNode(object):
         self.bridge = CvBridge()
         self.lock = threading.Lock()
 
+        rospy.init_node('homography_calibrator', log_level=rospy.DEBUG)
+        node_name = rospy.get_name()
+
         # Initialize data lists
         self.blobs_list = [] 
         self.image_points = [] 
         self.world_points = []
 
         # Set active target information and turn off leds
+        rospy.logdebug('running active_target_info'.format(node_name))
         target_info = mct_active_target.active_target_info()
+        rospy.logdebug('done'.format(node_name))
         self.led_n_max = target_info[0] 
         self.led_m_max = target_info[1]
-        self.led_max_power = target_info[2]
-        self.led_space_x = 2.5*0.0254
-        self.led_space_y = 2.5*0.0254
-        self.led_n = 0
-        self.led_m = 0
-        self.led_power = 10 
         self.number_of_leds = self.led_n_max*self.led_m_max
+        self.led_max_power = target_info[2]
+        self.led_space_x = target_info[3] 
+        self.led_space_y = target_info[3] 
         mct_active_target.off()
 
+        # Current led indices
+        self.led_n = 0
+        self.led_m = 0
+
+        # Led power setting
+        self.led_power = rospy.get_param('{0}/target/led_power'.format(node_name),10)  
+
         # Wait count for image acquisition
-        self.image_wait_number = 4
+        #self.image_wait_number = int(calibrator_params['image_wait_number'])
+        self.image_wait_number = rospy.get_param('{0}/image_wait_number',4) 
         self.image_wait_cnt = 0
 
         # Sleep periods for idle and wait count loops
@@ -76,20 +87,31 @@ class HomographyCalibratorNode(object):
 
         # Initialize blob finder
         self.blobFinder = BlobFinder()
-        self.blobFinder.threshold = 200 
-        self.blobFinder.filter_by_area = False
-        self.blobFinder.min_area = 0
-        self.blobFinder.max_area = 200
+        self.blobFinder.threshold = rospy.get_param(
+                '{0}/blob_finder/threshold'.format(node_name),
+                200
+                ) 
+        self.blobFinder.filter_by_area = rospy.get_param(
+                '{0}/blob_finder/filter_by_area'.format(node_name), 
+                False
+                ) 
+        self.blobFinder.min_area = rospy.get_param(
+                '{0}/blob_finder/min_area'.format(node_name), 
+                0
+                )
+        self.blobFinder.max_area = rospy.get_param(
+                '{0}/blob_finder/max_area'.format(node_name),
+                200
+                ) 
 
         # Initialize homography matrix and number of points required to solve for it
         self.homography_matrix = None
-        self.num_points_required = 10
+        self.num_points_required = rospy.get_param('{0}/num_points_required'.format(node_name), 10) 
 
         # Set font and initial image information
         self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.8, 0.8,thickness=1)
         self.image_info= 'no data'
 
-        rospy.init_node('homography_calibrator')
 
         # Subscription to image topic
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
@@ -99,7 +121,6 @@ class HomographyCalibratorNode(object):
         self.image_calib_pub = rospy.Publisher('image_homography_calibration', Image)
 
         # Services
-        node_name = rospy.get_name()
         self.start_srv = rospy.Service(
                 '{0}/start'.format(node_name),
                 Empty,

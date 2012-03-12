@@ -17,7 +17,7 @@ def active_target_info():
     rospy.wait_for_service('active_target_info')
     proxy = rospy.ServiceProxy('active_target_info',ActiveTargetInfo)
     resp = proxy()
-    return resp.array_size_n, resp.array_size_m, resp.max_power
+    return resp.array_size_n, resp.array_size_m, resp.max_power, resp.square
 
 def set_pattern():
     active_target_cmd('pattern')
@@ -34,29 +34,32 @@ def all():
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+
     import time
 
+    print()
     print('active_target_info')
-    led_n, led_m, max_power = active_target_info()
+    led_n, led_m, max_power, square = active_target_info()
     print('led_n:     {0}'.format(led_n))
     print('led_m:     {0}'.format(led_m))
     print('max_power: {0}'.format(max_power))
+    print('sqaure:    {0}'.format(square))
     print()
     time.sleep(1.0)
 
-    print('set_led')
-    for i in range(0,led_n):
-        for j in range(0,led_m):
-            print(' (i,j) = ({0},{1})'.format(i,j))
-            set_led(i,j,20)
-            time.sleep(0.25)
-    print()
+    #print('set_led')
+    #for i in range(0,led_n):
+    #    for j in range(0,led_m):
+    #        print(' (i,j) = ({0},{1})'.format(i,j))
+    #        set_led(i,j,20)
+    #        time.sleep(0.25)
+    #print()
 
-    print('set_pattern')
-    set_pattern()
-    print()
+    #print('set_pattern')
+    #set_pattern()
+    #print()
 
-    time.sleep(5)
+    #time.sleep(5)
 
     print('off')
     off()

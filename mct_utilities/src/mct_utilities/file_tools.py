@@ -12,12 +12,15 @@ cameras_dir = os.path.join(config_dir,'cameras')
 camera_calibration_dir = os.path.join(cameras_dir, 'calibrations')
 machine_dir = os.path.join(config_dir,'machine')
 targets_dir = os.path.join(config_dir, 'targets')
+tracking_2d_dir = os.path.join(config_dir, 'tracking_2d')
+homographies_dir = os.path.join(tracking_2d_dir, 'homographies')
 
 # Configuration files
 camera_assignment_file  = os.path.join(config_dir, 'cameras', 'camera_assignment.yaml')
 frame_rates_file = os.path.join(cameras_dir, 'frame_rates.yaml')
 machine_def_file = os.path.join(machine_dir,'machine_def.yaml')
 machine_launch_file = os.path.join(machine_dir,'mct.machine')
+homography_calibrator_params_file = os.path.join(homographies_dir, 'calibrator_params.yaml')
 
 def read_machine_def():
     """
@@ -117,6 +120,14 @@ def read_target_info(name):
         target_info = yaml.load(f)
     target_info['square'] = str(target_info['square'])
     return target_info
+
+def read_homography_calibrator_params():
+    """
+    Reads the homography calibrator parameters file
+    """
+    with open(homography_calibrator_params_file,'r') as f:
+        calibrator_params = yaml.load(f)
+    return calibrator_params
 
 def get_last_modified_time(filename):
     """
@@ -224,6 +235,9 @@ if __name__ == '__main__':
         caldata = read_camera_calibration('camera_1')
         print(caldata)
 
-    if 1:
+    if 0:
         rsync_camera_calibrations(verbose=True)
+
+    if 1:
+        read_homography_calibrator_params()
 

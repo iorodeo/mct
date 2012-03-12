@@ -56,9 +56,9 @@ class ActiveTargetDev(serial.Serial):
     def extract_info(self,target_info):
         port = target_info['port']
         baudrate = target_info['baudrate']
-        square = target_info['square']
+        square = float(target_info['square'])
         ledArraySize = tuple([int(x) for x in target_info['size'].split('x')])
-        maxPowerInt = target_info['max_power']
+        maxPowerInt = int(target_info['max_power'])
         return port, baudrate, square, ledArraySize, maxPowerInt
 
         

@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_active_target" type="active_target_node.py" name="active_target" machine="mct_master" required="true"/>
+</launch>

@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find mct_active_target)/launch/active_target.launch" />
+    <include file="$(find mct_camera_tools)/launch/camera1394_master.launch" />
+    <include file="$(find mct_camera_tools)/launch/image_proc_master.launch" /> 
+    <include file="$(find mct_camera_tools)/launch/mjpeg_manager.launch" />
+</launch>

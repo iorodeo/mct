@@ -19,6 +19,7 @@ class ActiveTargetNode(object):
         target_info = file_tools.read_target_info('active')
         self.dev = ActiveTargetDev(target_info)
         self.dev.off()
+
         rospy.init_node('active_target')
         rospy.on_shutdown(self.shutdown)
 
@@ -48,7 +49,8 @@ class ActiveTargetNode(object):
         n = self.dev.ledArraySize[0]
         m = self.dev.ledArraySize[1]
         max_power = self.dev.maxPowerInt
-        return ActiveTargetInfoResponse(n,m,max_power)
+        square = self.dev.square
+        return ActiveTargetInfoResponse(n,m,max_power,square)
 
     def handle_cmd(self,req):
         """
