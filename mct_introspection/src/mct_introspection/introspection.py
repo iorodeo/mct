@@ -176,11 +176,7 @@ def get_machine_def():
     """
     Reads the machine definition file.
     """
-    config_pkg = os.environ['MCT_CONFIG']
-    machine_def_file = os.path.join(config_pkg,'machine','machine_def.yaml')
-    with open(machine_def_file,'r') as f:
-        machine_def = yaml.load(f)
-    return machine_def
+    return file_tools.read_machine_def()
 
 def get_slave_info():
     """
@@ -238,29 +234,14 @@ def get_camera_assignment():
     """
     Reads the current camera assignment yaml file.
     """
-    config_pkg = os.environ['MCT_CONFIG']
-    filename = os.path.join(config_pkg,'cameras', 'camera_assignment.yaml')
-    if os.path.isfile(filename):
-        with open(filename,'r') as f:
-            camera_assignment = yaml.load(f)
-    else:
-        camera_assignment = None
-    return camera_assignment
+    return file_tools.read_camera_assignment()
 
 def get_frame_rates():
     """
     Reads the frame_rates.yaml file and returns a dictionary of the allowed frame
     rates.
     """
-    config_pkg = os.environ['MCT_CONFIG']
-    filename = os.path.join(config_pkg,'cameras', 'frame_rates.yaml')
-    if os.path.isfile(filename):
-        with open(filename,'r') as f:
-            frame_rates = yaml.load(f)
-    else:
-        frame_rates = None
-    return frame_rates
-
+    return file_tools.read_frame_rates()
 
 def get_camera_calibrator_nodes():
     """
@@ -298,6 +279,7 @@ def get_camera_calibration_info():
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+    
 
     if 0:
         node_list = get_nodes()
@@ -390,7 +372,7 @@ if __name__ == '__main__':
             for kk, vv in v.iteritems():
                 print('  ',kk,vv)
     
-    if 0:
+    if 1:
 
         frame_rates = get_frame_rates()
         for k,v in frame_rates.iteritems():
@@ -407,7 +389,7 @@ if __name__ == '__main__':
         print(srv_list)
 
 
-    if 1:
+    if 0:
         cal_info = get_camera_calibration_info()
         print(cal_info)
 

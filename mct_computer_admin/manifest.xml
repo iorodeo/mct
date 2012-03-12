@@ -11,6 +11,7 @@
   <depend package="rospy"/>
   <depend package="mct_xml_tools"/>
   <depend package="mct_introspection"/>
+  <depand package="mct_file_tools"/>
 
   <rosdep name="fabric"/>
 

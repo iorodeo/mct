@@ -10,6 +10,7 @@ import os.path
 import subprocess
 import mct_xml_tools
 import mct_introspection
+import mct_utilities
 
 from fabric.api import *
 from fabric.decorators import hosts
@@ -36,7 +37,7 @@ cmd_msgs = {
         'list_machine_def': 'listing current machine definition',
         'list_cameras': 'listing cameras',
         'list_camera_assignment': 'listing camera assignment', 
-        'create_camera_launch': 'creating camera launch files',
+        'rsync_camera_calibrations':'rsyncing camera calibraitons',
         'test': 'test command for development',
         }
 
@@ -53,8 +54,6 @@ fab_cmds = [
         'clean',
         'rosmake',
         'rosmake_preclean',
-        'update_machine_def',
-        'list_machine_def',
         ]
 
 def wakeup():
@@ -199,9 +198,9 @@ def update_machine_def():
     machine definition file.
     """
     machine_def = mct_introspection.get_machine_def()
-    mct_config = os.environ['MCT_CONFIG']
-    mct_machine_file = os.path.join(mct_config,'machine','mct.machine')
-    mct_xml_tools.launch.create_machine_launch(mct_machine_file,machine_def)
+    machine_dir = mct_utilities.file_tools.machine_dir
+    mct_machine_file = os.path.join(machine_dir, 'mct.machine')
+    mct_xml_tools.launch.create_machine_launch(mct_machine_file, machine_def)
 
 def list_machine_def():
     """
@@ -259,19 +258,11 @@ def list_camera_assignment():
     else:
         print('\n camera assignment is None\n')
 
-def create_camera_launch():
+def rsync_camera_calibrations():
     """
-    Create camera launch files.
+    Use rsync to send camera calibrations to camera computers
     """
-    config_pkg = os.environ['MCT_CONFIG']
-    directory = os.path.join(config_pkg,'cameras')
-    camera_assignment = mct_introspection.get_camera_assignment()
-    filename_norm = os.path.join(config_pkg,'cameras','camera.launch')
-    filename_trig = os.path.join(config_pkg,'cameras','camera_trig.launch')
-    mct_xml_tools.launch.create_camera_yaml(directory, camera_assignment)
-    mct_xml_tools.launch.create_camera_launch(filename_norm, camera_assignment, trigger=False)
-    mct_xml_tools.launch.create_camera_launch(filename_trig, camera_assignment, trigger=True)
-
+    mct_utilities.file_tools.rsync_camera_calibrations(verbose=True)
 
 def test(*args):
     print('test')
@@ -304,5 +295,4 @@ def main(argv):
             globals()[cmd]() 
         except KeyError:
             print('ERROR: command not found, {0}'.format(cmd))
-
 
