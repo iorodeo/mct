@@ -15,8 +15,9 @@ targets_dir = os.path.join(config_dir, 'targets')
 
 # Configuration files
 camera_assignment_file  = os.path.join(config_dir, 'cameras', 'camera_assignment.yaml')
-machine_def_file = os.path.join(machine_dir,'machine_def.yaml')
 frame_rates_file = os.path.join(cameras_dir, 'frame_rates.yaml')
+machine_def_file = os.path.join(machine_dir,'machine_def.yaml')
+machine_launch_file = os.path.join(machine_dir,'mct.machine')
 
 def read_machine_def():
     """

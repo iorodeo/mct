@@ -276,6 +276,32 @@ def get_camera_calibration_info():
         cal_info[camera] = {'file': f, 'modified': f_time}
     return cal_info
 
+def get_camera_namespace_dict():
+    """
+    Returns a dictionary of the camera namespaces. 
+    """
+    image_topic_list = find_camera_image_topics(transport='image_raw') 
+    namespace_dict = {}
+    for image_topic in image_topic_list:
+        image_topic_split = image_topic.split('/')
+        camera = image_topic_split[2]
+        namespace = '/'.join(image_topic_split[:4])
+        namespace_dict[camera] = namespace
+    return namespace_dict
+
+def get_calibrated_cameras():
+    """
+    Returns a list of the cameras for which there exist calibration
+    files.
+    """
+    cal_file_list = file_tools.get_camera_calibration_files(fullpath=False)
+    cam_list = []
+    for cal_file in cal_file_list:
+        cam, dummy = os.path.splitext(cal_file)
+        cam_list.append(cam)
+    return cam_list
+
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -371,8 +397,7 @@ if __name__ == '__main__':
             print(k)
             for kk, vv in v.iteritems():
                 print('  ',kk,vv)
-    
-    if 1:
+    if 0:
 
         frame_rates = get_frame_rates()
         for k,v in frame_rates.iteritems():
@@ -392,5 +417,15 @@ if __name__ == '__main__':
     if 0:
         cal_info = get_camera_calibration_info()
         print(cal_info)
+
+    if 0:
+        namespace_dict = get_camera_namespace_dict()
+        for k,v in namespace_dict.iteritems():
+            print(k,v)
+
+    if 1:
+        camera_list = get_calibrated_cameras()
+        print(camera_list)
+
 
             

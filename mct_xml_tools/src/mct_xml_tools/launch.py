@@ -1,3 +1,4 @@
+from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_xml_tools')
 import rospy
@@ -6,15 +7,17 @@ import os.path
 import jinja2
 import yaml
 import mct_introspection
+import mct_utilities
+
+file_path, dummy = os.path.split(__file__)
+template_dir = os.path.join(file_path, 'templates')
 
 def create_inspector_launch(filename,machine_names):
     """
     Creates launch file for camera inspector nodes.
     """
-    file_path, file_name = os.path.split(__file__)
-    template_dir = os.path.join(file_path, 'templates')
     template_name ='inspector_nodes_launch.xml'
-    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    machine_file = mct_utilities.file_tools.machine_launch_file
 
     # Use jinja2 to create xml string
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
@@ -30,10 +33,7 @@ def create_machine_launch(filename,machine_def):
     Creates the mct_machine.launch file from the machine definition found in
     the machine_def.yaml file.
     """
-    file_path, file_name = os.path.split(__file__)
-    template_dir = os.path.join(file_path, 'templates')
     template_name = 'mct_machine.xml'
-
     user = machine_def['user']
     master_info = machine_def['mct_master']
     master_info['name'] = 'mct_master'
@@ -78,10 +78,8 @@ def create_inspector_camera_launch(filename, camera_dict):
     Note, assumes that the yaml files for the cameras have been added to the
     info dict for each camera.
     """
-    file_path, file_name = os.path.split(__file__)
-    template_dir = os.path.join(file_path, 'templates')
     template_name = 'inspector_camera_launch.xml'
-    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    machine_file = mct_utilities.file_tools.machine_launch_file
     frame_rate_dict = mct_introspection.get_frame_rates()
     frame_rate = frame_rate_dict['assignment']
 
@@ -102,10 +100,8 @@ def create_mjpeg_server_launch(filename, mjpeg_info_dict):
     dictionary, mjpeg_info_dict. This function is designed to be called from
     the mjpeg_manager node.
     """
-    file_path, file_name = os.path.split(__file__)
-    template_dir = os.path.join(file_path, 'templates')
     template_name = 'mjpeg_server_launch.xml'
-    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    machine_file = mct_utilities.file_tools.machine_launch_file
     
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
@@ -121,11 +117,8 @@ def create_camera_launch(filename, camera_assignment, frame_rate='default', trig
     Note, if camera assignment is given it assumes that the camera yaml files
     have been added to the camera assignment.
     """
-    config_pkg = os.environ['MCT_CONFIG']
-    file_path, file_name = os.path.split(__file__)
-    template_dir = os.path.join(file_path, 'templates')
     template_name = 'camera_launch.xml'
-    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
+    machine_file = mct_utilities.file_tools.machine_launch_file
     frame_rate_dict = mct_introspection.get_frame_rates()
     frame_rate_value = frame_rate_dict[frame_rate]
 
@@ -161,10 +154,8 @@ def create_camera_calibrator_launch(filename, image_topics, chessboard_size, che
     """
     Create launch file for camera calibrators.
     """
-    file_path, file_name = os.path.split(__file__)
-    template_dir = os.path.join(file_path, 'templates')
-    machine_file = os.path.join(os.environ['MCT_CONFIG'],'machine','mct.machine')
     template_name = 'camera_calibrator_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
 
     # Pack up calibrator data
     camera_names = [val.split('/')[2] for val in image_topics]
@@ -180,8 +171,43 @@ def create_camera_calibrator_launch(filename, image_topics, chessboard_size, che
             chessboard_size=chessboard_size,
             chessboard_square=chessboard_square,
             )
+
     with open(filename,'w') as f:
         f.write(xml_str)
+
+def create_image_proc_launch(filename):
+    """
+    Creates launch file for image rectification and processing nodes
+    """
+    template_name = 'image_proc_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+
+    # Create dictionary which associates a camera name to its namespace for all
+    # cameras which have a calibration   
+    namespace_dict = mct_introspection.get_camera_namespace_dict()
+    camera_list = mct_introspection.get_calibrated_cameras()
+    for camera in namespace_dict.keys():
+        if not camera in camera_list:
+            namespace_dict.pop(camera)
+
+    # Create a list given pairs (camera namespace, computer) on which to launch
+    # image_proc nodes.
+    camera_assignment = mct_introspection.get_camera_assignment()
+    launch_list = []
+    for camera, namespace in namespace_dict.iteritems():
+        computer = camera_assignment[camera]['computer']
+        launch_list.append((namespace,computer))
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(machine_file=machine_file, launch_list=launch_list)
+
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
+
+    
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -241,7 +267,7 @@ if __name__ == '__main__':
                 }
         create_mjpeg_server_launch(filename,mjpeg_info_dict)
 
-    if 1:
+    if 0:
         filename = 'camera.launch'
         yaml_directory = './'
         camera_assignment = mct_introspection.get_camera_assignment()
@@ -267,6 +293,11 @@ if __name__ == '__main__':
         chessboard_size = '8x6'
         chessboard_square = '0.0254'
         create_camera_calibrator_launch(filename,image_topics,chessboard_size,chessboard_square)
+
+    if 1:
+        filename = 'image_proc.launch'
+        create_image_proc_launch(filename)
+
 
 
        

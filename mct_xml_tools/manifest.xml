@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/mct_xml_tools</url>
   <depend package="rospy"/>
   <depend package="mct_introspection"/>
+  <depend package="mct_utilities"/>
 
   <rosdep name="virtualenv"/>
   <rosdep name="pip" />
