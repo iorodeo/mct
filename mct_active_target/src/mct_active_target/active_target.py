@@ -3,8 +3,10 @@ import roslib
 roslib.load_manifest('mct_active_target')
 import rospy
 import time
+
 from mct_msg_and_srv.srv import ActiveTargetCmd
 from mct_msg_and_srv.srv import ActiveTargetInfo
+from mct_msg_and_srv.srv import CommandString
 
 def active_target_cmd(command,ind0=0,ind1=0,power=5):
     rospy.wait_for_service('/active_target_cmd')
@@ -18,6 +20,18 @@ def active_target_info():
     proxy = rospy.ServiceProxy('/active_target_info',ActiveTargetInfo)
     resp = proxy()
     return resp.array_size_n, resp.array_size_m, resp.max_power, resp.square
+
+def lock(node_name):
+    rospy.wait_for_service('/active_target_lock')
+    proxy = rospy.ServiceProxy('/active_target_lock', CommandString)
+    resp = proxy(node_name)
+    return resp.flag, resp.message
+
+def unlock(node_name):
+    rospy.wait_for_service('/active_target_unlock')
+    proxy = rospy.ServiceProxy('/active_target_unlock',CommandString)
+    resp = proxy(node_name)
+    return resp.flag, resp.message
 
 def set_pattern():
     active_target_cmd('pattern')
