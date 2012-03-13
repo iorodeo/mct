@@ -14,8 +14,6 @@ from mct_utilities import file_tools
 from cv_bridge.cv_bridge import CvBridge 
 
 # Services
-#from std_srvs.srv import Empty
-#from std_srvs.srv import EmptyResponse
 from mct_msg_and_srv.srv import GetMatrix
 from mct_msg_and_srv.srv import GetMatrixResponse
 from mct_msg_and_srv.srv import GetBool
@@ -262,7 +260,9 @@ class HomographyCalibratorNode(object):
                 self.led_n  = 0
                 self.led_m += 1
         else:
-            # Unlock active target
+
+            # Turn off led and unlock active target
+            mct_active_target.off()
             mct_active_target.unlock(self.node_name)
 
             # Need to check that we got enough done otherwise return to idle.
@@ -305,8 +305,6 @@ class HomographyCalibratorNode(object):
                 self.increment_led()
 
             elif self.state == FINISHED and self.homography_matrix is None:
-
-                    mct_active_target.off()
 
                     # Find the homography transformation
                     image_points = numpy.array(self.image_points)
