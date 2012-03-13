@@ -7,15 +7,15 @@ from mct_msg_and_srv.srv import ActiveTargetCmd
 from mct_msg_and_srv.srv import ActiveTargetInfo
 
 def active_target_cmd(command,ind0=0,ind1=0,power=5):
-    rospy.wait_for_service('active_target_cmd')
-    proxy = rospy.ServiceProxy('active_target_cmd',ActiveTargetCmd)
+    rospy.wait_for_service('/active_target_cmd')
+    proxy = rospy.ServiceProxy('/active_target_cmd',ActiveTargetCmd)
     resp = proxy(command,ind0,ind1,power)
     status, message = resp.status, resp.message
     return status, message
 
 def active_target_info():
-    rospy.wait_for_service('active_target_info')
-    proxy = rospy.ServiceProxy('active_target_info',ActiveTargetInfo)
+    rospy.wait_for_service('/active_target_info')
+    proxy = rospy.ServiceProxy('/active_target_info',ActiveTargetInfo)
     resp = proxy()
     return resp.array_size_n, resp.array_size_m, resp.max_power, resp.square
 

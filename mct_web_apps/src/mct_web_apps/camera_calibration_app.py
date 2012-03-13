@@ -262,7 +262,7 @@ def start_cameras_and_mjpeg_servers():
     """
     if not DEVELOP: 
         # Start cameras
-        camera_master.set_camera_launch_param(frame_rate='calibration',trigger=False)
+        camera_master.set_camera_launch_param(frame_rate='camera_calibration',trigger=False)
         camera_master.start_cameras()
         # Wait until the camera nodes are ready and then start the mjpeg servers
         while not mct_introspection.camera_nodes_ready(mode='calibration'):

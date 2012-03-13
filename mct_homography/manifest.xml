@@ -17,6 +17,7 @@
   <depend package="mct_active_target"/>
   <depend package="mct_msg_and_srv"/>
   <depend package="mct_utilities"/>
+  <depend package="mct_xml_tools"/>
 
 </package>
 

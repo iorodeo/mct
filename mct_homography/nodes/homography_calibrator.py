@@ -49,7 +49,7 @@ class HomographyCalibratorNode(object):
         self.bridge = CvBridge()
         self.lock = threading.Lock()
 
-        rospy.init_node('homography_calibrator', log_level=rospy.DEBUG)
+        rospy.init_node('homography_calibrator')
         node_name = rospy.get_name()
 
         # Initialize data lists
@@ -58,9 +58,7 @@ class HomographyCalibratorNode(object):
         self.world_points = []
 
         # Set active target information and turn off leds
-        rospy.logdebug('running active_target_info'.format(node_name))
         target_info = mct_active_target.active_target_info()
-        rospy.logdebug('done'.format(node_name))
         self.led_n_max = target_info[0] 
         self.led_m_max = target_info[1]
         self.number_of_leds = self.led_n_max*self.led_m_max
@@ -77,12 +75,11 @@ class HomographyCalibratorNode(object):
         self.led_power = rospy.get_param('{0}/target/led_power'.format(node_name),10)  
 
         # Wait count for image acquisition
-        #self.image_wait_number = int(calibrator_params['image_wait_number'])
-        self.image_wait_number = rospy.get_param('{0}/image_wait_number',4) 
+        self.image_wait_number = rospy.get_param('{0}/image_wait_number'.format(node_name),4) 
         self.image_wait_cnt = 0
 
         # Sleep periods for idle and wait count loops
-        self.idle_sleep_dt = 0.1
+        self.idle_sleep_dt = 0.25
         self.wait_sleep_dt = 0.005
 
         # Initialize blob finder
@@ -285,6 +282,8 @@ class HomographyCalibratorNode(object):
 
             elif self.state == FINISHED and self.homography_matrix is None:
 
+                    mct_active_target.off()
+
                     # Find the homography transformation
                     image_points = numpy.array(self.image_points)
                     world_points = numpy.array(self.world_points)
@@ -308,7 +307,6 @@ class HomographyCalibratorNode(object):
                     error = error.mean()
                     self.image_info = 'error {0:1.2f} mm'.format(1e3*error)
             else:
-                mct_active_target.off()
                 rospy.sleep(self.idle_sleep_dt)
 
 class HomographyCalibrator(object):

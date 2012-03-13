@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_homography" type="homography_calibrator_master.py" name="homography_calibrator_master" machine="mct_master" required="true"/>
+</launch>
