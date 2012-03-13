@@ -14,12 +14,14 @@ from mct_utilities import file_tools
 from cv_bridge.cv_bridge import CvBridge 
 
 # Services
-from std_srvs.srv import Empty
-from std_srvs.srv import EmptyResponse
+#from std_srvs.srv import Empty
+#from std_srvs.srv import EmptyResponse
 from mct_msg_and_srv.srv import GetMatrix
 from mct_msg_and_srv.srv import GetMatrixResponse
 from mct_msg_and_srv.srv import GetBool
 from mct_msg_and_srv.srv import GetBoolResponse
+from mct_msg_and_srv.srv import GetFlagAndMessage
+from mct_msg_and_srv.srv import GetFlagAndMessageResponse
 
 # Messages
 from sensor_msgs.msg import Image
@@ -50,7 +52,7 @@ class HomographyCalibratorNode(object):
         self.lock = threading.Lock()
 
         rospy.init_node('homography_calibrator')
-        node_name = rospy.get_name()
+        self.node_name = rospy.get_name()
 
         # Initialize data lists
         self.blobs_list = [] 
@@ -72,10 +74,16 @@ class HomographyCalibratorNode(object):
         self.led_m = 0
 
         # Led power setting
-        self.led_power = rospy.get_param('{0}/target/led_power'.format(node_name),10)  
+        self.led_power = rospy.get_param(
+                '{0}/target/led_power'.format(self.node_name),
+                10
+                )  
 
         # Wait count for image acquisition
-        self.image_wait_number = rospy.get_param('{0}/image_wait_number'.format(node_name),4) 
+        self.image_wait_number = rospy.get_param(
+                '{0}/image_wait_number'.format(self.node_name),
+                4
+                ) 
         self.image_wait_cnt = 0
 
         # Sleep periods for idle and wait count loops
@@ -85,25 +93,28 @@ class HomographyCalibratorNode(object):
         # Initialize blob finder
         self.blobFinder = BlobFinder()
         self.blobFinder.threshold = rospy.get_param(
-                '{0}/blob_finder/threshold'.format(node_name),
+                '{0}/blob_finder/threshold'.format(self.node_name),
                 200
                 ) 
         self.blobFinder.filter_by_area = rospy.get_param(
-                '{0}/blob_finder/filter_by_area'.format(node_name), 
+                '{0}/blob_finder/filter_by_area'.format(self.node_name), 
                 False
                 ) 
         self.blobFinder.min_area = rospy.get_param(
-                '{0}/blob_finder/min_area'.format(node_name), 
+                '{0}/blob_finder/min_area'.format(self.node_name), 
                 0
                 )
         self.blobFinder.max_area = rospy.get_param(
-                '{0}/blob_finder/max_area'.format(node_name),
+                '{0}/blob_finder/max_area'.format(self.node_name),
                 200
                 ) 
 
         # Initialize homography matrix and number of points required to solve for it
         self.homography_matrix = None
-        self.num_points_required = rospy.get_param('{0}/num_points_required'.format(node_name), 10) 
+        self.num_points_required = rospy.get_param(
+                '{0}/num_points_required'.format(self.node_name), 
+                10
+                ) 
 
         # Set font and initial image information
         self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.8, 0.8,thickness=1)
@@ -119,19 +130,19 @@ class HomographyCalibratorNode(object):
 
         # Services
         self.start_srv = rospy.Service(
-                '{0}/start'.format(node_name),
-                Empty,
+                '{0}/start'.format(self.node_name),
+                GetFlagAndMessage,
                 self.handle_start_srv
                 )
 
         self.get_matrix_srv = rospy.Service(
-                '{0}/get_matrix'.format(node_name),
+                '{0}/get_matrix'.format(self.node_name),
                 GetMatrix,
                 self.handle_get_matrix_srv
                 )
 
         self.is_calibrated_srv = rospy.Service(
-                '{0}/is_calibrated'.format(node_name),
+                '{0}/is_calibrated'.format(self.node_name),
                 GetBool,
                 self.handle_is_calibrated_srv
                 )
@@ -140,16 +151,20 @@ class HomographyCalibratorNode(object):
         """
         Handles to start/restart the homography calibration procedure.
         """
+        flag = True
+        message = ''
         with self.lock:
-            self.homography_matrix = None
-            self.image_info = ''
-            self.image_points = []
-            self.world_points = []
-            self.blobs_list = []
-            self.state = WORKING
-            self.led_n = 0
-            self.led_m = 0
-        return EmptyResponse()
+            flag, message = mct_active_target.lock(self.node_name)
+            if flag:
+                self.homography_matrix = None
+                self.image_info = ''
+                self.image_points = []
+                self.world_points = []
+                self.blobs_list = []
+                self.state = WORKING
+                self.led_n = 0
+                self.led_m = 0
+        return GetFlagAndMessageResponse(flag,message)
 
     def handle_get_matrix_srv(self,req):
         """
@@ -247,6 +262,9 @@ class HomographyCalibratorNode(object):
                 self.led_n  = 0
                 self.led_m += 1
         else:
+            # Unlock active target
+            mct_active_target.unlock(self.node_name)
+
             # Need to check that we got enough done otherwise return to idle.
             if len(self.image_points) >= self.num_points_required:
                 self.state = FINISHED 
