@@ -181,7 +181,13 @@ class HomographyCalibratorNode(object):
         """
         # Find blobs
         with self.lock:
-            self.blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
+
+            if self.state == WORKING:
+                self.blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
+            else: 
+                self.blobs_list = []
+                blobs_rosimage = data
+
             if self.image_wait_cnt < self.image_wait_number:
                 self.image_wait_cnt += 1
 
