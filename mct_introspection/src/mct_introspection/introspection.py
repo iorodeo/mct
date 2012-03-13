@@ -22,6 +22,16 @@ def get_nodes():
     node_list = node_str.split()
     return node_list
 
+def exists_node(node):
+    """
+    Returns True if node is in list of currently running nodes
+    """
+    node_list = get_nodes()
+    if node in node_list:
+        return True
+    else:
+        return False
+
 def get_services():
     """
     Returns a list of all currently available services.
@@ -313,6 +323,14 @@ if __name__ == '__main__':
         print(node_list)
         print()
 
+    if 1:
+        node_list = get_nodes()
+        node_list.append('/bobs_node')
+        for node in node_list:
+            flag = exists_node(node)
+            print('extis_node({0}) = {1}'.format(node,flag))
+        print()
+
     if 0:
         service_list = get_services()
         print('service_list:')
@@ -423,7 +441,7 @@ if __name__ == '__main__':
         for k,v in namespace_dict.iteritems():
             print(k,v)
 
-    if 1:
+    if 0:
         camera_list = get_calibrated_cameras()
         print(camera_list)
 

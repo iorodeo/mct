@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import roslib
 roslib.load_manifest('mct_active_target')
+import threading
 import rospy
 import time
+import mct_introspection
 from mct_active_target import ActiveTargetDev
 from mct_utilities import file_tools
 
@@ -10,10 +12,16 @@ from mct_msg_and_srv.srv import ActiveTargetCmd
 from mct_msg_and_srv.srv import ActiveTargetCmdResponse
 from mct_msg_and_srv.srv import ActiveTargetInfo
 from mct_msg_and_srv.srv import ActiveTargetInfoResponse
+from mct_msg_and_srv.srv import CommandString
+from mct_msg_and_srv.srv import CommandStringResponse
 
 class ActiveTargetNode(object):
 
     def __init__(self):
+
+        self.lock = threading.Lock()
+        self.access_lock_owner = None
+        self.sleep_dt = 1.0
 
         # Open device
         target_info = file_tools.read_target_info('active')
@@ -29,17 +37,67 @@ class ActiveTargetNode(object):
                 ActiveTargetCmd,
                 self.handle_cmd
                 )
+
         self.info_srv = rospy.Service(
                 'active_target_info',
                 ActiveTargetInfo,
                 self.handle_info
                 )
 
+        self.lock_srv = rospy.Service(
+                'active_target_lock',
+                CommandString,
+                self.handle_lock_srv
+                )
+
+        self.lock_srv = rospy.Service(
+                'active_target_unlock',
+                CommandString,
+                self.handle_unlock_srv
+                )
+
     def run(self):
         rospy.spin()
+        #while not rospy.is_shutdown():
+        #    print(self.access_lock_owner)
+        #    rospy.sleep(0.25)
 
     def shutdown(self):
         self.dev.off()
+
+
+    def handle_lock_srv(self,req):
+        """
+        Try to acquire access lock
+        """
+        node_name = req.command
+        flag = True
+        message = ''
+        with self.lock:
+            if (self.access_lock_owner is None) or (self.access_lock_owner == node_name):
+                self.access_lock_owner = node_name
+            else:
+                flag = False
+                message = 'cannot lock - lock already owned'
+        return CommandStringResponse(flag,message)
+
+
+    def handle_unlock_srv(self,req):
+        """
+        Try to release access lock
+        """
+        node_name = req.command
+        flag = True
+        message = ''
+        with self.lock:
+            if self.access_lock_owner is not None:
+                if node_name == self.access_lock_owner:
+                    self.access_lock_owner = None
+                else:
+                    flag = False
+                    message = 'cannot unlock - not lock owner'
+        return CommandStringResponse(flag,message)
+
 
     def handle_info(self,req):
         """
