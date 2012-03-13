@@ -25,7 +25,7 @@ from mct_utilities import json_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
-DEVELOP = False
+DEVELOP = False 
 DEBUG = False
 
 # Setup application w/ sijax

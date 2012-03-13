@@ -17,8 +17,7 @@ def mjpeg_servers_srv(cmd):
     cmd = cmd.lower()
     if not cmd in ('start', 'stop'):
         raise ValueError, "command must be 'start' or 'stop'"
-    rospy.wait_for_service('camera_mjpeg_servers')
-    proxy = rospy.ServiceProxy('camera_mjpeg_servers',CommandString)
+    proxy = rospy.ServiceProxy('/camera_mjpeg_manager/mjpeg_servers',CommandString)
     try:
         response = proxy(cmd)
         flag = response.flag
@@ -45,8 +44,7 @@ def mjpeg_servers_info_srv():
     Proxy for the mjpeg servers info service. Returns the mjpeg information
     dictionary mjpeg_info_dict or None if the mjpeg servers are not running. 
     """
-    rospy.wait_for_service('camera_mjpeg_servers_info')
-    proxy = rospy.ServiceProxy('camera_mjpeg_servers_info',GetJSONString)
+    proxy = rospy.ServiceProxy('/camera_mjpeg_manager/info',GetJSONString)
     try:
         response = proxy()
         mjpeg_info_dict = json.loads(response.json_string, object_hook=json_tools.decode_dict)
@@ -60,6 +58,13 @@ def get_mjpeg_info_dict():
     """
     return mjpeg_servers_info_srv()
 
+def set_transport(transport):
+    """
+    Set the image transport for the mjpeg servers and the throttling nodes.
+    """
+    proxy = rospy.ServiceProxy('/camera_mjpeg_manager/set_transport', CommandString)
+    resp = proxy(transport)
+    return resp.flag, resp.message
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -71,6 +76,9 @@ if __name__ == '__main__':
         stop_servers()
 
     if 1:
+        set_transport('image_rect')
+
+    if 0:
         mjpeg_info_dict = get_mjpeg_info_dict()
         if mjpeg_info_dict is not None:
             for k,v in mjpeg_info_dict.iteritems():

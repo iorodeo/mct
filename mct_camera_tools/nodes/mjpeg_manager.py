@@ -2,6 +2,7 @@
 from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_camera_tools')
+import threading
 import rospy
 import os
 import os.path
@@ -21,29 +22,45 @@ class MJPEG_Manager(object):
 
     def __init__(self):
 
+        self.lock = threading.Lock()
         self.server_running = False
         self.mjpeg_info_dict = None
         self.tmp_dir = tempfile.gettempdir()
         self.server_launch_file = os.path.join(self.tmp_dir,'mjpeg_server.launch')
         self.server_popen = None
         self.mjpeg_start_port = rospy.get_param('mjpeg_start_port',8080)
+        self.transport = 'image_raw' 
 
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera_mjpeg_manager')
+        node_name = rospy.get_name()
 
         self.mjpeg_servers_srv = rospy.Service(
-                'camera_mjpeg_servers',
+                '{0}/mjpeg_servers'.format(node_name),
                 CommandString, 
                 self.handle_mjpeg_servers_srv
                 )
         self.mjpeg_servers_info_srv = rospy.Service(
-                'camera_mjpeg_servers_info',
+                '{0}/info'.format(node_name),
                 GetJSONString,
                 self.handle_mjpeg_servers_info_srv
+                )
+        self.set_transport_srv = rospy.Service(
+                '{0}/set_transport'.format(node_name),
+                CommandString,
+                self.handle_set_transport_srv
                 )
 
     def run(self):
         rospy.spin()
+
+    def handle_set_transport_srv(self, req):
+        """
+        Handles requests to set the image transport 
+        """
+        with self.lock:
+            self.transport = req.command
+        return CommandStringResponse(True,'')
 
     def handle_mjpeg_servers_info_srv(self,req):
         """
@@ -91,7 +108,7 @@ class MJPEG_Manager(object):
         """
         Creates the mjpeg server launch file and launches the mjpeg server nodes.
         """
-        topics = find_camera_image_topics()
+        topics = find_camera_image_topics(transport=self.transport)
         self.mjpeg_info_dict = self.create_mjpeg_info_dict(topics)
         create_mjpeg_server_launch(self.server_launch_file,self.mjpeg_info_dict)
         self.server_popen = subprocess.Popen(['roslaunch',self.server_launch_file])

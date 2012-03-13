@@ -311,7 +311,83 @@ def get_calibrated_cameras():
         cam_list.append(cam)
     return cam_list
 
+def get_image_proc_nodes():
+    """
+    Returns a list of the running image_proc nodes
+    """
+    node_list = get_nodes()
+    image_proc_list = []
+    for node in node_list:
+        if ('image_proc' in node) and (not 'image_proc_master' in node):
+            image_proc_list.append(node)
+    return image_proc_list
 
+def image_proc_nodes_ready():
+    """
+    Returns true is the image proc nodes are ready. The image_proc nodes are
+    considered to be ready when the number of image_proc nodes is equal to the
+    number of calibrated cameras.  
+    """
+    # Get number of calibrated cameras
+    calibrated_list = get_calibrated_cameras()
+    num_calibrated = len(calibrated_list)
+
+    # Get number of image_proc nodes
+    image_proc_list = get_image_proc_nodes()
+    num_image_proc = len(image_proc_list)
+
+    if num_image_proc == num_calibrated:
+        return True
+    else:
+        return False
+
+def image_rect_ready():
+    """
+    Returns true is the number of image_rect topics is equal to the number of image_proc
+    nodes
+    """
+    # Get number of image_rect topics
+    image_rect_list = find_camera_image_topics(transport='image_rect')
+    num_image_rect = len(image_rect_list)
+
+    # Get number of image_proc nodes 
+    image_proc_list = get_image_proc_nodes()
+    num_image_proc = len(image_proc_list)
+    
+    if num_image_rect == num_image_proc:
+        return True
+    else:
+        return False
+
+def get_homography_calibrator_nodes():
+    """
+    Returns a list of the homography calibrator nodes.
+    """
+    node_list = get_nodes()
+    calibrator_nodes = []
+    for node in node_list:
+        if ('homography_calibrator' in node) and (not 'homography_calibrator_master' in node):
+            calibrator_nodes.append(node)
+    return calibrator_nodes
+
+def homography_calibrator_nodes_ready():
+    """
+    Returns true if the homography calibrator nodes are ready. They nodes are 
+    considered ready if the number of homography calibrator nodes is equal to the 
+    number of image_proc nodes
+    """
+    # Get number of image_proc nodes
+    image_proc_list = get_image_proc_nodes()
+    num_image_proc = len(image_proc_list)
+
+    # Get number of homography calibrator nodes
+    calibrator_list = get_homography_calibrator_nodes()
+    num_calibrator = len(calibrator_list)
+
+    if num_image_proc == num_calibrator:
+        return True
+    else:
+        return False
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -323,7 +399,7 @@ if __name__ == '__main__':
         print(node_list)
         print()
 
-    if 1:
+    if 0:
         node_list = get_nodes()
         node_list.append('/bobs_node')
         for node in node_list:
@@ -444,6 +520,27 @@ if __name__ == '__main__':
     if 0:
         camera_list = get_calibrated_cameras()
         print(camera_list)
+
+    if 0:
+        node_list = get_image_proc_nodes()
+        print(node_list)
+
+    if 0:
+        flag = image_proc_nodes_ready()
+        print(flag)
+
+    if 0:
+        node_list = get_homography_calibrator_nodes()
+        print(node_list)
+
+    if 0:
+        flag = homography_calibrator_nodes_ready()
+        print(flag)
+
+    if 1:
+        flag = image_rect_ready()
+        print(flag)
+
 
 
             
