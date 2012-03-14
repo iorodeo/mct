@@ -1,5 +1,4 @@
 import mjpeg_servers
-import camera1394_inspector
 import camera_inspector_master
 import camera_master
 import image_proc_master
