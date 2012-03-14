@@ -31,7 +31,7 @@ class ZoomToolNode(object):
         node_name = rospy.get_name()
 
         self.blobFinder = BlobFinder()
-        self.blobFinder.threshold = rospy.get_param('/zoom_tool_params/threshold' 150)
+        self.blobFinder.threshold = rospy.get_param('/zoom_tool_params/threshold', 150)
         self.blobFinder.filter_by_area = rospy.get_param('/zoom_tool_params/filter_by_area', False) 
         self.blobFinder.min_area = rospy.get_param('/zoom_tool_params/min_area', 0) 
         self.blobFinder.max_area = rospy.get_param('/zoom_tool_params/max_area', 200) 
