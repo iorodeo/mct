@@ -4,6 +4,10 @@
     <machine name="{{info['name']}}" address="{{info['address']}}"  user="{{user}}" default="{{info['default']}}" ros-root ="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" >
         <env name="VIRTUAL_ENV" value="$(env MCT_PYTHON_VIRTUALENV)" />
         <env name="PATH" value="$(env MCT_PYTHON_VIRTUALENV)/bin:$(env PATH)"/>
+        <env name="MCT_RESOURCES" value="$(env MCT_RESOURCES)"/> 
+        <env name="MCT_NAME" value="$(env MCT_NAME)"/>
+        <env name="MCT_CONFIG" value="$(env MCT_CONFIG)"/>
     </machine>
     {% endfor %}
 </launch>
+

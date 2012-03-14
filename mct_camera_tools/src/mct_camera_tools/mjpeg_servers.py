@@ -5,7 +5,6 @@ import rospy
 import json
 from mct_utilities import json_tools
 
-
 # Services
 from mct_msg_and_srv.srv import CommandString 
 from mct_msg_and_srv.srv import GetJSONString
