@@ -27,21 +27,21 @@ class ZoomToolNode(object):
         self.topic = topic
         self.lock = threading.Lock()
         self.bridge = CvBridge()
+        rospy.init_node('zoom_tool')
+        node_name = rospy.get_name()
 
         self.blobFinder = BlobFinder()
-        self.blobFinder.threshold = 150
-        self.blobFinder.filter_by_area = False
-        self.blobFinder.min_area = 0
-        self.blobFinder.max_area = 200
+        self.blobFinder.threshold = rospy.get_param('{0}/threshold'.format(node_name), 150)
+        self.blobFinder.filter_by_area = rospy.get_param('{0}/filter_by_area'.format(node_name), False) 
+        self.blobFinder.min_area = rospy.get_param('{0}/min_area'.format(node_name), 0) 
+        self.blobFinder.max_area = rospy.get_param('{0}/max_area'.format(node_name), 200) 
 
         self.circle_color = (0,0,255)
         self.text_color = (0,0,255)
         self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.8, 0.8,thickness=1)
 
-        rospy.init_node('zoom_tool')
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_zoom_tool', Image)
-        node_name = rospy.get_name()
         self.set_param_srv = rospy.Service( 
                 '{0}/set_param'.format(node_name), 
                 BlobFinderSetParam, 

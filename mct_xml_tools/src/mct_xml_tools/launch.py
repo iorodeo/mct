@@ -233,6 +233,14 @@ def create_homography_calibrator_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
+def create_zoom_tool_launch(filename):
+    """
+    Creates launch file for zoom tool nodes.
+    """
+    template_name = 'zoom_tool_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+    params_file = mct_utilities.file_tools.zoom_tool_params_file
     
 
 # -----------------------------------------------------------------------------
