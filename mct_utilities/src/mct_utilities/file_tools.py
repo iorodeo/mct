@@ -22,6 +22,7 @@ frame_rates_file = os.path.join(cameras_dir, 'frame_rates.yaml')
 machine_def_file = os.path.join(machine_dir,'machine_def.yaml')
 machine_launch_file = os.path.join(machine_dir,'mct.machine')
 homography_calibrator_params_file = os.path.join(homographies_dir, 'calibrator_params.yaml')
+zoom_tool_params_file = os.path.join(cameras_dir,'zoom_tool_params.yaml')
 
 def read_machine_def():
     """

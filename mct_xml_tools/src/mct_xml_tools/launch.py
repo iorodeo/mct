@@ -241,6 +241,28 @@ def create_zoom_tool_launch(filename):
     template_name = 'zoom_tool_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
     params_file = mct_utilities.file_tools.zoom_tool_params_file
+    camera_assignment = mct_utilities.file_tools.read_camera_assignment()
+    
+    # Create launch list for zoom tools (namespace,topic, computer)
+    image_topics = mct_introspection.find_camera_image_topics(transport='image_raw')
+    launch_list = []
+    for topic in image_topics:
+        topic_split = topic.split('/')
+        namespace = '/'.join(topic_split[:4])
+        camera = topic_split[2]
+        computer = camera_assignment[camera]['computer']
+        launch_list.append((namespace,topic,computer))
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            params_file=params_file,
+            launch_list=launch_list
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
     
 
 # -----------------------------------------------------------------------------
@@ -332,9 +354,13 @@ if __name__ == '__main__':
         filename = 'image_proc.launch'
         create_image_proc_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'homography_calibrator.launch'
         create_homography_calibrator_launch(filename)
+
+    if 1:
+        filename = 'zoom_tool.launch'
+        create_zoom_tool_launch(filename)
 
 
 
