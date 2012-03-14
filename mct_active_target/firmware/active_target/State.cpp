@@ -73,6 +73,20 @@ void State::setModeAll() {
     }
 }
 
+void State::setModeTwoLed() {
+    uint8_t i;
+    uint8_t j;
+    setModeOff();
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        mode = modeTwoLed;
+    }
+    for (int n=0; n<2; n++) {
+        i = twoLedPair[n][0];
+        j = twoLedPair[n][1];
+        digitalWrite(ledArray[i][j],HIGH);
+    }
+}
+
 void State::updateTimerCount() {
     timerCount++;
     if (timerCount >= timerCountMax) {

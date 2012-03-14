@@ -127,6 +127,8 @@ class ActiveTargetNode(object):
             self.dev.pattern()
         elif command == 'all' or command == 'allon':
             self.dev.all()
+        elif command == 'led_pair':
+            self.dev.ledPair()
         elif command == 'led':
             if req.ind0 < 0 or req.ind0 >= self.dev.ledArraySize[0]:
                 status = False

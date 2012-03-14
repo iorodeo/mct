@@ -45,6 +45,9 @@ def off():
 def all():
     active_target_cmd('all')
 
+def led_pair():
+    active_target_cmd('led_pair')
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -61,19 +64,26 @@ if __name__ == '__main__':
     print()
     time.sleep(1.0)
 
-    #print('set_led')
-    #for i in range(0,led_n):
-    #    for j in range(0,led_m):
-    #        print(' (i,j) = ({0},{1})'.format(i,j))
-    #        set_led(i,j,20)
-    #        time.sleep(0.25)
-    #print()
+    if 1:
+        print('led_pair')
+        led_pair()
+        time.sleep(5.0)
 
-    #print('set_pattern')
-    #set_pattern()
-    #print()
+    if 0:
+        print('set_led')
+        for i in range(0,led_n):
+            for j in range(0,led_m):
+                print(' (i,j) = ({0},{1})'.format(i,j))
+                set_led(i,j,20)
+                time.sleep(0.25)
+        print()
 
-    #time.sleep(5)
+    if 0:
+        print('set_pattern')
+        set_pattern()
+        print()
+
+        time.sleep(5)
 
     print('off')
     off()

@@ -53,6 +53,10 @@ class ActiveTargetDev(serial.Serial):
         cmd = '[3]'
         self.sendCmd(cmd)
 
+    def ledPair(self):
+        cmd = '[4]'
+        self.sendCmd(cmd)
+
     def extract_info(self,target_info):
         port = target_info['port']
         baudrate = target_info['baudrate']
@@ -75,8 +79,10 @@ if __name__ == '__main__':
 
     if 0:
         dev.led(5,3,10)
-    if 1:
+    if 0:
         dev.pattern()
+    if 1:
+        dev.ledPair()
 
     raw_input('to quit press enter')
 

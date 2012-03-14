@@ -49,6 +49,10 @@ void SerialHandler::switchYard() {
             sysState.setModeAll();
             break;
 
+        case CMD_TWO_LED:
+            sysState.setModeTwoLed();
+            break;
+
         default:
             // We shouldn't be here - same as off.
             //Serial << "default - unknown cmd" << endl;

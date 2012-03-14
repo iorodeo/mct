@@ -17,6 +17,7 @@ enum {
     CMD_SINGLE_LED = 1,
     CMD_PATTERN    = 2,
     CMD_ALL        = 3,
+    CMD_TWO_LED    = 4
 };
 
 extern const long baudrate;
@@ -35,6 +36,10 @@ extern const uint8_t modeOff;
 extern const uint8_t modeSingleLed;
 extern const uint8_t modePattern;
 extern const uint8_t modeAll;
+extern const uint8_t modeTwoLed;
+
+// Arrays for two led mode
+extern const uint8_t twoLedPair[2][2];  
 
 #endif
 

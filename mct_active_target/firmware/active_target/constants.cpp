@@ -26,3 +26,7 @@ const uint8_t modeOff = 0;
 const uint8_t modeSingleLed = 1;
 const uint8_t modePattern = 2;
 const uint8_t modeAll = 3;
+const uint8_t modeTwoLed = 4;
+
+// Two led mode led indices
+const uint8_t twoLedPair[2][2] = {{3,2},{3,4}};
