@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import roslib
-roslib.load_manifest('mct_blob_finder')
+roslib.load_manifest('mct_zoom_tool')
 import rospy
 import threading
 import sys
 import math
+import cv
+import cv2
 
+from cv_bridge.cv_bridge import CvBridge 
 from mct_blob_finder import BlobFinder
 
 # Messages
@@ -23,6 +26,7 @@ class ZoomToolNode(object):
     def __init__(self,topic=None):
         self.topic = topic
         self.lock = threading.Lock()
+        self.bridge = CvBridge()
 
         self.blobFinder = BlobFinder()
         self.blobFinder.threshold = 150
@@ -31,6 +35,8 @@ class ZoomToolNode(object):
         self.blobFinder.max_area = 200
 
         self.circle_color = (0,0,255)
+        self.text_color = (0,0,255)
+        self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.8, 0.8,thickness=1)
 
         rospy.init_node('zoom_tool')
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
@@ -80,6 +86,15 @@ class ZoomToolNode(object):
             blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
 
         if len(blobs_list) == 2:
+
+            # If two blobs are found computer the distance between them and
+            # show it on the published image.
+
+            # Create calibration data  image
+            cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
+            ipl_image = cv.GetImage(cv_image)
+            calib_image = cv.CreateImage(cv.GetSize(ipl_image), cv.IPL_DEPTH_8U, 3)
+            cv.CvtColor(ipl_image,calib_image,cv.CV_GRAY2BGR)
             x0 = blobs_list[0]['centroid_x']
             y0 = blobs_list[0]['centroid_y']
             x1 = blobs_list[1]['centroid_x']
@@ -88,8 +103,12 @@ class ZoomToolNode(object):
             dist = math.sqrt((x0-x1)**2 + (y0-y1)**2)
             for x,y in point_list:
                 cv.Circle(calib_image, (int(x),int(y)),3, self.circle_color)
-            message = 'dist = {0:1.2f}'.format(dist)
-            cv.PutText(calib_image,message,(10,25),self.cv_text_font,color)
+            message = 'dist = {0:1.1f} px'.format(dist)
+            cv.PutText(calib_image,message,(10,25),self.cv_text_font,self.text_color)
+
+            # Publish calibration progress image
+            calib_rosimage = self.bridge.cv_to_imgmsg(calib_image,encoding="passthrough")
+            self.image_pub.publish(calib_rosimage)
         else:
             self.image_pub.publish(data)
 
@@ -101,5 +120,5 @@ class ZoomToolNode(object):
 if __name__ == '__main__':
 
     topic = sys.argv[1]
-    node = ZoomToolNode()
+    node = ZoomToolNode(topic)
     node.run()
