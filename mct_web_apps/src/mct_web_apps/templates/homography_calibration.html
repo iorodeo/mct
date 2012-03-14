@@ -1,7 +1,24 @@
-{% extends "base.html" %}
-{% block head %}
+{% extends "base.html" %} {% block head %}
 {{ super() }}
 <title> MCT: Homography Calibration Tool</title>
+
+<script>
+    function buttonRequest(name) {
+        Sijax.request(name);
+    }
+</script>
+
+<script>
+    function resetButtonRequest() {
+        var ans = confirm('Reset homography calibration?');
+        if (ans) {
+            buttonRequest('reset_button_ok');
+        }
+        else{
+            buttonRequest('reset_button_cancel');
+        }
+    }
+</script>
 
 <script>
     function calibrateButtonRequest(name,topic) {
@@ -64,6 +81,16 @@
     </table>
 </form>
 
+<form>
+    <button onclick="buttonRequest('save_button'); return false;"> Save </button>
+    &nbsp;
+    &nbsp;
+    <button onclick="resetButtonRequest('reset_button'); return false;"> Reset </button>
+</form>
+
+<p> <b id="message" style="color:black"> </b>  </p>
+<table id="message_table" style="display:none">
+</table>
 
 <p id="develop"> </p>
 

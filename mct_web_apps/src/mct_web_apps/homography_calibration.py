@@ -40,6 +40,9 @@ def index():
 
     if flask.g.sijax.is_sijax_request: 
         flask.g.sijax.register_callback('calibrate_button', calibrate_button_handler)
+        flask.g.sijax.register_callback('save_button', save_button_handler)
+        flask.g.sijax.register_callback('reset_button_ok', reset_button_ok_handler)
+        flask.g.sijax.register_callback('reset_button_cancel', reset_button_cancel_handler)
         return flask.g.sijax.process_request()
 
     else:
@@ -71,6 +74,34 @@ def calibrate_button_handler(obj_response, camera, topic):
     calibrator_node = get_calibrator_from_topic(topic)
     homography_calibrator.start(calibrator_node)
     obj_response.html('#develop', str(calibrator_node))
+
+def save_button_handler(obj_response):
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+
+    # Get dictionary of calibration data 
+    calibration_dict = {}
+    for camera, info in mjpeg_info_dict.iteritems():
+        topic = info['image_topic']
+        calibrator_node = get_calibrator_from_topic(topic)
+        if homography_calibrator.is_calibrated(calibrator_node):
+            num_row, num_col, data = homography_calibrator.get_matrix(calibrator_node)
+            calibration = {
+                    'num_row': num_row,
+                    'num_col': num_col,
+                    'data'   : data,
+                    }
+            calibration_dict[camera] = calibration 
+
+    # Save calibration data 
+
+    obj_response.html('#develop', str(calibration_dict))
+    #obj_response.html('#develop', 'save button')
+
+def reset_button_ok_handler(obj_response):
+    obj_response.html('#develop', 'reset button ok')
+
+def reset_button_cancel_handler(obj_response):
+    obj_response.html('#develop', 'reset button cancel')
 
 # ---------------------------------------------------------------------------------------
 def get_calibrator_from_topic(topic):
