@@ -35,7 +35,7 @@ STATE_MESSAGE = {
         }
 
 STATE_COLOR = {
-        WAITING  : (255,100,0),
+        WAITING  : (0,255,255),
         WORKING  : (0,0,255),
         FINISHED : (0,255,0) ,
         }
@@ -221,7 +221,8 @@ class HomographyCalibratorNode(object):
         message = [STATE_MESSAGE[self.state]]
 
         if self.state == WORKING or self.state==FINISHED:
-            message.append('{0}/{1} pts'.format(len(self.image_points),self.number_of_leds))
+            #message.append('{0}/{1} pts'.format(len(self.image_points),self.number_of_leds))
+            message.append('{0}/{1} pts'.format(len(self.image_points),self.get_led_count()))
         if self.image_info:
             message.append('- {0}'.format(self.image_info))
         message = ' '.join(message)
@@ -273,6 +274,9 @@ class HomographyCalibratorNode(object):
                 self.state = WAITING
                 self.image_info = 'not enough data'
                 self.homography_matrix = None
+
+    def get_led_count(self):
+        return self.led_n + self.led_m*self.led_n_max + 1
 
     def run(self):
         """

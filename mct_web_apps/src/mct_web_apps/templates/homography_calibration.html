@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block head %}
+{{ super() }}
+<title> MCT: Homography Calibration Tool</title>
+
+<script>
+    function calibrateButtonRequest(name,topic) {
+        Sijax.request('calibrate_button',[name,topic]);
+    }
+</script>
+
+<script type="text/javascript">
+    function reload_page() {
+        var scale = document.getElementById('mjpeg_scale').value;
+        var url = window.location.href;
+        if (url.indexOf("?")>-1){
+            url = url.substr(0,url.indexOf("?"));
+        }
+        window.location.href = url + "?scale=" + scale;
+        return false;
+    }
+</script>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<h1 style="color:blue" > MCT: Homography Calibration Tool </h1>
+
+<form id="mjpeg_scale_form">
+    scale
+    <select name="mjpeg_scale" id="mjpeg_scale" onChange="reload_page()">
+        {% for val in scale_options %}
+        <option value="{{val}}" {%if val == scale %} selected="selected" {% endif %}> {{val}} </option>
+        {% endfor %}
+    </select>
+</form>
+<form id="camera_view_form">
+    <table id="mjpeg_table">
+        {% for camera, info in mjpeg_info %}
+        {% if loop.index0%4 == 0 %}
+        <tr>
+        {% endif %}
+            <td>
+                <div>
+                    <div>
+                        <a href="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['image_topic']}}_throttle">
+                            <img id="{{camera}}" src="http://{{ip_iface_ext}}:{{info['mjpeg_port']}}/stream?topic={{info['image_topic']}}_throttle?width={{image_width}}?height={{image_height}}" />
+                        </a>
+                    </div>
+                    <div>
+                        {{ camera | title }}
+                        &nbsp;
+                        &nbsp;
+                        <button onclick="calibrateButtonRequest('{{camera}}','{{info['image_topic']}}'); return false;"> Calibrate </button>
+                    </div>
+                </div>
+            </td>
+
+        {% if loop.index0%4 == 3 or loop.last%}
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+</form>
+
+
+<p id="develop"> </p>
+
+{% endblock %}

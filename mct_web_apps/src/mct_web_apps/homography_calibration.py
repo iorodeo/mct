@@ -25,8 +25,8 @@ from mct_utilities import json_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
-DEVELOP = False 
-DEBUG = False 
+DEVELOP = True 
+DEBUG = True 
 TARGET_TYPE = 'chessboard'
 
 ## Setup application w/ sijax
@@ -38,20 +38,101 @@ flask_sijax.Sijax(app)
 @flask_sijax.route(app, '/')
 def index():
 
-    if flask.g.sijax.is_sijax_request:
-        pass
+    if flask.g.sijax.is_sijax_request: 
+        flask.g.sijax.register_callback('calibrate_button', calibrate_button_handler)
+        return flask.g.sijax.process_request()
+
     else:
+        # Get scale and compute image width
+        scale, scale_options = common_args.get_scale(config,flask.request)
+        redis_tools.set_str(db,'scale', scale)
+        image_width, image_height = get_image_size(scale)
+
+        ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
+        mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+        mjpeg_info = sorted(mjpeg_info_dict.items(), cmp=mjpeg_info_cmp)
+            
+        render_dict = {
+                'scale'             : scale,
+                'scale_options'     : scale_options,
+                'image_width'       : image_width,
+                'image_height'      : image_height,
+                'ip_iface_ext'      : ip_iface_ext,
+                'mjpeg_info'        : mjpeg_info,
+                }
+
+        return flask.render_template('homography_calibration.html',**render_dict)
+
         return "Hello"
 
+# sijax request handlers
+# ---------------------------------------------------------------------------------------
+def calibrate_button_handler(obj_response, camera, topic):
+    calibrator_node = get_calibrator_from_topic(topic)
+    homography_calibrator.start(calibrator_node)
+    obj_response.html('#develop', str(calibrator_node))
+
+# ---------------------------------------------------------------------------------------
+def get_calibrator_from_topic(topic):
+    """
+    Get name of calibrator node from image topic
+    """
+    calibrator = [str(x) for x in topic.split('/')]
+    calibrator[-1] = 'homography_calibrator' 
+    calibrator = '/'.join(calibrator)
+    return calibrator
+
+def get_image_size(scale): 
+    """
+    Get size of image from scale
+    """
+    image_width = int(config.camera_image['width']*float(scale))
+    image_height = int(config.camera_image['height']*float(scale))
+    return image_width, image_height
+
+def mjpeg_info_cmp(x,y):
+    """
+    Comparison function for sorting a list of (camera_name, camera_info) pairs.
+    """
+    name_x = x[0]
+    name_y = y[0]
+    value_x = int(name_x.replace('camera_', ''))
+    value_y = int(name_y.replace('camera_', ''))
+    if value_x > value_y:
+        return 1
+    elif value_y > value_x:
+        return -1
+    else:
+        return 0
+
 def setup_redis_db():
-    print('* setting up redis db')
+    print(' * setting up redis db')
+
+    # Create db and add empty camera assignment
+    db = redis.Redis('localhost',db=config.redis_db)
+
+    # Add mjpeg info dictionary
+    mjpeg_info_dict = mjpeg_servers.get_mjpeg_info_dict()
+    redis_tools.set_dict(db,'mjpeg_info_dict', mjpeg_info_dict)
+
+    # Add external network interface
+    machine_def = mct_introspection.get_machine_def()
+    ip_iface_ext = iface_tools.get_ip_addr(machine_def['mct_master']['iface-ext'])
+    redis_tools.set_str(db,'ip_iface_ext',ip_iface_ext)
+
+    # Add default scale for image view
+    scale_default = config.camera_view_table['scale_default']
+    redis_tools.set_str(db,'scale', scale_default)
+
+    return db
 
 def start_nodes():
 
     if not DEVELOP: 
 
         # Start camera nodes and wait until they are ready
-        print('* starting camera nodes ... ',end='')
+        print(' * starting camera nodes ... ',end='')
+        sys.stdout.flush()
         camera_master.set_camera_launch_param(
                 frame_rate='homography_calibration',
                 trigger=False
@@ -62,7 +143,8 @@ def start_nodes():
         print('done')
 
         # Start image_proc nodes and wait until they are ready
-        print('* starting image proc nodes ... ', end='')
+        print(' * starting image proc nodes ... ', end='')
+        sys.stdout.flush()
         image_proc_master.start_image_proc()
         while not mct_introspection.image_proc_nodes_ready():
             time.sleep(0.2)
@@ -70,30 +152,39 @@ def start_nodes():
 
         # Wait for rectified images to be ready - required for launching homography
         # calibrators.
-        print('* waiting for image rect topics ...', end='')
+        print(' * waiting for image rect topics ...', end='')
+        sys.stdout.flush()
         while not mct_introspection.image_rect_ready():
             time.sleep(0.2)
         print('done')
 
         # Start homography calibrator nodes and wait until ready
-        print('* starting homography calibrators', end='')
-        value = homography_calibrator_master.start()
+        print(' * starting homography calibrators ... ', end='')
+        sys.stdout.flush()
+        homography_calibrator_master.start()
         while not mct_introspection.homography_calibrator_nodes_ready():
             time.sleep(0.2)
         print('done')
 
         # Start mjpeg servers and throttleing 
+        print(' * starting mjpeg servers ... ',end='')
+        sys.stdout.flush()
+        mjpeg_servers.set_transport('image_homography_calibration')
+        mjpeg_servers.start_servers()
+        print('done')
 
 
 def kill_nodes():
-    print('* killing nodes ... ',end='')
-    homography_calibrator_master.stop()
-    image_proc_master.stop_image_proc()
-    camera_master.stop_cameras()
-    print('done')
+    if not DEVELOP: 
+        print(' * killing nodes ... ',end='')
+        homography_calibrator_master.stop()
+        image_proc_master.stop_image_proc()
+        camera_master.stop_cameras()
+        print('done')
 
 def cleanup():
     kill_nodes()
+    db.flushdb()
 
 # ---------------------------------------------------------------------------------
 if __name__ == '__main__':
