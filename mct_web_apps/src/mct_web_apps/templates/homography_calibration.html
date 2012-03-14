@@ -26,6 +26,13 @@
     }
 </script>
 
+<script type="text/javascript"> 
+    setTimeout(function() { 
+            Sijax.request('timer_update'); 
+            setTimeout(arguments.callee,1000); 
+            }, 1000); 
+</script>
+
 <script type="text/javascript">
     function reload_page() {
         var scale = document.getElementById('mjpeg_scale').value;
@@ -67,9 +74,9 @@
                     </div>
                     <div>
                         {{ camera | title }}
+                        <button onclick="calibrateButtonRequest('{{camera}}','{{info['image_topic']}}'); return false;"> Run </button>
                         &nbsp;
-                        &nbsp;
-                        <button onclick="calibrateButtonRequest('{{camera}}','{{info['image_topic']}}'); return false;"> Calibrate </button>
+                        <a id="{{camera}}_modified_time"> {{calibration_info[camera]['modified']}}</a>
                     </div>
                 </div>
             </td>

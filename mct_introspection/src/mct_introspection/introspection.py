@@ -272,18 +272,30 @@ def get_camera_calibrate_services():
 
 def get_camera_calibration_info():
     """
-    Returns dictionary of information regarding the existing camera calibration
+    Returns a dictionary of information regarding the existing camera calibration
     files.
     """
     cal_files = file_tools.get_camera_calibration_files(fullpath=True)
+    return get_cal_files_info(cal_files)
+
+def get_homography_calibration_info():
+    """
+    Returns a dictionary of information regarding the existing homography calibraiton 
+    files.
+    """
+    cal_files = file_tools.get_homography_calibration_files(fullpath=True)
+    return get_cal_files_info(cal_files)
+
+def get_cal_files_info(cal_files):
+    """
+    Returns a dictionary of information regarding the list of given calibratoin files.
+    """
     cal_info = {}
     for f in cal_files:
-        # Get camera name
         f_name = os.path.split(f)[-1]
-        camera, dummy = os.path.splitext(f_name)
-        # Get last modified time
+        base_name, dummy = os.path.splitext(f_name)
         f_time = file_tools.get_last_modified_time(f)
-        cal_info[camera] = {'file': f, 'modified': f_time}
+        cal_info[base_name] = {'file': f, 'modified': f_time}
     return cal_info
 
 def get_camera_namespace_dict():
@@ -512,6 +524,10 @@ if __name__ == '__main__':
         cal_info = get_camera_calibration_info()
         print(cal_info)
 
+    if 1:
+        cal_info = get_homography_calibration_info()
+        print(cal_info)
+
     if 0:
         namespace_dict = get_camera_namespace_dict()
         for k,v in namespace_dict.iteritems():
@@ -537,7 +553,7 @@ if __name__ == '__main__':
         flag = homography_calibrator_nodes_ready()
         print(flag)
 
-    if 1:
+    if 0:
         flag = image_rect_ready()
         print(flag)
 

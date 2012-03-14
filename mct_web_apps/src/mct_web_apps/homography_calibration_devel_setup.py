@@ -11,6 +11,9 @@ from mct_camera_tools import image_proc_master
 from mct_homography import  homography_calibrator_master
 from mct_homography import homography_calibrator
 from mct_camera_tools import mjpeg_servers
+from mct_utilities import file_tools
+
+file_tools.rsync_camera_calibrations(verbose=True)
 
 # Start camera nodes and wait until they are ready
 print(' * starting camera nodes ... ',end='')

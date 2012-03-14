@@ -37,7 +37,8 @@ cmd_msgs = {
         'list_machine_def': 'listing current machine definition',
         'list_cameras': 'listing cameras',
         'list_camera_assignment': 'listing camera assignment', 
-        'rsync_camera_calibrations':'rsyncing camera calibraitons',
+        'rsync_camera_calibrations': 'rsyncing camera calibraitons',
+        'clean_camera_calibrations': 'cleaning camera calibrations',
         'test': 'test command for development',
         }
 
@@ -54,6 +55,7 @@ fab_cmds = [
         'clean',
         'rosmake',
         'rosmake_preclean',
+        'clean_camera_calibrations',
         ]
 
 def wakeup():
@@ -263,6 +265,16 @@ def rsync_camera_calibrations():
     Use rsync to send camera calibrations to camera computers
     """
     mct_utilities.file_tools.rsync_camera_calibrations(verbose=True)
+
+@hosts(*host_list)
+def clean_camera_calibrations():
+    """
+    Clean any existing old camera calibration files.
+    """
+    ros_camera_info_dir = mct_utilities.file_tools.ros_camera_info_dir
+    if exists(ros_camera_info_dir):
+        with cd(ros_camera_info_dir):
+            run('rm *.yaml')
 
 def test(*args):
     print('test')

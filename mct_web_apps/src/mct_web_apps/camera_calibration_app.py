@@ -15,6 +15,10 @@ import yaml
 
 import config
 import common_args
+
+from common_tasks import get_image_size
+from common_tasks import mjpeg_info_cmp 
+
 import mct_introspection
 from mct_camera_tools import camera_master
 from mct_camera_tools import mjpeg_servers
@@ -203,26 +207,6 @@ def camera_name_from_calibrator(calibrator):
     Returns the name of the camera associated with the given camera calibrator.
     """
     return calibrator.split('/')[2]
-
-def get_image_size(scale): 
-    image_width = int(config.camera_image['width']*float(scale))
-    image_height = int(config.camera_image['height']*float(scale))
-    return image_width, image_height
-
-def mjpeg_info_cmp(x,y):
-    """
-    Comparison function for sorting a list of (camera_name, camera_info) pairs.
-    """
-    name_x = x[0]
-    name_y = y[0]
-    value_x = int(name_x.replace('camera_', ''))
-    value_y = int(name_y.replace('camera_', ''))
-    if value_x > value_y:
-        return 1
-    elif value_y > value_x:
-        return -1
-    else:
-        return 0
 
 def cleanup():
     """
