@@ -371,6 +371,18 @@ def image_rect_ready():
     else:
         return False
 
+def zoom_tool_image_ready():
+    """
+    Returns true if the number of zoom tool images is equal to the number of image_raw
+    images.
+    """
+    image_raw_list = find_camera_image_topics(transport='image_raw')
+    zoom_tool_list = find_camera_image_topics(transport='image_zoom_tool')
+    if len(zoom_tool_list) == len(image_raw_list):
+        return True
+    else:
+        return False
+
 def get_homography_calibrator_nodes():
     """
     Returns a list of the homography calibrator nodes.
@@ -524,7 +536,7 @@ if __name__ == '__main__':
         cal_info = get_camera_calibration_info()
         print(cal_info)
 
-    if 1:
+    if 0:
         cal_info = get_homography_calibration_info()
         print(cal_info)
 
@@ -555,6 +567,10 @@ if __name__ == '__main__':
 
     if 0:
         flag = image_rect_ready()
+        print(flag)
+
+    if 1:
+        flag = zoom_tool_ready()
         print(flag)
 
 

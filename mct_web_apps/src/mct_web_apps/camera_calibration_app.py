@@ -212,7 +212,7 @@ def cleanup():
     """
     Clean up temporary redis database
     """
-    stop_cameras_and_mjpeg_servers()
+    #stop_cameras_and_mjpeg_servers()
     db.flushdb()
 
 def setup_redis_db():

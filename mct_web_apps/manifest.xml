@@ -14,6 +14,7 @@
   <depend package="mct_introspection"/>
   <depend package="mct_camera_calibrator"/>
   <depend package="mct_homography"/>
+  <depend package="mct_zoom_tool"/>
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>

@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_zoom_tool" type="zoom_tool_master.py" name="zoom_tool_master" machine="mct_master" required="true"/>
+</launch>

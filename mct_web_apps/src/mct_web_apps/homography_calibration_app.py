@@ -30,7 +30,6 @@ from mct_utilities import file_tools
 
 DEVELOP = False 
 DEBUG = False 
-TARGET_TYPE = 'chessboard'
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -71,8 +70,6 @@ def index():
                 }
 
         return flask.render_template('homography_calibration.html',**render_dict)
-
-        return "Hello"
 
 # sijax request handlers
 # ---------------------------------------------------------------------------------------
@@ -247,7 +244,7 @@ def kill_nodes():
         print('done')
 
 def cleanup():
-    kill_nodes()
+    #kill_nodes()
     db.flushdb()
 
 # ---------------------------------------------------------------------------------

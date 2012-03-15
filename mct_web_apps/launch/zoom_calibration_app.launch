@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_web_apps" type="zoom_calibration_app.py" name="zoom_calibration_app" />
+</launch>
