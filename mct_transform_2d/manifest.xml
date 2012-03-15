@@ -1,0 +1,16 @@
+<package>
+  <description brief="mct_transform_2d">
+
+     mct_transform_2d
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_transform_2d</url>
+  <depend package="rospy"/>
+  <depend package="mct_blob_finder"/>
+
+</package>
+
+
