@@ -156,6 +156,15 @@ def write_homography_calibration(calibration_dict):
             yaml.dump({'cols' : matrix['cols']}, f, default_flow_style=False)
             yaml.dump({'data' : matrix['data']}, f, default_flow_style=False)
 
+def read_homography_calibration(camera):
+    """
+    Reads the homography calibration for the given camera.
+    """
+    filename = os.path.join(homographies_dir,'{0}.yaml'.format(camera))
+    with open(filename,'r') as f:
+        homography_data = yaml.load(f)
+    return homography_data
+
 def get_last_modified_time(filename):
     """
     Returns the last modified time for the given file.
@@ -223,7 +232,6 @@ def rsync_camera_calibrations(verbose=False):
         # Remove temporary guid calibration file
         os.remove(guid_yaml_temp)
 
-
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     if 0:
@@ -262,7 +270,7 @@ if __name__ == '__main__':
         caldata = read_camera_calibration('camera_1')
         print(caldata)
 
-    if 1:
+    if 0:
         rsync_camera_calibrations(verbose=True)
 
     if 0:
@@ -273,4 +281,8 @@ if __name__ == '__main__':
         print(file_list)
         file_list = get_homography_calibration_files()
         print(file_list)
+
+    if 1:
+        data = read_homography_calibration('camera_8')
+        print(data)
 

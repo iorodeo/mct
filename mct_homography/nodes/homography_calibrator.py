@@ -335,10 +335,6 @@ class HomographyCalibratorNode(object):
             else:
                 rospy.sleep(self.idle_sleep_dt)
 
-class HomographyCalibrator(object):
-
-    def __init__(self):
-        self.have_cal = False
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':

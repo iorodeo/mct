@@ -10,6 +10,14 @@
   <url>http://ros.org/wiki/mct_transform_2d</url>
   <depend package="rospy"/>
   <depend package="mct_blob_finder"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="sensor_msgs"/>
+  <depend package="mct_blob_finder"/>
+  <depend package="mct_active_target"/>
+  <depend package="mct_msg_and_srv"/>
+  <depend package="mct_utilities"/>
+  <depend package="mct_xml_tools"/>
 
 </package>
 
