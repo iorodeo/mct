@@ -10,6 +10,7 @@ import sys
 import threading
 import mct_active_target
 import functools
+import scipy.optimize
 from mct_blob_finder import BlobFinder
 from mct_utilities import file_tools
 from cv_bridge.cv_bridge import CvBridge 
@@ -43,8 +44,8 @@ class Transform_2D_Calibrator(object):
 
     def __init__(self, topic_0, topic_1):
 
-        #self.state = WAITING  # There are 3 allowed states WAITING, WORKING, FINISHED
-        self.state = WORKING  
+        self.state = WAITING  # There are 3 allowed states WAITING, WORKING, FINISHED
+        #self.state = WORKING  
         self.topics = topic_0, topic_1
         self.bridge = CvBridge()
         self.lock = threading.Lock()
@@ -125,6 +126,29 @@ class Transform_2D_Calibrator(object):
                 10
                 ) 
         self.transform = None
+        self.transform_error = None
+
+        # Get homography matrices
+        self.homography_dict = {}
+        for topic in self.topics:
+            try:
+                # Get the data from the parameter server
+                rows = rospy.get_param('{0}/homography_matrix/rows')
+                cols = rospy.get_param('{0}/homography_matrix/cols')
+                data = rospy.get_param('{0}/homography_matrix/data')
+            except KeyError:
+                # Data is not on the parameter server - try getting it by reading the file
+                camera = get_camera_from_topic(topic)
+                homography = file_tools.read_homography_calibration(camera)
+                rows = homography['rows']
+                cols = homography['cols']
+                data = homography['data']
+           
+            # Rearrange into numpy matrix
+            homography_matrix = numpy.array(homography['data'])
+            homography_matrix = homography_matrix.reshape((rows,cols))
+            self.homography_dict[topic] = homography_matrix
+
 
         # Set font and initial image information
         self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.8, 0.8,thickness=1)
@@ -173,6 +197,8 @@ class Transform_2D_Calibrator(object):
                 self.blobs = {topic_0: [], topic_1: []}
                 self.index_to_image = {topic_0: {}, topic_1: {}}
                 self.overlap_indices = []
+                self.transform = None
+                self.transform_error = None
         return GetFlagAndMessageResponse(flag,message)
 
     def handle_is_calibrated_srv(self,req):
@@ -230,6 +256,9 @@ class Transform_2D_Calibrator(object):
             message.append('{0}/{1} pts'.format(num_points_found,self.get_led_count()))
         if self.image_info:
             message.append('- {0}'.format(self.image_info))
+        if self.state == FINISHED and topic == self.topics[1]:
+            if self.transform_error is not None:
+                message.append('- error {0:1.2f} mm'.format(1e3*self.transform_error))
         message = ' '.join(message)
         cv.PutText(calib_image,message,(10,25),self.cv_text_font,color)
 
@@ -299,6 +328,7 @@ class Transform_2D_Calibrator(object):
     def get_led_count(self):
         return self.led_n + self.led_m*self.led_n_max + 1
 
+   
     def run(self):
         """
         Node main function. When the state is WORKING this function activates the leds on the
@@ -328,16 +358,14 @@ class Transform_2D_Calibrator(object):
 
             elif self.state == FINISHED and self.transform is None:
 
+
+                # Get world points for both topics for all points in overlap 
+                world_points_dict = {}
+
                 for topic in self.topics:
 
                     # Get homography from image coordinates to world coordinates
-                    camera = get_camera_from_topic(topic)
-                    homography = file_tools.read_homography_calibration(camera)
-                    homography_matrix = numpy.array(homography['data'])
-                    homography_matrix = homography_matrix.reshape((
-                        homography['rows'],
-                        homography['cols']
-                        ))
+                    homography_matrix = self.homography_dict[topic]
                     homography_matrix_t = homography_matrix.transpose()
 
                     # Get image points for indices in overlap
@@ -355,44 +383,91 @@ class Transform_2D_Calibrator(object):
                     denom[:,0] = world_points_hg[:,2]
                     denom[:,1] = world_points_hg[:,2]
                     world_points = world_points/denom
+                    world_points_dict[topic] = world_points
 
-                    print(camera)
-                    print(homography_matrix)
-                    print(image_points.shape)
-                    print(image_points_hg.shape)
-                    print(world_points_hg.shape)
-                    print(world_points.shape)
-                    print(world_points)
-                    with open('{0}_temp.txt'.format(camera),'w') as f:
-                        for i in range(world_points.shape[0]):
-                            f.write('{0} {1}\n'.format(world_points[i,0], world_points[i,1]))
-                    self.transform = []
+                # Estimate translate as mean difference in point positions
+                points_0 = world_points_dict[self.topics[0]]
+                points_1 = world_points_dict[self.topics[1]]
+                rotation_est, translation_est = estimate_transform_2d(points_0, points_1)
 
-            #        # Find the homography transformation
-            #        image_points = numpy.array(self.image_points)
-            #        world_points = numpy.array(self.world_points)
-            #        result = cv2.findHomography(image_points, world_points, cv.CV_RANSAC)
-            #        self.homography_matrix, mask = result 
+                rotation, translation, error = fit_transform_2d(
+                        points_0, 
+                        points_1, 
+                        rotation_est, 
+                        translation_est
+                        )
 
-            #        # Compute the mean reprojection error
-            #        image_points_hg = numpy.ones((image_points.shape[0],3))
-            #        image_points_hg[:,:2] = image_points
-            #        world_points_hg = numpy.ones((world_points.shape[0],3))
-            #        world_points_hg[:,:2] = world_points
-            #        homography_matrix_t = self.homography_matrix.transpose()
-            #        world_points_hg_pred = numpy.dot(image_points_hg, homography_matrix_t)
-            #        denom = numpy.zeros((world_points.shape[0],2))
-            #        denom[:,0] = world_points_hg_pred[:,2]
-            #        denom[:,1] = world_points_hg_pred[:,2]
-            #        world_points_pred = world_points_hg_pred[:,:2]/denom
-            #        error = (world_points - world_points_pred)**2
-            #        error = error.sum(axis=1)
-            #        error = numpy.sqrt(error)
-            #        error = error.mean()
-            #        self.image_info = 'error {0:1.2f} mm'.format(1e3*error)
+                self.transform = {'rotation': rotation, 'translation': translation}
+                self.transform_error = error
+
+                #print()
+                #print('translation_est (m): ', translation_est)
+                #print('rotation_est  (deg): ', 180*rotation_est/numpy.pi)
+                #print()
+                #print('translation     (m): ', translation)
+                #print('rotation      (deg): ', 180*rotation/numpy.pi)
+                #print()
+                #print('error           (m): ', error) 
+                #print('error          (mm): ', 1000*error) 
+                #print()
+
             else:
                 rospy.sleep(self.idle_sleep_dt)
 
+
+def fit_transform_2d(points_0, points_1, rotation_est, translation_est):
+    """
+    Fits the 2d transformation from points
+    """
+    def error_func(x):
+        dx, dy, angle = x[0], x[1], x[2]
+        rot_matrix = get_rot_matrix(angle)
+        rot_matrix_t = rot_matrix.transpose()
+        points_1_pred = numpy.dot(points_0,rot_matrix_t) + numpy.array([dx,dy])
+        error = (points_1_pred - points_1)**2
+        error = numpy.sqrt(error.sum(axis=1))
+        return error.mean()
+
+    # Find best least squares fit using downhill simplex
+    x0 = numpy.array([translation_est[0], translation_est[1], rotation_est])
+    result = scipy.optimize.fmin(error_func, x0,disp=False, full_output=True)
+    sol, error = result[0], result[1]
+    rotation, translation = sol[2], sol[:2]
+    return rotation, translation, error
+
+
+def estimate_transform_2d(points_0, points_1): 
+    """
+    Estimates 2d transformation from corresponding points_0 and points_1
+    """
+
+    # Estimate rotation - as mean angle between a and b vectors
+    a = points_0 - points_0[0,:]
+    b = points_1 - points_1[0,:]
+    a = a[1:,:]
+    b = b[1:,:]
+    a_dot_b = a[:,0]*b[:,0] + a[:,1]*b[:,1]
+    a_cross_b = a[:,0]*b[:,1] - a[:,1]*b[:,0]
+    rotation_est = numpy.arctan2(a_cross_b, a_dot_b)
+    rotation_est = rotation_est.mean()
+
+    # Un-rotate and estimate translation
+    rot_matrix = get_rot_matrix(rotation_est)
+    rot_matrix_t = rot_matrix.transpose()
+    points_0_rot = numpy.dot(points_0,rot_matrix_t)
+    translation_est = points_1 - points_0_rot
+    translation_est = translation_est.mean(axis=0)
+    return rotation_est, translation_est
+
+def get_rot_matrix(angle): 
+    """
+    Returns 2d rotation matrix given the rotation angle
+    """
+    rot_matrix = numpy.array([ 
+        [numpy.cos(angle), -numpy.sin(angle)], 
+        [numpy.sin(angle),  numpy.cos(angle)], 
+        ])
+    return rot_matrix
 
 def get_camera_from_topic(topic):
     """
