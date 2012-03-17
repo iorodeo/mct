@@ -23,14 +23,35 @@ machine_def_file = os.path.join(machine_dir,'machine_def.yaml')
 machine_launch_file = os.path.join(machine_dir,'mct.machine')
 homography_calibrator_params_file = os.path.join(homographies_dir, 'calibrator_params.yaml')
 zoom_tool_params_file = os.path.join(cameras_dir,'zoom_tool_params.yaml')
+tracking_2d_regions_file = os.path.join(tracking_2d_dir,'regions.yaml')
+tracking_2d_camera_pairs_file = os.path.join(tracking_2d_dir,'camera_pairs.yaml')
+
+
+def read_yaml_file(filename):
+    """
+    Reads the given yaml file and returns a dictionary with its contents
+    """
+    with open(filename,'r') as f:
+        yaml_dict = yaml.load(f)
+    return yaml_dict
+
+def read_tracking_2d_regions():
+    """
+    Reads the regions.yaml file from the tracking 2d directory
+    """
+    return read_yaml_file(tracking_2d_regions_file)
+
+def read_tracking_2d_camera_pairs():
+    """
+    Reads the camera_pairs file from the tracking 2d directory
+    """
+    return read_yaml_file(tracking_2d_camera_pairs_file)
 
 def read_machine_def():
     """
     Reads the machine definition file.
     """
-    with open(machine_def_file,'r') as f:
-        machine_def = yaml.load(f)
-    return machine_def
+    return read_yaml_file(machine_def_file)
 
 def write_camera_assignment(yaml_dict):
     """
@@ -49,14 +70,16 @@ def read_camera_assignment():
     this file doesn't exist then None is returned.
     """
     if os.path.isfile(camera_assignment_file):
-        try:
-            with open(camera_assignment_file) as f:
-                yaml_dict = yaml.load(f)
-        except:
-            return None
-        return yaml_dict
+        return read_yaml_file(camera_assignment_file)
     else:
         return None
+
+def read_frame_rates():
+    """
+    Reads the frame_rates.yaml file and returns a dictionary of the allowed frame
+    rates.
+    """
+    return read_yaml_file(frame_rates_file)
 
 def get_camera_calibration_files(fullpath=True):
     """
@@ -139,9 +162,7 @@ def read_homography_calibrator_params():
     """
     Reads the homography calibrator parameters file
     """
-    with open(homography_calibrator_params_file,'r') as f:
-        calibrator_params = yaml.load(f)
-    return calibrator_params
+    return read_yaml_file(homography_calibrator_params_file)
 
 def write_homography_calibration(calibration_dict):
     """
@@ -174,17 +195,6 @@ def get_last_modified_time(filename):
     t_string = time.strftime('%m/%d/%y-%H:%M:%S', t_struct) 
     return t_string 
 
-def read_frame_rates():
-    """
-    Reads the frame_rates.yaml file and returns a dictionary of the allowed frame
-    rates.
-    """
-    if os.path.isfile(frame_rates_file):
-        with open(frame_rates_file,'r') as f:
-            frame_rates = yaml.load(f)
-    else:
-        frame_rates = None
-    return frame_rates
 
 def rsync_camera_calibrations(verbose=False):
     """
@@ -282,7 +292,20 @@ if __name__ == '__main__':
         file_list = get_homography_calibration_files()
         print(file_list)
 
-    if 1:
+    if 0:
         data = read_homography_calibration('camera_8')
         print(data)
 
+    if 0:
+        regions_dict = read_tracking_2d_regions()
+        for region, camera_list in regions_dict.iteritems():
+            print(region)
+            for c in camera_list:
+                print(' ', c)
+
+    if 1:
+        camera_pairs_dict = read_tracking_2d_camera_pairs()
+        for region, pairs_list in camera_pairs_dict.iteritems():
+            print(region)
+            for pair in pairs_list:
+                print(' ', pair)

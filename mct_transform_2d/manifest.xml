@@ -19,6 +19,8 @@
   <depend package="mct_utilities"/>
   <depend package="mct_xml_tools"/>
 
+  <rosdep name="python_scipy"/>
+
 </package>
 
 

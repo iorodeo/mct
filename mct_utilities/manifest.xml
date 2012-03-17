@@ -12,6 +12,7 @@
 
   <rosdep name="redis_server"/>
   <rosdep name="python_redis"/>
+  <rosdep name="python_networkx"/>
 
 </package>
 

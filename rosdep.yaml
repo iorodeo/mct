@@ -40,6 +40,12 @@ ubuntu_checkinstall:
 python_netifaces:
   ubuntu: python-netifaces
 
+python_scipy:
+  ubuntu: python-scipy
+
+python_networkx:
+  ubuntu: python-networkx
+
 pydc1394: 
   ubuntu: |
     python $MCT_INSTALL_SCRIPTS/install_pydc1394.py
