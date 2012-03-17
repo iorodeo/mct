@@ -1,0 +1,4 @@
+---
+float32 rotation
+float32 translation_x
+float32 translation_y

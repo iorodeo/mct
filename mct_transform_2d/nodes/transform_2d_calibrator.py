@@ -20,6 +20,8 @@ from mct_msg_and_srv.srv import GetBool
 from mct_msg_and_srv.srv import GetBoolResponse
 from mct_msg_and_srv.srv import GetFlagAndMessage
 from mct_msg_and_srv.srv import GetFlagAndMessageResponse
+from mct_msg_and_srv.srv import GetTransform2d
+from mct_msg_and_srv.srv import GetTransform2dResponse
 
 # Messages
 from sensor_msgs.msg import Image
@@ -181,6 +183,28 @@ class Transform_2D_Calibrator(object):
                 self.handle_is_calibrated_srv
                 )
 
+        self.get_transform_2d_srv = rospy.Service(
+                '{0}/get_transform_2d'.format(self.node_name),
+                GetTransform2d,
+                self.handle_get_transform_2d_srv
+                )
+
+
+    def handle_get_transform_2d_srv(self,req):
+        """
+        Handles requests to get the transform found by the 
+        """
+        if self.transform is None:
+            rotation = 0.0
+            translation_x = 0.0
+            translation_y = 0.1
+        else:
+            rotation = self.transform['rotation']
+            translation_x = self.transform['translation_x']
+            translation_y = self.transform['translation_y']
+        return GetTransform2dResponse(rotation, translation_x, translation_y)
+
+
     def handle_start_srv(self,req):
         """
         Handles to start/restart the homography calibration procedure.
@@ -247,7 +271,6 @@ class Transform_2D_Calibrator(object):
 
         ## Add text to image
         message = [STATE_MESSAGE[self.state]]
-
         if self.state == WORKING or self.state==FINISHED:
             if self.state == WORKING:
                 num_points_found = len(self.index_to_image[topic])
@@ -256,8 +279,7 @@ class Transform_2D_Calibrator(object):
             message.append('{0}/{1} pts'.format(num_points_found,self.get_led_count()))
         if self.image_info:
             message.append('- {0}'.format(self.image_info))
-        if self.state == FINISHED and topic == self.topics[1]:
-            if self.transform_error is not None:
+        if (self.state == FINISHED) and (self.transform_error is not None):
                 message.append('- error {0:1.2f} mm'.format(1e3*self.transform_error))
         message = ' '.join(message)
         cv.PutText(calib_image,message,(10,25),self.cv_text_font,color)
@@ -328,92 +350,94 @@ class Transform_2D_Calibrator(object):
     def get_led_count(self):
         return self.led_n + self.led_m*self.led_n_max + 1
 
+    def save_blob_data(self):
+        """
+        Save blob data found in images
+        """
+        with self.lock: 
+            for topic in self.topics: 
+                if len(self.blobs[topic]) == 1:  
+                    blob = self.blobs[topic][0]
+                    image_x = blob['centroid_x']
+                    image_y = blob['centroid_y']
+                    self.index_to_image[topic][ (self.led_n, self.led_m) ] = (image_x, image_y)
+
+    def find_transform(self):
+        """
+        Find 2d transform (rotation + translation) from the world points found
+        in topic[0] and topic[1] and thier respective homographies.
+        """
+        # Get world points for both topics for all points in overlap 
+        world_points_dict = {}
+
+        for topic in self.topics:
+
+            # Get homography from image coordinates to world coordinates
+            homography_matrix = self.homography_dict[topic]
+            homography_matrix_t = homography_matrix.transpose()
+
+            # Get image points for indices in overlap
+            image_points = []
+            for index in self.overlap_indices:
+                image_points.append(self.index_to_image[topic][index])
+            image_points = numpy.array(image_points)
+
+            # Convert to homogenious coordinates and compute world coordinates
+            image_points_hg = numpy.ones((image_points.shape[0],3))
+            image_points_hg[:,:2] = image_points
+            world_points_hg = numpy.dot(image_points_hg, homography_matrix_t)
+            world_points = numpy.array(world_points_hg[:,:2])
+            denom = numpy.zeros((world_points.shape[0],2))
+            denom[:,0] = world_points_hg[:,2]
+            denom[:,1] = world_points_hg[:,2]
+            world_points = world_points/denom
+            world_points_dict[topic] = world_points
+
+        # Estimate translate as mean difference in point positions
+        points_0 = world_points_dict[self.topics[0]]
+        points_1 = world_points_dict[self.topics[1]]
+        rotation_est, translation_est = estimate_transform_2d(points_0, points_1)
+
+        rotation, translation, error = fit_transform_2d(
+                points_0, 
+                points_1, 
+                rotation_est, 
+                translation_est
+                )
+
+        self.transform = {
+                'rotation'      : rotation, 
+                'translation_x' : translation[0],
+                'translation_y' : translation[1],
+                }
+
+        self.transform_error = error
+
    
     def run(self):
         """
-        Node main function. When the state is WORKING this function activates the leds on the
-        active calibration target one at a time. When all of the leds have been activated and
-        if sufficient number of points have been collected the homography matrix is calculated.
+        Node main function. When the state is WORKING this function activates
+        the leds on the active calibration target one at a time. When all of
+        the leds have been activated and if sufficient number of points have
+        been collected the homography matrix is calculated.
         """
 
         while not rospy.is_shutdown():
 
             if self.state == WORKING:
-
                 # Turn on current led and wait for images
                 mct_active_target.set_led(self.led_n, self.led_m, self.led_power)
                 self.wait_for_images()
-
-                for topic in self.topics:
-                    print(' topic: {0}'.format(topic))
-                    if len(self.blobs[topic]) == 1:  
-                        blob = self.blobs[topic][0]
-                        image_x = blob['centroid_x']
-                        image_y = blob['centroid_y']
-                        self.index_to_image[topic][ (self.led_n, self.led_m) ] = (image_x, image_y)
-                        print(' {0}, {1} --> {2}, {3}'.format(self.led_n, self.led_m, image_x, image_y))
-
-                print()
+                self.save_blob_data()
                 self.increment_led()
 
             elif self.state == FINISHED and self.transform is None:
-
-
-                # Get world points for both topics for all points in overlap 
-                world_points_dict = {}
-
-                for topic in self.topics:
-
-                    # Get homography from image coordinates to world coordinates
-                    homography_matrix = self.homography_dict[topic]
-                    homography_matrix_t = homography_matrix.transpose()
-
-                    # Get image points for indices in overlap
-                    image_points = []
-                    for index in self.overlap_indices:
-                        image_points.append(self.index_to_image[topic][index])
-                    image_points = numpy.array(image_points)
-
-                    # Convert to homogenious coordinates and compute world coordinates
-                    image_points_hg = numpy.ones((image_points.shape[0],3))
-                    image_points_hg[:,:2] = image_points
-                    world_points_hg = numpy.dot(image_points_hg, homography_matrix_t)
-                    world_points = numpy.array(world_points_hg[:,:2])
-                    denom = numpy.zeros((world_points.shape[0],2))
-                    denom[:,0] = world_points_hg[:,2]
-                    denom[:,1] = world_points_hg[:,2]
-                    world_points = world_points/denom
-                    world_points_dict[topic] = world_points
-
-                # Estimate translate as mean difference in point positions
-                points_0 = world_points_dict[self.topics[0]]
-                points_1 = world_points_dict[self.topics[1]]
-                rotation_est, translation_est = estimate_transform_2d(points_0, points_1)
-
-                rotation, translation, error = fit_transform_2d(
-                        points_0, 
-                        points_1, 
-                        rotation_est, 
-                        translation_est
-                        )
-
-                self.transform = {'rotation': rotation, 'translation': translation}
-                self.transform_error = error
-
-                #print()
-                #print('translation_est (m): ', translation_est)
-                #print('rotation_est  (deg): ', 180*rotation_est/numpy.pi)
-                #print()
-                #print('translation     (m): ', translation)
-                #print('rotation      (deg): ', 180*rotation/numpy.pi)
-                #print()
-                #print('error           (m): ', error) 
-                #print('error          (mm): ', 1000*error) 
-                #print()
-
+                # Calculate 2d transforms
+                self.find_transform()
             else:
                 rospy.sleep(self.idle_sleep_dt)
 
+# ----------------------------------------------------------------------------------
 
 def fit_transform_2d(points_0, points_1, rotation_est, translation_est):
     """
