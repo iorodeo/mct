@@ -44,6 +44,7 @@ class HomographyCalibratorNode(object):
 
     def __init__(self,topic):
 
+        self.ready = False
         self.state = WAITING  # There are 3 allowed states WAITING, WORKING, FINISHED
         self.topic = topic
         self.bridge = CvBridge()
@@ -145,6 +146,7 @@ class HomographyCalibratorNode(object):
                 GetBool,
                 self.handle_is_calibrated_srv
                 )
+        self.ready = True
 
     def handle_start_srv(self,req):
         """
@@ -195,6 +197,9 @@ class HomographyCalibratorNode(object):
         """
         # Find blobs
         with self.lock:
+
+            if not self.ready:
+                return
 
             if self.state == WORKING:
                 self.blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
