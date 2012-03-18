@@ -46,6 +46,7 @@ class Transform_2D_Calibrator(object):
 
     def __init__(self, topic_0, topic_1):
 
+        self.ready = False
         self.state = WAITING  # There are 3 allowed states WAITING, WORKING, FINISHED
         #self.state = WORKING  
         self.topics = topic_0, topic_1
@@ -92,39 +93,40 @@ class Transform_2D_Calibrator(object):
         self.wait_sleep_dt = 0.005
 
         # Led power setting
+        params_namespace = '/transform_2d_calibrator_params'
         self.led_power = rospy.get_param(
-                '{0}/target/led_power'.format(self.node_name),
+                '{0}/target/led_power'.format(params_namespace),
                 10
                 )  
 
         # Wait count for image acquisition
         self.image_wait_number = rospy.get_param(
-                '{0}/image_wait_number'.format(self.node_name),
+                '{0}/image_wait_number'.format(params_namespace),
                 4
                 ) 
 
         # Initialize blob finder
         self.blobFinder = BlobFinder()
         self.blobFinder.threshold = rospy.get_param(
-                '{0}/blob_finder/threshold'.format(self.node_name),
+                '{0}/blob_finder/threshold'.format(params_namespace),
                150 
                 ) 
         self.blobFinder.filter_by_area = rospy.get_param(
-                '{0}/blob_finder/filter_by_area'.format(self.node_name), 
+                '{0}/blob_finder/filter_by_area'.format(params_namespace),
                 False
                 ) 
         self.blobFinder.min_area = rospy.get_param(
-                '{0}/blob_finder/min_area'.format(self.node_name), 
+                '{0}/blob_finder/min_area'.format(params_namespace), 
                 0
                 )
         self.blobFinder.max_area = rospy.get_param(
-                '{0}/blob_finder/max_area'.format(self.node_name),
+                '{0}/blob_finder/max_area'.format(params_namespace),
                 200
                 ) 
 
         # Number of points required
         self.num_points_required = rospy.get_param(
-                '{0}/num_points_required'.format(self.node_name), 
+                '{0}/num_points_required'.format(params_namespace), 
                 10
                 ) 
         self.transform = None
@@ -135,9 +137,9 @@ class Transform_2D_Calibrator(object):
         for topic in self.topics:
             try:
                 # Get the data from the parameter server
-                rows = rospy.get_param('{0}/homography_matrix/rows')
-                cols = rospy.get_param('{0}/homography_matrix/cols')
-                data = rospy.get_param('{0}/homography_matrix/data')
+                rows = rospy.get_param('{0}/homography_matrix/rows'.format(topic))
+                cols = rospy.get_param('{0}/homography_matrix/cols'.format(topic))
+                data = rospy.get_param('{0}/homography_matrix/data'.format(topic))
             except KeyError:
                 # Data is not on the parameter server - try getting it by reading the file
                 camera = get_camera_from_topic(topic)
@@ -166,8 +168,8 @@ class Transform_2D_Calibrator(object):
 
         # Publications - bcalibration progress images for topics 0 and 1
         self.image_pub = {
-                self.topics[0] : rospy.Publisher('image_transform_0', Image),
-                self.topics[1] : rospy.Publisher('image_transform_1', Image),
+                self.topics[0] : rospy.Publisher('image_transform_calibration_0', Image),
+                self.topics[1] : rospy.Publisher('image_transform_calibration_1', Image),
                 }
 
         # Services
@@ -188,6 +190,8 @@ class Transform_2D_Calibrator(object):
                 GetTransform2d,
                 self.handle_get_transform_2d_srv
                 )
+
+        self.ready = True
 
 
     def handle_get_transform_2d_srv(self,req):
@@ -243,6 +247,9 @@ class Transform_2D_Calibrator(object):
         """
         # Find blobs
         with self.lock:
+
+            if not self.ready:
+                return
 
             if self.state == WORKING:
                 self.blobs[topic], blobs_rosimage = self.blobFinder.findBlobs(data)
@@ -329,12 +336,10 @@ class Transform_2D_Calibrator(object):
             if len(self.overlap_indices) >= self.num_points_required:
                 self.state = FINISHED
                 self.image_info = ''
-                print('finished')
             else:
                 self.state = WAITING
                 self.image_info = 'not enough data'
                 self.transform = None
-                print('not enough data')
 
     def get_overlap_indices(self):
         """

@@ -1,7 +1,6 @@
 from __future__ import print_function
 import networkx as nx
 import file_tools
-import pylab
 
 def check_region(region_cameras):
     """

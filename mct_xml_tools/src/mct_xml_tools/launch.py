@@ -243,7 +243,7 @@ def create_zoom_tool_launch(filename):
     params_file = mct_utilities.file_tools.zoom_tool_params_file
     camera_assignment = mct_utilities.file_tools.read_camera_assignment()
     
-    # Create launch list for zoom tools (namespace,topic, computer)
+    # Create launch list for zoom tools (namespace, topic, computer)
     image_topics = mct_introspection.find_camera_image_topics(transport='image_raw')
     launch_list = []
     for topic in image_topics:
@@ -263,8 +263,51 @@ def create_zoom_tool_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
-    
 
+def create_transform_2d_calibrator_launch(filename):
+    """
+    Creates launch file for transform_2d_calibrator nodes.
+    """
+    template_name = 'transform_2d_calibrator_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+    params_file = mct_utilities.file_tools.transform_2d_calibrator_params_file
+
+    # Get region and camera pair information
+    region_dict = mct_utilities.file_tools.read_tracking_2d_regions()
+    camera_pairs_dict = mct_utilities.file_tools.read_tracking_2d_camera_pairs() 
+
+    # Get dictionary of camera to rectified images
+    image_rect_list = mct_introspection.find_camera_image_topics(transport='image_rect')
+    camera_to_image_rect = {}
+    for camera_list in region_dict.values():
+        for camera in camera_list:
+            for image_rect in image_rect_list:
+                if camera in image_rect.split('/'):
+                    camera_to_image_rect[camera] = image_rect
+
+    # Create launch list (namespace, topic0, topic1)
+    launch_list = []
+    for pairs_list in camera_pairs_dict.values():
+        for camera0, camera1 in pairs_list:
+            try:
+                namespace = '/{0}_{1}'.format(camera0, camera1)
+                topic0 = camera_to_image_rect[camera0]
+                topic1 = camera_to_image_rect[camera1]
+                launch_list.append((namespace, topic0, topic1))
+            except KeyError:
+                pass
+    
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            params_file=params_file,
+            launch_list=launch_list
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
+            
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -358,10 +401,13 @@ if __name__ == '__main__':
         filename = 'homography_calibrator.launch'
         create_homography_calibrator_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'zoom_tool.launch'
         create_zoom_tool_launch(filename)
 
+    if 1:
+        filename = 'transform_2d_calibrator.launch'
+        create_transform_2d_calibrator_launch(filename)
 
 
        

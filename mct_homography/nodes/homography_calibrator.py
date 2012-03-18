@@ -72,14 +72,15 @@ class HomographyCalibratorNode(object):
         self.led_m = 0
 
         # Led power setting
+        params_namespace = '/homography_calibrator_params'
         self.led_power = rospy.get_param(
-                '{0}/target/led_power'.format(self.node_name),
+                '{0}/target/led_power'.format(params_namespace),
                 10
                 )  
 
         # Wait count for image acquisition
         self.image_wait_number = rospy.get_param(
-                '{0}/image_wait_number'.format(self.node_name),
+                '{0}/image_wait_number'.format(params_namespace),
                 4
                 ) 
         self.image_wait_cnt = 0
@@ -91,26 +92,26 @@ class HomographyCalibratorNode(object):
         # Initialize blob finder
         self.blobFinder = BlobFinder()
         self.blobFinder.threshold = rospy.get_param(
-                '{0}/blob_finder/threshold'.format(self.node_name),
+                '{0}/blob_finder/threshold'.format(params_namespace),
                 200
                 ) 
         self.blobFinder.filter_by_area = rospy.get_param(
-                '{0}/blob_finder/filter_by_area'.format(self.node_name), 
+                '{0}/blob_finder/filter_by_area'.format(params_namespace), 
                 False
                 ) 
         self.blobFinder.min_area = rospy.get_param(
-                '{0}/blob_finder/min_area'.format(self.node_name), 
+                '{0}/blob_finder/min_area'.format(params_namespace), 
                 0
                 )
         self.blobFinder.max_area = rospy.get_param(
-                '{0}/blob_finder/max_area'.format(self.node_name),
+                '{0}/blob_finder/max_area'.format(params_namespace),
                 200
                 ) 
 
         # Initialize homography matrix and number of points required to solve for it
         self.homography_matrix = None
         self.num_points_required = rospy.get_param(
-                '{0}/num_points_required'.format(self.node_name), 
+                '{0}/num_points_required'.format(params_namespace), 
                 10
                 ) 
 
