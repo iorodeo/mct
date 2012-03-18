@@ -1,14 +1,35 @@
 from __future__ import print_function
+import os
 import networkx as nx
 import file_tools
 
+def check_regions_and_camera_pairs(regions_dict, camera_pairs_dict):
+    """
+    Check the regions and camera pairs dictionaries.
+    """
+    if not regions_dict.keys() == camera_pairs_dict.keys():
+        raise ValueError, 'regions and camera_pairs dictionaries must have the save region names'
+    for region_cameras in regions_dict.values():
+        check_region(region_cameras)
+    for region_name in regions_dict:
+        check_camera_pairs(regions_dict[region_name], camera_pairs_dict[region_name])
+    
 def check_region(region_cameras):
     """
     Checks region for redundant cameras.
     """
+    # Check that camera list doesn't contain redundant cameras
     region_cameras_set = set(region_cameras)
     if len(region_cameras_set) != len(region_cameras):
         raise ValueError, 'camera list contains redundant cameras'
+
+    # Check that a homography matrix exists for every camera in the region
+    homography_files = file_tools.get_homography_calibration_files(fullpath=False)
+    homography_files = map(os.path.splitext, homography_files)
+    cameras_w_homography = [name for name, ext in homography_files if 'camera' in name]
+    for camera in region_cameras:
+        if not camera in cameras_w_homography:
+            raise ValueError, '{0} does not have a homography matrix'.format(camera)
 
 def check_camera_pairs(region_cameras, camera_pairs):
     """
@@ -45,7 +66,16 @@ if __name__ ==  '__main__':
     camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
     region_cameras = regions_dict['maze']
     camera_pairs = camera_pairs_dict['maze']
-    check_camera_pairs(region_cameras,camera_pairs)
+
+    if 0:
+        for region_cameras in regions_dict.values():
+            check_region(region_cameras)
+
+    if 0:
+        check_camera_pairs(region_cameras,camera_pairs)
+
+    if 1:
+        check_regions_and_camera_pairs(regions_dict, camera_pairs_dict)
         
 
 
