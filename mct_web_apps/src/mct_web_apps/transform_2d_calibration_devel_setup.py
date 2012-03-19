@@ -51,9 +51,10 @@ while not mct_introspection.transform_2d_calibrator_nodes_ready():
     time.sleep(0.2)
 print('done')
 
-## Start mjpeg servers and throttleing 
-#print(' * starting mjpeg servers ... ',end='')
-#sys.stdout.flush()
-#mjpeg_servers.set_transport('image_homography_calibration')
-#mjpeg_servers.start_servers()
-#print('done')
+# Start mjpeg servers and throttleing 
+print(' * starting mjpeg servers ... ',end='')
+sys.stdout.flush()
+topic_list = [ 'image_transform_calibration_0', 'image_transform_calibration_1']
+mjpeg_servers.set_topics(topic_list)
+mjpeg_servers.start_servers()
+print('done')

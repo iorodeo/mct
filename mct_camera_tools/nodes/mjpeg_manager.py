@@ -144,17 +144,26 @@ class MJPEG_Manager(object):
         """
         mjpeg_info_dict = {}
         for i, topic in enumerate(topic_list):
-            camera_name = topic.split('/')[2]
-            camera_computer = topic.split('/')[1]
-            mjpeg_server_name = 'mjpeg_server_{0}'.format(camera_name)
+            topic_split = topic.split('/')
+            if 'camera' in topic_split:
+                # Note, this special naming of the mjpeg servers for camera nodes is 
+                # a residual issue we might want to fix
+                name = topic_split[2]
+                computer = topic_split[1]
+            else:
+                name = i 
+                computer = 'mct_master'
+
+            mjpeg_server_name = 'mjpeg_server_{0}'.format(i)
+
             mjpeg_server_port = self.mjpeg_start_port + i
             info = {
                     'image_topic'     : topic,
-                    'computer'        : camera_computer,
+                    'computer'        : computer,
                     'mjpeg_server'    : mjpeg_server_name,
                     'mjpeg_port'      : mjpeg_server_port,
                     }
-            mjpeg_info_dict[camera_name] = info 
+            mjpeg_info_dict[name] = info 
         return mjpeg_info_dict
 
     def clean_up(self):

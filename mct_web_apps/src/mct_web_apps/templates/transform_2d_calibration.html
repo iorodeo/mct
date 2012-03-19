@@ -1,0 +1,50 @@
+{% extends "base.html" %} {% block head %}
+{{ super() }}
+<title> MCT: 2D Transform Calibration Tool</title>
+
+
+<script type="text/javascript">
+    function reload_page() {
+        var scale = document.getElementById('mjpeg_scale').value;
+        var url = window.location.href;
+        if (url.indexOf("?")>-1){
+            url = url.substr(0,url.indexOf("?"));
+        }
+        window.location.href = url + "?scale=" + scale;
+        return false;
+    }
+</script>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<h1 style="color:blue" > MCT: 2D Transform Calibration Tool </h1>
+
+<form id="mjpeg_scale_form">
+    scale
+    <select name="mjpeg_scale" id="mjpeg_scale" onChange="reload_page()">
+        {% for val in scale_options %}
+        <option value="{{val}}" {%if val == scale %} selected="selected" {% endif %}> {{val}} </option>
+        {% endfor %}
+    </select>
+</form>
+
+{% for region, pairs_list in camera_pairs.iteritems() %}
+<h2> {{region | title}} </h2> 
+<form id="form_{{region}}">
+    <table id="table_{{region}}">
+        {% for cam0, cam1 in pairs_list %}
+        <tr>
+            <td> {{cam0}} </td>
+            <td> {{cam1}} </td>
+        </tr>
+        {% endfor %}
+    </table>
+</form>
+{% endfor %}
+
+
+<p id="develop"> {{develop}}</p>
+
+{% endblock %}
