@@ -40,6 +40,11 @@ flask_sijax.Sijax(app)
 def index():
 
     if flask.g.sijax.is_sijax_request: 
+        flask.g.sijax.register_callback('calibrate_button', calibrate_button_handler)
+        flask.g.sijax.register_callback('save_button', save_button_handler)
+        flask.g.sijax.register_callback('reset_button_ok', reset_button_ok_handler)
+        flask.g.sijax.register_callback('reset_button_cancel', reset_button_cancel_handler)
+        #flask.g.sijax.register_callback('timer_update', timer_update_handler)
         return flask.g.sijax.process_request()
 
     else:
@@ -51,18 +56,16 @@ def index():
         ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
         mjpeg_info = redis_tools.get_dict(db,'mjpeg_info_dict')
         camera_pairs = redis_tools.get_dict(db,'camera_pairs_dict')
-        pairs_to_mjpeg_info = get_pairs_to_mjpeg_info(camera_pairs, mjpeg_info)
+        camera_pairs_mjpeg_info = get_camera_pairs_mjpeg_info(camera_pairs, mjpeg_info)
             
         render_dict = {
-                'scale'             : scale,
-                'scale_options'     : scale_options,
-                'image_width'       : image_width,
-                'image_height'      : image_height,
-                'ip_iface_ext'      : ip_iface_ext,
-                'mjpeg_info'        : mjpeg_info,
-                'camera_pairs'      : camera_pairs,
-                'pairs_to_mjpeg_info' : pairs_to_mjpeg_info,
-                'develop'            : str(pairs_to_mjpeg_info),
+                'scale': scale,
+                'scale_options': scale_options,
+                'image_width': image_width,
+                'image_height': image_height,
+                'ip_iface_ext': ip_iface_ext,
+                'camera_pairs': camera_pairs,
+                'camera_pairs_mjpeg_info': camera_pairs_mjpeg_info,
                 }
 
         return flask.render_template('transform_2d_calibration.html',**render_dict)
@@ -70,15 +73,96 @@ def index():
 # sijax request handlers
 # ---------------------------------------------------------------------------------------
 
-def get_pairs_to_mjpeg_info(camera_pairs_dict, mjpeg_info_dict):
-    camera_pair_info_dict = {}
-    for pairs_list in camera_pairs_dict.values():
-        for cam0, cam1 in pairs_list:
-            for info in mjpeg_info_dict.values():
-                cam_pair_str = '{0}_{1}'.format(cam0, cam1)
-                if cam_pair_str in info['image_topic'].split('/'): 
-                    camera_pair_info_dict[(cam0, cam1)] = info
-    return camera_pair_info_dict
+def calibrate_button_handler(obj_response,camera0,camera1):
+    calibrator_name = get_calibrator_name(camera0,camera1) 
+    transform_2d_calibrator.start(calibrator_name)
+    obj_response.html('#message', '')
+    obj_response.html('#message_table', '')
+    obj_response.attr('#message_table', 'style', 'display:none')
+
+def save_button_handler(obj_response):
+
+    # Collect calibration data for camera pairs
+    pairs_dict = redis_tools.get_dict(db,'camera_pairs_dict')
+    calibration_dict = {}
+    calibration_list = []
+    for pairs_list in pairs_dict.values():
+        for camera0, camera1 in pairs_list:
+            calibrator_name = get_calibrator_name(camera0,camera1)
+            if transform_2d_calibrator.is_calibrated(calibrator_name):
+                rot, tx, ty = transform_2d_calibrator.get_transform_2d(calibrator_name)
+                calibration_dict[(camera0,camera1)] = {
+                        'rotation': rot,
+                        'translation_x': tx,
+                        'translation_y': ty,
+                        }
+                calibration_list.append((camera0,camera1))
+
+    file_tools.write_transform_2d_calibration(calibration_dict)
+
+    table_data = []
+    for camera0, camera1 in calibration_list:
+        table_data.append('<tr> <td>')
+        table_data.append('{0}, {1}'.format(camera0,camera1))
+        table_data.append('</td> </tr>')
+    table_data = '\n'.join(table_data)
+
+    if calibration_dict:
+        obj_response.html('#message', 'Saved calibrations for camera pairs:')
+        obj_response.html('#message_table', table_data)
+        obj_response.attr('#message_table', 'style', 'display:block')
+    else:
+        obj_response.html('#message', 'No data to save')
+        obj_response.attr('#message_table', 'style', 'display:none')
+
+def reset_button_ok_handler(obj_response):
+
+    obj_response.html('#message', '')
+    obj_response.html('#message_table', '')
+    obj_response.attr('#message_table', 'style', 'display:none')
+
+    transform_2d_calibrator_master.stop() 
+    time.sleep(0.5) 
+    transform_2d_calibrator_master.start()
+    #
+    #while not mct_introspection.transform_2d_calibrator_nodes_ready():
+    #    time.sleep(0.2)
+
+    obj_response.html('#message', '2D transform calibrators reset')
+    obj_response.html('#message_table', '')
+    obj_response.attr('#message_table', 'style', 'display:none')
+
+
+def reset_button_cancel_handler(obj_response):
+    obj_response.html('#message', 'Reset Canceled')
+    obj_response.html('#message_table', '')
+    obj_response.attr('#message_table', 'style', 'display:none')
+
+# ---------------------------------------------------------------------------------------
+
+def get_calibrator_name(camera0,camera1):
+    return '/{0}_{1}/transform_2d_calibrator'.format(camera0,camera1)
+
+def get_camera_pairs_mjpeg_info(camera_pairs_dict, mjpeg_info_dict):
+    camera_pairs_mjpeg_info = {}
+    for info_dict in mjpeg_info_dict.values():
+
+        topic = info_dict['image_topic']
+        topic_split = topic.split('/')
+
+        # Get camera pair associated with this topic
+        camera_pair_str = topic_split[1]
+        camera_pair_split = camera_pair_str.split('_')
+        camera_0 = '{0}_{1}'.format(camera_pair_split[0],camera_pair_split[1])
+        camera_1 = '{0}_{1}'.format(camera_pair_split[2],camera_pair_split[3])
+
+        # Get index of image_transform topic
+        image_transform = topic_split[2]
+        index = int(image_transform.split('_')[-1])
+
+        camera_pairs_mjpeg_info[(camera_0, camera_1, index)] = info_dict
+
+    return camera_pairs_mjpeg_info 
         
 
 def setup_redis_db():
@@ -111,7 +195,7 @@ def start_nodes():
         
         # Start camera nodes and wait until they are ready
         camera_master.set_camera_launch_param(
-                frame_rate='homography_calibration',
+                frame_rate='transform_2d_calibration',
                 trigger=False
                 )
         camera_master.start_cameras()
@@ -145,8 +229,6 @@ def check_regions_and_pairs():
     regions_dict = file_tools.read_tracking_2d_regions()
     camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
     region_tools.check_regions_and_camera_pairs(regions_dict, camera_pairs_dict)
-
-
 
 def cleanup():
     db.flushdb()

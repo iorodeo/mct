@@ -2,6 +2,29 @@
 {{ super() }}
 <title> MCT: 2D Transform Calibration Tool</title>
 
+<script>
+    function buttonRequest(name) {
+        Sijax.request(name);
+    }
+</script>
+
+<script>
+    function resetButtonRequest() {
+        var ans = confirm('Reset homography calibration?');
+        if (ans) {
+            buttonRequest('reset_button_ok');
+        }
+        else{
+            buttonRequest('reset_button_cancel');
+        }
+    }
+</script>
+
+<script>
+    function calibrateButtonRequest(camera_0, camera_1) {
+        Sijax.request('calibrate_button',[camera_0, camera_1]);
+    }
+</script>
 
 <script type="text/javascript">
     function reload_page() {
@@ -30,21 +53,51 @@
     </select>
 </form>
 
+
 {% for region, pairs_list in camera_pairs.iteritems() %}
-<h2> {{region | title}} </h2> 
+<h2> {{region | title}} - camera pairs </h2> 
 <form id="form_{{region}}">
-    <table id="table_{{region}}">
+    <table id="table_{{region}}" cellspacing="10">
         {% for cam0, cam1 in pairs_list %}
         <tr>
-            <td> {{cam0}} </td>
-            <td> {{cam1}} </td>
+            {% for cam in (cam0, cam1) %}
+            <td style="vertical-align:top">
+                <div>
+                    <div> 
+                        <img id="{{cam}}" src="http://{{ip_iface_ext}}:{{camera_pairs_mjpeg_info[(cam0, cam1, loop.index0) ]['mjpeg_port'] }}/stream?topic={{camera_pairs_mjpeg_info[(cam0, cam1, loop.index0)]['image_topic']}}_throttle?width={{image_width}}?height={{image_height}}" /> 
+                    </div>
+                    <div>
+                        {{cam}}
+                        &nbsp;
+                        {% if loop.index0 == 0 %}
+                        <button onclick="calibrateButtonRequest('{{cam0}}', '{{cam1}}'); return false;" > Run </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </td>
+            {% endfor %}
         </tr>
         {% endfor %}
     </table>
 </form>
 {% endfor %}
 
+<form>
+    <button onclick="buttonRequest('save_button'); return false;"> Save </button>
+    &nbsp;
+    &nbsp;
+    <button onclick="resetButtonRequest(); return false;"> Reset </button>
+</form>
 
-<p id="develop"> {{develop}}</p>
+<p> <b id="message" style="color:black"> </b>  </p>
+<table id="message_table" style="display:none">
+</table>
+
+
+<p id="develop"> </p>
+
+{% for i in range(0,12) %}
+<br>
+{% endfor %}
 
 {% endblock %}

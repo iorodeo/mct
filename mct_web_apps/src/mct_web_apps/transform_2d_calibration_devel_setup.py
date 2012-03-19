@@ -19,7 +19,7 @@ file_tools.rsync_camera_calibrations(verbose=True)
 print(' * starting camera nodes ... ',end='')
 sys.stdout.flush()
 camera_master.set_camera_launch_param(
-        frame_rate='homography_calibration',
+        frame_rate='transform_2d_calibration',
         trigger=False
         )
 camera_master.start_cameras()
