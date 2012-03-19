@@ -90,6 +90,27 @@ def find_camera_image_topics(transport='image_raw'):
             image_topic_list.append(topic_name)
     return image_topic_list
 
+def find_topics_w_name(name):
+    """
+    Finds a list of all topics containing the given name
+    """
+    topic_list = [n for n,t in rospy.get_published_topics()]
+    topic_w_name_list = []
+    for topic in topic_list:
+        if name in topic.split('/'):
+            topic_w_name_list.append(topic)
+    return topic_w_name_list
+
+def find_topics_w_ending(name):
+    """
+    Finds a list of all topics ending in the given name
+    """
+    topic_list = [n for n,t in rospy.get_published_topics()]
+    topic_w_name_list = []
+    for topic in topic_list:
+        if name  ==  topic.split('/')[-1]:
+            topic_w_name_list.append(topic)
+    return topic_w_name_list
 
 def add_machine2camera_dict(input_dict, machine):
     """
@@ -413,6 +434,38 @@ def homography_calibrator_nodes_ready():
     else:
         return False
 
+def get_transform_2d_calibrator_nodes():
+    """
+    Returns a list of the transform 2d calibrator nodes.
+    """
+    node_list = get_nodes()
+    calibrator_nodes = []
+    for node in node_list:
+        if ('transform_2d_calibrator' in node) and (not 'transform_2d_calibrator_master' in node):
+            calibrator_nodes.append(node)
+    return calibrator_nodes
+
+def transform_2d_calibrator_nodes_ready():
+    """
+    Returns True if the transform 2d calibrator nodes are ready. They are ready 
+    if the number of transform 2d calibrator nodes are eqaul to the number of
+    camera pairs.
+    """
+    # Get list of currently running transform 2d calibrators
+    calibrator_list = get_transform_2d_calibrator_nodes()
+
+    # Get list of all camera pairs
+    camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
+    all_pairs_list = []
+    for pairs_list in camera_pairs_dict.values():
+        all_pairs_list.extend(pairs_list)
+
+    if len(all_pairs_list) == len(calibrator_list):
+        return True
+    else:
+        return False
+
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     
@@ -569,9 +622,25 @@ if __name__ == '__main__':
         flag = image_rect_ready()
         print(flag)
 
-    if 1:
+    if 0:
         flag = zoom_tool_ready()
         print(flag)
+
+    if 0:
+        node_list = get_transform_2d_calibrator_nodes()
+        print(node_list)
+
+    if 0:
+        flag = transform_2d_calibrator_nodes_ready()
+        print(flag)
+
+    if 1:
+        topic_list = find_topics_w_ending('image_raw')
+        print(len(topic_list))
+        print(topic_list)
+        topic_list = find_topics_w_ending('image_rect')
+        print(len(topic_list))
+        print(topic_list)
 
 
 

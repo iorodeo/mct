@@ -6,6 +6,7 @@ import json
 from mct_utilities import json_tools
 
 # Services
+from mct_msg_and_srv.srv import ArrayOfStrings
 from mct_msg_and_srv.srv import CommandString 
 from mct_msg_and_srv.srv import GetJSONString
 
@@ -57,12 +58,12 @@ def get_mjpeg_info_dict():
     """
     return mjpeg_servers_info_srv()
 
-def set_transport(transport):
+def set_topics(endings_list):
     """
-    Set the image transport for the mjpeg servers and the throttling nodes.
+    Set the image topics based on endings for the mjpeg servers and the throttling nodes.
     """
-    proxy = rospy.ServiceProxy('/camera_mjpeg_manager/set_transport', CommandString)
-    resp = proxy(transport)
+    proxy = rospy.ServiceProxy('/camera_mjpeg_manager/set_topics', ArrayOfStrings)
+    resp = proxy(endings_list)
     return resp.flag, resp.message
 
 # -----------------------------------------------------------------------------

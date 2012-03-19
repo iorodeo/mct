@@ -9,7 +9,8 @@ import os.path
 import tempfile
 import subprocess
 import json
-from mct_introspection import find_camera_image_topics
+
+from mct_introspection import find_topics_w_ending
 from mct_xml_tools.launch import create_mjpeg_server_launch
 
 # Services
@@ -17,6 +18,8 @@ from mct_msg_and_srv.srv import CommandString
 from mct_msg_and_srv.srv import CommandStringResponse
 from mct_msg_and_srv.srv import GetJSONString
 from mct_msg_and_srv.srv import GetJSONStringResponse
+from mct_msg_and_srv.srv import ArrayOfStrings
+from mct_msg_and_srv.srv import ArrayOfStringsResponse
 
 class MJPEG_Manager(object):
 
@@ -29,7 +32,7 @@ class MJPEG_Manager(object):
         self.server_launch_file = os.path.join(self.tmp_dir,'mjpeg_server.launch')
         self.server_popen = None
         self.mjpeg_start_port = rospy.get_param('mjpeg_start_port',8080)
-        self.transport = 'image_raw' 
+        self.topic_endings = ['image_raw']
 
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera_mjpeg_manager')
@@ -45,22 +48,22 @@ class MJPEG_Manager(object):
                 GetJSONString,
                 self.handle_mjpeg_servers_info_srv
                 )
-        self.set_transport_srv = rospy.Service(
-                '{0}/set_transport'.format(node_name),
-                CommandString,
-                self.handle_set_transport_srv
+        self.set_topic_ending_srv = rospy.Service(
+                '{0}/set_topics'.format(node_name),
+                ArrayOfStrings,
+                self.handle_set_topics_srv
                 )
 
     def run(self):
         rospy.spin()
 
-    def handle_set_transport_srv(self, req):
+    def handle_set_topics_srv(self, req):
         """
-        Handles requests to set the image transport 
+        Handles requests to set the image topics 
         """
         with self.lock:
-            self.transport = req.command
-        return CommandStringResponse(True,'')
+            self.topic_endings = req.values
+        return ArrayOfStringsResponse(True,'')
 
     def handle_mjpeg_servers_info_srv(self,req):
         """
@@ -108,7 +111,9 @@ class MJPEG_Manager(object):
         """
         Creates the mjpeg server launch file and launches the mjpeg server nodes.
         """
-        topics = find_camera_image_topics(transport=self.transport)
+        topics = []
+        for ending in self.topic_endings:
+            topics.extend(find_topics_w_ending(ending))
         self.mjpeg_info_dict = self.create_mjpeg_info_dict(topics)
         create_mjpeg_server_launch(self.server_launch_file,self.mjpeg_info_dict)
         self.server_popen = subprocess.Popen(['roslaunch',self.server_launch_file])
@@ -158,8 +163,6 @@ class MJPEG_Manager(object):
         """
         self.kill_mjpeg_servers()
         self.delete_server_launch_file()
-
-
 
 
 # -----------------------------------------------------------------------------

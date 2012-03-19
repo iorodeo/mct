@@ -231,7 +231,7 @@ def start_nodes():
             time.sleep(0.2)
 
         # Start mjpeg servers and throttleing 
-        mjpeg_servers.set_transport('image_homography_calibration')
+        mjpeg_servers.set_topics(['image_homography_calibration'])
         mjpeg_servers.start_servers()
 
 

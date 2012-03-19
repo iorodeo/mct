@@ -251,6 +251,7 @@ def start_cameras_and_mjpeg_servers():
         # Wait until the camera nodes are ready and then start the mjpeg servers
         while not mct_introspection.camera_nodes_ready(mode='calibration'):
             time.sleep(0.2)
+        mjpeg_servers.set_topics(['image_raw'])
         mjpeg_servers.start_servers()
         target_info = file_tools.read_target_info(TARGET_TYPE)
         calibrator_master.start(target_info['size'], target_info['square'])
