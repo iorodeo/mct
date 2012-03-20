@@ -309,11 +309,13 @@ def create_transform_2d_calibrator_launch(filename):
         f.write(xml_str)
             
 
-def create_static_tf_publisher_launch(filename):
+def create_static_tf_publisher_2d_launch(filename):
     """
     Create static transform publisher launch file.
+
+    This is not currently used.
     """
-    template_name = 'static_tf_publisher_launch.xml'
+    template_name = 'static_tf_publisher_2d_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
 
     # Generate lauch list (frame_0, frame_1
@@ -333,8 +335,8 @@ def create_static_tf_publisher_launch(filename):
             ty = transform_2d['translation_y']
             tz = 0.0
             ang = transform_2d['rotation']
-            rate_ms = 100
-            node_name = '{0}_{1}_broadcaster'.format(frame_0,frame_1)
+            rate_ms = 10
+            node_name = 'tracking_plane_{0}_to_{1}_broadcaster'.format(num_0,num_1)
             node_args = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(tx, ty, tz, 0.0, 0.0, ang, frame_0, frame_1, rate_ms)
             launch_list.append((node_name,node_args))
 
@@ -452,8 +454,8 @@ if __name__ == '__main__':
         create_transform_2d_calibrator_launch(filename)
 
     if 1:
-        filename = 'static_tf_publisher.launch'
-        create_static_tf_publisher_launch(filename)
+        filename = 'static_tf_publisher_2d.launch'
+        create_static_tf_publisher_2d_launch(filename)
 
 
        
