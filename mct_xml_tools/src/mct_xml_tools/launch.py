@@ -308,6 +308,48 @@ def create_transform_2d_calibrator_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
             
+
+def create_static_tf_publisher_launch(filename):
+    """
+    Create static transform publisher launch file.
+    """
+    template_name = 'static_tf_publisher_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+
+    # Generate lauch list (frame_0, frame_1
+    launch_list = []
+    camera_pairs_dict = mct_utilities.file_tools.read_tracking_2d_camera_pairs()
+    for pairs_list in camera_pairs_dict.values():
+        for cam_0, cam_1 in pairs_list:
+            # Get camera numbers and use to form frame ids for tracking planes
+            num_0 = int(cam_0.split('_')[1])
+            num_1 = int(cam_1.split('_')[1])
+            frame_0 = 'tracking_plane_{0}'.format(num_0)
+            frame_1 = 'tracking_plane_{0}'.format(num_1)
+
+            # Get 2d transformation and make 3d
+            transform_2d = mct_utilities.file_tools.read_transform_2d_calibration(cam_0,cam_1)
+            tx = transform_2d['translation_x']
+            ty = transform_2d['translation_y']
+            tz = 0.0
+            ang = transform_2d['rotation']
+            rate_ms = 200
+            node_name = '{0}_{1}_broadcaster'.format(frame_0,frame_1)
+            node_args = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(tx, ty, tz, 0.0, 0.0, ang, frame_0, frame_1, rate_ms)
+            launch_list.append((node_name,node_args))
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            launch_list=launch_list
+            )
+
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -405,9 +447,13 @@ if __name__ == '__main__':
         filename = 'zoom_tool.launch'
         create_zoom_tool_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'transform_2d_calibrator.launch'
         create_transform_2d_calibrator_launch(filename)
+
+    if 1:
+        filename = 'static_tf_publisher.launch'
+        create_static_tf_publisher_launch(filename)
 
 
        

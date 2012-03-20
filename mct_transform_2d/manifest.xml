@@ -18,6 +18,7 @@
   <depend package="mct_msg_and_srv"/>
   <depend package="mct_utilities"/>
   <depend package="mct_xml_tools"/>
+  <depend package="tf"/>
 
   <rosdep name="python_scipy"/>
 
