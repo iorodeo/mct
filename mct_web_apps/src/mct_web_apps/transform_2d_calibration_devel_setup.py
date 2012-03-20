@@ -12,6 +12,11 @@ from mct_transform_2d import transform_2d_calibrator_master
 from mct_transform_2d import transform_2d_calibrator
 from mct_camera_tools import mjpeg_servers
 from mct_utilities import file_tools
+from mct_utilities import region_tools
+
+regions_dict = file_tools.read_tracking_2d_regions()
+camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
+region_tools.check_regions_and_camera_pairs(regions_dict, camera_pairs_dict)
 
 file_tools.rsync_camera_calibrations(verbose=True)
 

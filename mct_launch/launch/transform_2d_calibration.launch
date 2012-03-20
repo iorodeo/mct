@@ -4,4 +4,5 @@
     <include file="$(find mct_camera_tools)/launch/image_proc_master.launch" /> 
     <include file="$(find mct_transform_2d)/launch/transform_2d_calibrator_master.launch" />
     <include file="$(find mct_camera_tools)/launch/mjpeg_manager.launch" />
+    <include file="$(find mct_web_apps)/launch/transform_2d_calibration_app.launch"/> 
 </launch>

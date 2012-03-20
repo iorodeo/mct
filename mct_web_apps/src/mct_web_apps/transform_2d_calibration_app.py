@@ -27,8 +27,8 @@ from mct_utilities import iface_tools
 from mct_utilities import file_tools
 from mct_utilities import region_tools
 
-DEVELOP = True 
-DEBUG = True 
+DEVELOP = False 
+DEBUG = False 
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -44,7 +44,7 @@ def index():
         flask.g.sijax.register_callback('save_button', save_button_handler)
         flask.g.sijax.register_callback('reset_button_ok', reset_button_ok_handler)
         flask.g.sijax.register_callback('reset_button_cancel', reset_button_cancel_handler)
-        #flask.g.sijax.register_callback('timer_update', timer_update_handler)
+        flask.g.sijax.register_callback('timer_update', timer_update_handler)
         return flask.g.sijax.process_request()
 
     else:
@@ -57,6 +57,7 @@ def index():
         mjpeg_info = redis_tools.get_dict(db,'mjpeg_info_dict')
         camera_pairs = redis_tools.get_dict(db,'camera_pairs_dict')
         camera_pairs_mjpeg_info = get_camera_pairs_mjpeg_info(camera_pairs, mjpeg_info)
+        calibration_info = get_calibration_info()
             
         render_dict = {
                 'scale': scale,
@@ -66,6 +67,7 @@ def index():
                 'ip_iface_ext': ip_iface_ext,
                 'camera_pairs': camera_pairs,
                 'camera_pairs_mjpeg_info': camera_pairs_mjpeg_info,
+                'calibration_info': calibration_info,
                 }
 
         return flask.render_template('transform_2d_calibration.html',**render_dict)
@@ -116,29 +118,52 @@ def save_button_handler(obj_response):
         obj_response.attr('#message_table', 'style', 'display:none')
 
 def reset_button_ok_handler(obj_response):
-
     obj_response.html('#message', '')
     obj_response.html('#message_table', '')
     obj_response.attr('#message_table', 'style', 'display:none')
-
     transform_2d_calibrator_master.stop() 
     time.sleep(0.5) 
     transform_2d_calibrator_master.start()
-    #
-    #while not mct_introspection.transform_2d_calibrator_nodes_ready():
-    #    time.sleep(0.2)
-
+    while not mct_introspection.transform_2d_calibrator_nodes_ready():
+        time.sleep(0.25)
     obj_response.html('#message', '2D transform calibrators reset')
     obj_response.html('#message_table', '')
     obj_response.attr('#message_table', 'style', 'display:none')
-
 
 def reset_button_cancel_handler(obj_response):
     obj_response.html('#message', 'Reset Canceled')
     obj_response.html('#message_table', '')
     obj_response.attr('#message_table', 'style', 'display:none')
 
+def timer_update_handler(obj_response):
+    """
+    Callback for the timer update function. Resets the modified times for the camera 
+    calibration files.
+    """
+    calibration_info = get_calibration_info()
+    for camera_pair, info in calibration_info.iteritems():
+        camera0, camera1 = camera_pair
+        obj_response.html('#{0}_{1}_modified_time'.format(camera0,camera1),info['modified'])
+
 # ---------------------------------------------------------------------------------------
+
+def get_calibration_info():
+    """
+    Gets the last modified date for any existing homography calibration files.
+    """
+    camera_pairs_dict = redis_tools.get_dict(db,'camera_pairs_dict')
+    calibration_info = mct_introspection.get_transform_2d_calibration_info()
+    calibration_info_mod = {}
+
+    for pairs_list in camera_pairs_dict.values():
+        for camera0, camera1 in pairs_list:
+            pair_str = '{0}_{1}'.format(camera0,camera1)
+            if not pair_str in calibration_info:
+                calibration_info_mod[(camera0,camera1)] = {'modified': ''}
+            else:
+                calibration_info_mod[(camera0,camera1)] = calibration_info[pair_str]
+    return calibration_info_mod
+
 
 def get_calibrator_name(camera0,camera1):
     return '/{0}_{1}/transform_2d_calibrator'.format(camera0,camera1)

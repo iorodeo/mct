@@ -26,6 +26,13 @@
     }
 </script>
 
+<script type="text/javascript"> 
+    setTimeout(function() { 
+            Sijax.request('timer_update'); 
+            setTimeout(arguments.callee,1000); 
+            }, 1000); 
+</script>
+
 <script type="text/javascript">
     function reload_page() {
         var scale = document.getElementById('mjpeg_scale').value;
@@ -44,6 +51,8 @@
 {{ super() }}
 <h1 style="color:blue" > MCT: 2D Transform Calibration Tool </h1>
 
+<p id="develop"> {{develop}} </p>
+
 <form id="mjpeg_scale_form">
     scale
     <select name="mjpeg_scale" id="mjpeg_scale" onChange="reload_page()">
@@ -53,8 +62,8 @@
     </select>
 </form>
 
-
 {% for region, pairs_list in camera_pairs.iteritems() %}
+{% if pairs_list | length > 0 %}
 <h2> {{region | title}} - camera pairs </h2> 
 <form id="form_{{region}}">
     <table id="table_{{region}}" cellspacing="10">
@@ -67,10 +76,12 @@
                         <img id="{{cam}}" src="http://{{ip_iface_ext}}:{{camera_pairs_mjpeg_info[(cam0, cam1, loop.index0) ]['mjpeg_port'] }}/stream?topic={{camera_pairs_mjpeg_info[(cam0, cam1, loop.index0)]['image_topic']}}_throttle?width={{image_width}}?height={{image_height}}" /> 
                     </div>
                     <div>
-                        {{cam}}
-                        &nbsp;
                         {% if loop.index0 == 0 %}
                         <button onclick="calibrateButtonRequest('{{cam0}}', '{{cam1}}'); return false;" > Run </button>
+                        &nbsp;
+                        <b> {{cam0}}, {{cam1}} </b>
+                        {% else %}
+                        <a id="{{cam0}}_{{cam1}}_modified_time"> {{calibration_info[(cam0,cam1)]['modified']}}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -80,6 +91,7 @@
         {% endfor %}
     </table>
 </form>
+{% endif %}
 {% endfor %}
 
 <form>
@@ -94,7 +106,6 @@
 </table>
 
 
-<p id="develop"> </p>
 
 {% for i in range(0,12) %}
 <br>

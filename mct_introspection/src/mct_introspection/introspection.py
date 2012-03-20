@@ -307,6 +307,14 @@ def get_homography_calibration_info():
     cal_files = file_tools.get_homography_calibration_files(fullpath=True)
     return get_cal_files_info(cal_files)
 
+def get_transform_2d_calibration_info():
+    """
+    Returns a dictionary of information regarding the existing transform 2d calibratiion
+    files.
+    """
+    cal_files = file_tools.get_transform_2d_calibration_files(fullpath=True)
+    return get_cal_files_info(cal_files)
+
 def get_cal_files_info(cal_files):
     """
     Returns a dictionary of information regarding the list of given calibratoin files.
@@ -593,6 +601,10 @@ if __name__ == '__main__':
         cal_info = get_homography_calibration_info()
         print(cal_info)
 
+    if 1:
+        cal_info = get_transform_2d_calibration_info()
+        print(cal_info)
+
     if 0:
         namespace_dict = get_camera_namespace_dict()
         for k,v in namespace_dict.iteritems():
@@ -634,7 +646,7 @@ if __name__ == '__main__':
         flag = transform_2d_calibrator_nodes_ready()
         print(flag)
 
-    if 1:
+    if 0:
         topic_list = find_topics_w_ending('image_raw')
         print(len(topic_list))
         print(topic_list)
