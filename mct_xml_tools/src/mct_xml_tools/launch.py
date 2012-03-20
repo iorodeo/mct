@@ -333,7 +333,7 @@ def create_static_tf_publisher_launch(filename):
             ty = transform_2d['translation_y']
             tz = 0.0
             ang = transform_2d['rotation']
-            rate_ms = 200
+            rate_ms = 100
             node_name = '{0}_{1}_broadcaster'.format(frame_0,frame_1)
             node_args = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(tx, ty, tz, 0.0, 0.0, ang, frame_0, frame_1, rate_ms)
             launch_list.append((node_name,node_args))
