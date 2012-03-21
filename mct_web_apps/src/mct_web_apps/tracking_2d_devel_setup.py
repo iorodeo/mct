@@ -2,12 +2,15 @@ from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_web_apps')
 import rospy
-import mct_introspection
 import sys
 import time
 
+import mct_introspection
+from mct_utilities import file_tools
+from mct_utilities import region_tools
 from mct_camera_tools import camera_master
 from mct_camera_tools import image_proc_master
+from mct_camera_trigger import camera_trigger
 
 regions_dict = file_tools.read_tracking_2d_regions()
 camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
@@ -23,23 +26,29 @@ camera_master.set_camera_launch_param(
         trigger=True
         )
 camera_master.start_cameras()
-while not mct_introspection.camera_nodes_ready(mode='calibration'):
+while not mct_introspection.camera_nodes_ready(mode='tracking'):
     time.sleep(0.2)
 print('done')
 
-# Start image_proc nodes and wait until they are ready
-print(' * starting image proc nodes ... ', end='')
-sys.stdout.flush()
-image_proc_master.start_image_proc()
-while not mct_introspection.image_proc_nodes_ready():
-    time.sleep(0.2)
-print('done')
+# Start camera triggers
+camera_trigger.start(10)
 
-# Wait for rectified images to be ready - required for launching transform 
-# calibrators.
-print(' * waiting for image rect topics ...', end='')
-sys.stdout.flush()
-while not mct_introspection.image_rect_ready():
-    time.sleep(0.2)
-print('done')
+#
+## Start image_proc nodes and wait until they are ready
+#print(' * starting image proc nodes ... ', end='')
+#sys.stdout.flush()
+#image_proc_master.start_image_proc()
+#while not mct_introspection.image_proc_nodes_ready():
+#    time.sleep(0.2)
+#print('done')
+#
+## Wait for rectified images to be ready - required for launching transform 
+## calibrators.
+#print(' * waiting for image rect topics ...', end='')
+#sys.stdout.flush()
+#while not mct_introspection.image_rect_ready():
+#    time.sleep(0.2)
+#print('done')
+#
+## Start camera triggers
 

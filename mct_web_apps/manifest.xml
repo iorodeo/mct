@@ -16,6 +16,7 @@
   <depend package="mct_homography"/>
   <depend package="mct_zoom_tool"/>
   <depend package="mct_transform_2d"/>
+  <depend package="mct_camera_trigger"/>
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>

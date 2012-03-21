@@ -3,7 +3,7 @@ import roslib
 roslib.load_manifest('mct_camera_trigger')
 import rospy
 import time
-from mct_camera_trigger import CamTrigDev
+from mct_camera_trigger.trigger_device import CamTrigDev
 
 from mct_msg_and_srv.srv import CameraTriggerCmd
 from mct_msg_and_srv.srv import CameraTriggerCmdResponse

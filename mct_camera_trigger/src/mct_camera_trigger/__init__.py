@@ -1,1 +1,2 @@
-from trigger_device import *
+import trigger_device
+import camera_trigger
