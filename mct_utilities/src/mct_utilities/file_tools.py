@@ -27,6 +27,7 @@ transform_2d_calibrator_params_file = os.path.join(transforms_2d_dir, 'calibrato
 zoom_tool_params_file = os.path.join(cameras_dir,'zoom_tool_params.yaml')
 tracking_2d_regions_file = os.path.join(tracking_2d_dir,'regions.yaml')
 tracking_2d_camera_pairs_file = os.path.join(tracking_2d_dir,'camera_pairs.yaml')
+tracking_2d_stitching_params_file = os.path.join(tracking_2d_dir,'stitching_params.yaml')
 
 
 def read_yaml_file(filename):
@@ -36,6 +37,12 @@ def read_yaml_file(filename):
     with open(filename,'r') as f:
         yaml_dict = yaml.load(f)
     return yaml_dict
+
+def read_tracking_2d_stitching_params():
+    """
+    Reads the stitching_params.yaml file from the tracking 2d directory.
+    """
+    return read_yaml_file(tracking_2d_stitching_params_file)
 
 def read_tracking_2d_regions():
     """
@@ -275,6 +282,9 @@ def rsync_camera_calibrations(verbose=False):
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+
+    # Development/testing
+
     if 0:
         frame_rates = read_frame_rates()
         print(frame_rates)
@@ -345,6 +355,10 @@ if __name__ == '__main__':
         file_list = get_transform_2d_calibration_files()
         print(file_list)
 
-    if 1:
+    if 0:
         transform = read_transform_2d_calibration('camera_1', 'camera_4')
         print(transform)
+
+    if 1:
+        data = read_tracking_2d_stitching_params()
+        print(data)
