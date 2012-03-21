@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_camera_trigger" type="camera_trigger_node.py" name="camera_trigger" machine="mct_master" required="true">
+        <rosparam file="$(env MCT_CONFIG)/cameras/ext_trigger.yaml" />
+    </node>
+</launch>

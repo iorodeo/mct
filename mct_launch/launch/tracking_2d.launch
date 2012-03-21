@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find mct_camera_tools)/launch/camera1394_master.launch" />
+    <include file="$(find mct_camera_tools)/launch/image_proc_master.launch" /> 
+</launch>

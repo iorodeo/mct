@@ -20,8 +20,8 @@ class TriggerNode(object):
     def __init__(self):
 
         # Get device parameters
-        self.port = rospy.get_param('trigger_device_port','/dev/ttyUSB0')
-        self.baudrate = rospy.get_param('trigger_device_baudrate', 115200)
+        self.port = rospy.get_param('/camera_trigger/port','/dev/camera-trigger')
+        self.baudrate = rospy.get_param('/camera_trigger/baudrate', 115200)
 
         # Open device
         self.dev = CamTrigDev(port=self.port,baudrate=self.baudrate)

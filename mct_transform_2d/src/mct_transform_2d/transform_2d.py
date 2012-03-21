@@ -153,10 +153,9 @@ class Transforms2d(object):
         bbox = self.get_anchor_plane_bounding_box(region)
         extent_x = bbox['max_x'] - bbox['min_x']
         extent_y = bbox['max_y'] - bbox['min_y']
-        if extent_x >= extent_y:
-            scale = float(image_width_max)/float(extent_x)
-        else:
-            scale = float(image_height_max)/float(extent_y)
+        scale_x = float(image_width_max)/float(extent_x)
+        scale_y = float(image_height_max)/float(extent_y)
+        scale = min([scale_y, scale_y])
         shift_x = -scale*bbox['min_x']
         shift_y = -scale*bbox['min_y']
         
@@ -213,6 +212,12 @@ class Transforms2d(object):
         """
         return self.get_bounding_box(region, self.camera_pts_to_anchor_plane)
 
+    def get_stitching_plane_bounding_box(self,region):
+        """
+        Returns ...
+        """
+        return self.get_bounding_box(region, self.camera_pts_to_stitching_plane)
+
     def get_camera_boundaries(self, region, transform_func):
         """
         Generic function which returns a dictionary of the camera boundaries for
@@ -237,18 +242,11 @@ class Transforms2d(object):
         """
         return self.get_camera_boundaries(region, self.camera_pts_to_anchor_plane)
 
-    def get_stitching_plane_bounding_box(self,region):
-        """
-        Returns ...
-        """
-        return self.get_bounding_box(region, self.camera_pts_to_stitching_plane)
-
     def get_stitching_plane_camera_boundaries(self,region):
         """
         Returns ...
         """
         return self.get_camera_boundaries(region, self.camera_pts_to_stitching_plane)
-
 
     # Initialization methods -------------------------------------------------------------------
 
@@ -508,6 +506,8 @@ if __name__ == '__main__':
 
     if 0:
 
+        # Show camera boundaries in anchor plane
+
         tf2d = Transforms2d()
 
         # Plot camera centers
@@ -548,6 +548,8 @@ if __name__ == '__main__':
 
     if 1:
 
+        # Show camera boundaries in stitching plane
+
         tf2d = Transforms2d()
 
         # Plot camera centers
@@ -573,11 +575,4 @@ if __name__ == '__main__':
         pylab.axis('equal')
         pylab.show()
         
-        
-
-
-
-
-
-
 
