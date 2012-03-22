@@ -7,6 +7,7 @@ import rospy
 import sys
 import time
 import os.path
+import tempfile
 import subprocess
 import mct_xml_tools
 import mct_introspection
@@ -39,6 +40,7 @@ cmd_msgs = {
         'list_camera_assignment': 'listing camera assignment', 
         'rsync_camera_calibrations': 'rsyncing camera calibraitons',
         'clean_camera_calibrations': 'cleaning camera calibrations',
+        'show_camera_info':  'launching camera_info viewers',
         'test': 'test command for development',
         }
 
@@ -275,6 +277,34 @@ def clean_camera_calibrations():
     if exists(ros_camera_info_dir):
         with cd(ros_camera_info_dir):
             run('rm *.yaml')
+
+def show_camera_info():
+    """
+    Launch rostopic echo for all camera info topics.
+    """
+    camera_info_topics = mct_introspection.find_camera_info_topics()
+    popen_list = []
+    filename_list = []
+    tmp_dir = tempfile.gettempdir()
+    pos_x, pos_y, step_x, step_y = 10, 50, 170, 0
+    for i, topic in enumerate(camera_info_topics):
+        filename = os.path.join(tmp_dir, 'camera_info_{0}.bash'.format(i))
+        with open(filename, 'w') as f:
+            f.write('rostopic echo {0}\n'.format(topic))
+        os.chmod(filename,0755)
+        geometry = '{0}x{1}+{2}+{3}'.format(80,28,pos_x,pos_y)
+        popen = subprocess.Popen(['gnome-terminal', '--geometry', geometry, '-x', filename])
+        popen_list.append(popen)
+        filename_list.append(filename)
+        pos_x += step_x
+        pos_y += step_y
+        time.sleep(0.05)
+
+    # Wait a bit before deleting files
+    time.sleep(5)
+    for filename in filename_list:
+        os.remove(filename)
+        
 
 def test(*args):
     print('test')

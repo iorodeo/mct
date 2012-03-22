@@ -6,7 +6,7 @@ import networkx
 
 from mct_utilities import file_tools
 
-class Transforms2d(object):
+class Transform2d(object):
 
     def __init__(self):
         self.regions_dict = file_tools.read_tracking_2d_regions()
@@ -508,7 +508,7 @@ if __name__ == '__main__':
 
         # Show camera boundaries in anchor plane
 
-        tf2d = Transforms2d()
+        tf2d = Transform2d()
 
         # Plot camera centers
         for camera in tf2d.regions_dict['maze']:
@@ -535,13 +535,13 @@ if __name__ == '__main__':
 
     if 0:
 
-        tf2d = Transforms2d()
+        tf2d = Transform2d()
         for region in tf2d.regions_dict:
             matrix = tf2d.get_anchor_to_stitching_plane_tf(region)
             print(matrix)
 
     if 0:
-        tf2d = Transforms2d()
+        tf2d = Transform2d()
         for camera in tf2d.regions_dict['maze']:
             matrix = tf2d.get_camera_to_stitching_plane_tf(camera)
             print(matrix)
@@ -550,7 +550,7 @@ if __name__ == '__main__':
 
         # Show camera boundaries in stitching plane
 
-        tf2d = Transforms2d()
+        tf2d = Transform2d()
 
         # Plot camera centers
         for camera in tf2d.regions_dict['maze']:

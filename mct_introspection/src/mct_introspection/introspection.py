@@ -77,6 +77,19 @@ def find_cameras(add_machine=True, add_info=False):
             camera_dict.update(camera_dict_temp)
     return camera_dict
 
+def find_camera_info_topics():
+    """
+    Returns a list of all camera info topics
+    """
+    topic_list = rospy.get_published_topics()
+    info_topic_list = []
+    for topic in topic_list:
+        topic_name, topic_type = topic
+        topic_name_split = topic_name.split('/')
+        if 'camera_info' in topic_name_split:
+            info_topic_list.append(topic_name)
+    return info_topic_list
+
 def find_camera_image_topics(transport='image_raw'):
     """
     Finds a list of all active camera topics
@@ -601,7 +614,7 @@ if __name__ == '__main__':
         cal_info = get_homography_calibration_info()
         print(cal_info)
 
-    if 1:
+    if 0:
         cal_info = get_transform_2d_calibration_info()
         print(cal_info)
 
@@ -652,6 +665,10 @@ if __name__ == '__main__':
         print(topic_list)
         topic_list = find_topics_w_ending('image_rect')
         print(len(topic_list))
+        print(topic_list)
+
+    if 1:
+        topic_list = find_camera_info_topics()
         print(topic_list)
 
 

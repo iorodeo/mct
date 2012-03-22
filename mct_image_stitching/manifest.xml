@@ -1,0 +1,21 @@
+<package>
+  <description brief="mct_image_stitching">
+
+     mct_image_stitching
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_image_stitching</url>
+  <depend package="rospy"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="sensor_msgs"/>
+  <depend package="mct_utilities"/>
+  <depend package="mct_introspection"/>
+  <depend package="mct_transform_2d"/>
+
+</package>
+
+

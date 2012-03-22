@@ -10,6 +10,7 @@ from mct_msg_and_srv.srv import CameraTriggerCmdResponse
 
 OPEN_SLEEP_DT = 1.0
 
+
 class TriggerNode(object):
     """
     Node for communicating with the camera trigger device. Provides services
@@ -26,14 +27,23 @@ class TriggerNode(object):
         # Open device
         self.dev = CamTrigDev(port=self.port,baudrate=self.baudrate)
         time.sleep(OPEN_SLEEP_DT) # Slight delay for opening device
+        self.dev.stop()
 
         # Initialize node and setup trigger command service
         rospy.init_node('camera_trigger_device')
+        rospy.on_shutdown(self.on_shutdown)
         self.trigger_cmd_srv = rospy.Service(
                 'camera_trigger_cmd',
                 CameraTriggerCmd,
                 self.handle_trigger_cmd
                 )
+
+    def on_shutdown(self):
+        """
+        On shutdown start triggers running at some base rate to ensure that the 
+        camera nodes w/ external triggers can shutdown properly. 
+        """
+        self.dev.start(10)
 
     def handle_trigger_cmd(self,req):
         """

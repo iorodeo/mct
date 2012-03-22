@@ -16,6 +16,12 @@ regions_dict = file_tools.read_tracking_2d_regions()
 camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
 region_tools.check_regions_and_camera_pairs(regions_dict, camera_pairs_dict)
 
+# Stop camera triggers
+print(' * stopping camera triggers ... ',end='')
+sys.stdout.flush()
+camera_trigger.stop()
+print('done')
+
 file_tools.rsync_camera_calibrations(verbose=True)
 
 # Start camera nodes and wait until they are ready
@@ -30,25 +36,32 @@ while not mct_introspection.camera_nodes_ready(mode='tracking'):
     time.sleep(0.2)
 print('done')
 
-# Start camera triggers
-camera_trigger.start(10)
 
-#
-## Start image_proc nodes and wait until they are ready
-#print(' * starting image proc nodes ... ', end='')
-#sys.stdout.flush()
-#image_proc_master.start_image_proc()
-#while not mct_introspection.image_proc_nodes_ready():
-#    time.sleep(0.2)
-#print('done')
-#
-## Wait for rectified images to be ready - required for launching transform 
-## calibrators.
-#print(' * waiting for image rect topics ...', end='')
-#sys.stdout.flush()
-#while not mct_introspection.image_rect_ready():
-#    time.sleep(0.2)
-#print('done')
-#
-## Start camera triggers
+# Delay until all camera nodes are ready 
+print(' * camera nodes sync delay ... ', end='')
+sys.stdout.flush()
+time.sleep(10)
+print('done')
+
+print(' * starting camera triggers ... ', end='')
+sys.stdout.flush()
+camera_trigger.start(10)
+print('done')
+
+# Start image_proc nodes and wait until they are ready
+print(' * starting image proc nodes ... ', end='')
+sys.stdout.flush()
+image_proc_master.start_image_proc()
+while not mct_introspection.image_proc_nodes_ready():
+    time.sleep(0.2)
+print('done')
+
+# Wait for rectified images to be ready - required for launching transform 
+# calibrators.
+print(' * waiting for image rect topics ...', end='')
+sys.stdout.flush()
+while not mct_introspection.image_rect_ready():
+    time.sleep(0.2)
+print('done')
+
 
