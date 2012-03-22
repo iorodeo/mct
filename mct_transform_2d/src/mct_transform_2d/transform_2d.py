@@ -180,18 +180,19 @@ class Transform2d(object):
             region = self.tracking_plane_to_region[name] 
         return region
 
-    def get_bounding_box(self, region, transform_func):
+    def get_bounding_box(self, region, transform_func,camera_list=None):
         """
         Generic function for getting the bounding box of a region given a tranfromation
         function.
         """
         trans_pts_list = []
-        camera_list = self.regions_dict[region]
+        if camera_list is None:
+            camera_list = self.regions_dict[region]
         for camera in camera_list:
             image_size = self.camera_to_image_size[camera]
             w = image_size['image_width']
             h = image_size['image_height']
-            pts_list = [(0,0),(w,0),(w,h),(0,h)]
+            pts_list = [(0,0),(w-1,0),(w-1,h-1),(0,h-1)]
             for p in pts_list:
                 q = transform_func(camera, *p) 
                 trans_pts_list.append(q)
@@ -205,18 +206,18 @@ class Transform2d(object):
                 }
         return bounding_box 
 
-    def get_anchor_plane_bounding_box(self, region):
+    def get_anchor_plane_bounding_box(self, region, camera_list=None):
         """
         Returns the dimensions of a box in the anchor plane for the tracking
         region which bounds the projected images for all cameras in the region.
         """
-        return self.get_bounding_box(region, self.camera_pts_to_anchor_plane)
+        return self.get_bounding_box(region,self.camera_pts_to_anchor_plane,camera_list=camera_list)
 
-    def get_stitching_plane_bounding_box(self,region):
+    def get_stitching_plane_bounding_box(self,region,camera_list=None):
         """
         Returns ...
         """
-        return self.get_bounding_box(region, self.camera_pts_to_stitching_plane)
+        return self.get_bounding_box(region, self.camera_pts_to_stitching_plane,camera_list=camera_list)
 
     def get_camera_boundaries(self, region, transform_func):
         """
@@ -247,6 +248,7 @@ class Transform2d(object):
         Returns ...
         """
         return self.get_camera_boundaries(region, self.camera_pts_to_stitching_plane)
+
 
     # Initialization methods -------------------------------------------------------------------
 
@@ -568,6 +570,7 @@ if __name__ == '__main__':
 
         # Plot bounding box
         bbox = tf2d.get_stitching_plane_bounding_box('maze')
+        #bbox = tf2d.get_stitching_plane_bounding_box('maze', camera_list= ['camera_1', 'camera_2'])
         x_pts = [bbox['min_x'], bbox['max_x'], bbox['max_x'], bbox['min_x'], bbox['min_x']]
         y_pts = [bbox['min_y'], bbox['min_y'], bbox['max_y'], bbox['max_y'], bbox['min_y']]
         pylab.plot(x_pts,y_pts,'k')

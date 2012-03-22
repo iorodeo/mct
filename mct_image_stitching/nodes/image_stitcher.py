@@ -9,6 +9,7 @@ import sys
 import threading
 import functools
 import math
+import numpy
 from cv_bridge.cv_bridge import CvBridge 
 
 import mct_introspection
@@ -40,9 +41,29 @@ class ImageStitcher(object):
         bbox = self.tf2d.get_stitching_plane_bounding_box(region)
         self.image_width = int(math.ceil(bbox['max_x']))
         self.image_height = int(math.ceil(bbox['max_y']))
+        self.image_size = (self.image_width, self.image_height)
 
+        self.is_first_write = True
+        self.stitched_image = None
         self.seq_to_images = {}
-
+        self.scratch_image = {}
+        self.tf_data = {}
+        for camera in self.camera_list:
+            # Get modified transform which maps to scratch image
+            bbox = self.tf2d.get_stitching_plane_bounding_box(region, camera_list=[camera])
+            tf_matrix = self.tf2d.get_camera_to_stitching_plane_tf(camera)
+            roi_x = int(math.floor(bbox['min_x']))
+            roi_y = int(math.floor(bbox['min_y']))
+            roi_w = int(math.ceil(bbox['max_x']) - math.floor(bbox['min_x'] ))
+            roi_h = int(math.ceil(bbox['max_y']) - math.floor(bbox['min_y'] ))
+            shift_matrix = numpy.array([
+                [1.0, 0.0, -bbox['min_x']],
+                [0.0, 1.0, -bbox['min_y']], 
+                [0.0, 0.0, 1.0],
+                ])
+            tf_matrix = numpy.dot(shift_matrix, tf_matrix)
+            self.tf_data[camera] = {'matrix': cv.fromarray(tf_matrix), 'roi': (roi_x, roi_y, roi_w, roi_h)}
+            
         # Pools for incomming data.  
         self.stamp_to_seq_pool= {}
         self.image_waiting_pool = {} 
@@ -151,39 +172,31 @@ class ImageStitcher(object):
                     cv_image = self.bridge.imgmsg_to_cv(ros_image,desired_encoding="passthrough")
                     ipl_image = cv.GetImage(cv_image)
 
-                    if i == 0:
+                    if self.stitched_image is None:
+                        self.stitched_image = cv.CreateImage(self.image_size,ipl_image.depth,ipl_image.channels)
 
-                        temp_image = cv.CreateImage(
-                                (self.image_width, self.image_height), 
-                                ipl_image.depth,
-                                ipl_image.channels
-                                )
+                    if self.is_first_write:
+                        warp_flags = cv.CV_INTER_LINEAR | cv.CV_WARP_FILL_OUTLIERS
+                        self.is_first_write = False
+                    else:
+                        warp_flags = cv.CV_INTER_LINEAR 
 
-                        stitched_image = cv.CreateImage(
-                                (self.image_width, self.image_height), 
-                                ipl_image.depth,
-                                ipl_image.channels
-                                )
-
-                        cv.Zero(stitched_image)
-
-                    # Get transform from camera to stiching plane
-                    tf_matrix = self.tf2d.get_camera_to_stitching_plane_tf(camera)
-                    tf_matrix_cv = cv.fromarray(tf_matrix)
+                    ### Get transform from camera to stiching plane
+                    #tf_matrix = cv.fromarray(self.tf2d.get_camera_to_stitching_plane_tf(camera))
+                    #cv.WarpPerspective(ipl_image, self.stitched_image, tf_matrix,flags=warp_flags)
 
                     # Wap into temporary image 
-                    cv.WarpPerspective(ipl_image, temp_image, tf_matrix_cv)
-                    cv.Or(temp_image,stitched_image,stitched_image)
+                    cv.SetImageROI(self.stitched_image, self.tf_data[camera]['roi'])
+                    cv.WarpPerspective(ipl_image, self.stitched_image, self.tf_data[camera]['matrix'],flags=warp_flags)
+                    cv.ResetImageROI(self.stitched_image)
 
-
-                    # Blend to create stitched image
-                
-                print('syncd seq: {0}'.format(seq))
 
                 del self.seq_to_images[seq]
+                print('syncd seq: {0}'.format(seq))
+                print()
 
                 # Convert stitched image to ros image and publish
-                stitched_ros_image = self.bridge.cv_to_imgmsg(stitched_image,encoding="passthrough")
+                stitched_ros_image = self.bridge.cv_to_imgmsg(self.stitched_image,encoding="passthrough")
                 self.image_pub.publish(stitched_ros_image)
 
 
