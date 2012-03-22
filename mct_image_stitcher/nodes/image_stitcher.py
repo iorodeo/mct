@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import roslib
-roslib.load_manifest('mct_image_stitching')
+roslib.load_manifest('mct_image_stitcher')
 import rospy
 import cv
 import cv2

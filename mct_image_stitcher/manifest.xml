@@ -1,13 +1,13 @@
 <package>
-  <description brief="mct_image_stitching">
+  <description brief="mct_image_stitcher">
 
-     mct_image_stitching
+     mct_image_stitcher
 
   </description>
   <author>Will Dickson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/mct_image_stitching</url>
+  <url>http://ros.org/wiki/mct_image_stitcher</url>
   <depend package="rospy"/>
   <depend package="opencv2"/>
   <depend package="cv_bridge"/>
