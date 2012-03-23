@@ -24,34 +24,6 @@ class Transform2d(object):
         self._create_tracking_plane_to_transform_dict()
         self._create_camera_to_transform_dict()
 
-    def transform_pts(self, tf_matrix, *args):
-        """
-        Generic function for transforming 2d points using the given 3x3
-        transformation matrix
-        """
-        if len(args) == 1:
-            pts = args[0]
-        elif len(args) == 2:
-            x,y = args[0], args[1]
-            pts = numpy.array([[x,y]])
-        # Get camera points in homogeneous coords.
-        pts_hg = numpy.ones((pts.shape[0],3))
-        pts_hg[:,0] = pts[:,0]
-        pts_hg[:,1] = pts[:,1]
-
-        # Get tracking points in homogeneous coords and convert back to 2d
-        tf_matrix_t = tf_matrix.transpose()
-        pts_trans_hg = numpy.dot(pts_hg,tf_matrix_t)
-        denom = numpy.zeros((pts.shape[0],2))
-        denom[:,0] = pts_trans_hg[:,2]
-        denom[:,1] = pts_trans_hg[:,2]
-        pts_trans = pts_trans_hg[:,:2]/denom
-        if len(args) == 1:
-            return pts_trans
-        else:
-            x_trans = pts_trans[0,0]
-            y_trans = pts_trans[0,1]
-            return x_trans, y_trans 
 
     def camera_pts_to_tracking_plane(self, camera, tracking_plane, *args):
         """
@@ -59,21 +31,21 @@ class Transform2d(object):
         tracking plane.
         """
         tf_matrix = self.get_camera_to_tracking_plane_tf(camera,tracking_plane)
-        return self.transform_pts(tf_matrix,*args)
+        return transform_pts(tf_matrix,*args)
 
     def camera_pts_to_anchor_plane(self, camera, *args):
         """
         Transform points from camera coords into anchor plane coordinates
         """
         tf_matrix = self.get_camera_to_anchor_plane_tf(camera)
-        return self.transform_pts(tf_matrix,*args)
+        return transform_pts(tf_matrix,*args)
 
     def camera_pts_to_stitching_plane(self, camera, *args):
         """
         Transforms points from camera coordinates into stitching plane coordinates.
         """
         tf_matrix = self.get_camera_to_stitching_plane_tf(camera)
-        return self.transform_pts(tf_matrix,*args)
+        return transform_pts(tf_matrix,*args)
 
     def get_camera_homography_tf(self, camera):
         """
@@ -427,6 +399,34 @@ def get_tracking_plane_name(camera):
     num = int(camera.split('_')[-1])
     return 'tracking_plane_{0}'.format(num)
 
+def transform_pts(tf_matrix, *args):
+    """
+    Generic function for transforming 2d points using the given 3x3
+    transformation matrix
+    """
+    if len(args) == 1:
+        pts = args[0]
+    elif len(args) == 2:
+        x,y = args[0], args[1]
+        pts = numpy.array([[x,y]])
+    # Get camera points in homogeneous coords.
+    pts_hg = numpy.ones((pts.shape[0],3))
+    pts_hg[:,0] = pts[:,0]
+    pts_hg[:,1] = pts[:,1]
+
+    # Get tracking points in homogeneous coords and convert back to 2d
+    tf_matrix_t = tf_matrix.transpose()
+    pts_trans_hg = numpy.dot(pts_hg,tf_matrix_t)
+    denom = numpy.zeros((pts.shape[0],2))
+    denom[:,0] = pts_trans_hg[:,2]
+    denom[:,1] = pts_trans_hg[:,2]
+    pts_trans = pts_trans_hg[:,:2]/denom
+    if len(args) == 1:
+        return pts_trans
+    else:
+        x_trans = pts_trans[0,0]
+        y_trans = pts_trans[0,1]
+        return x_trans, y_trans 
 
 def get_image_boundary_pts(w,h):
     """
@@ -443,6 +443,16 @@ def get_image_boundary_pts(w,h):
         bndry_pts.append((0,y))
     bndry_pts = numpy.array(bndry_pts,dtype=numpy.float)
     return bndry_pts
+
+def get_best_affine_approx(self,tf_matrix,pts):
+    """
+    Finds the best affine approximation for the 3x3 homography transform
+    """
+    tf_matrix_t = tf_matrix.transpose()
+    
+    # Not done yet
+    
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -566,7 +576,8 @@ if __name__ == '__main__':
         # Plot camera boundaries
         bndry_dict = tf2d.get_stitching_plane_camera_boundaries('maze')
         for camera, bndry in bndry_dict.iteritems():
-            pylab.plot(bndry[:,0], bndry[:,1],'b')
+            if camera == 'camera_3':
+                pylab.plot(bndry[:,0], bndry[:,1],'b')
 
         # Plot bounding box
         bbox = tf2d.get_stitching_plane_bounding_box('maze')

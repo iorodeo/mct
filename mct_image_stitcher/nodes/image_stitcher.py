@@ -17,10 +17,12 @@ from mct_utilities import file_tools
 from mct_transform_2d import transform_2d
 
 # Messages
+from mct_msg_and_srv.msg import StampInfo
+from mct_msg_and_srv.msg import ProcessingInfo
 from sensor_msgs.msg import CameraInfo 
 from sensor_msgs.msg import Image 
 from std_msgs.msg import UInt32
-from mct_msg_and_srv.msg import StampInfo
+from std_msgs.msg import Float32
 
 MAX_UINT32 = 2**32 - 1
 
@@ -30,7 +32,13 @@ class ImageStitcher(object):
     data to stitch the images together. Publishes image_stitched and image_stitched/seq.
     """
 
-    def __init__(self, region, max_seq_age=200, max_stamp_age=5.0):
+    def __init__(self, region, max_seq_age=1000, max_stamp_age=5.0):
+
+        #self.warp_flags = cv.CV_INTER_LINEAR | cv.CV_WARP_INVERSE_MAP
+        self.warp_flags = cv.CV_INTER_LINEAR 
+        #self.warp_flags = cv.CV_INTER_AREA
+        #self.warp_flags = cv.CV_INTER_NN
+        self.affine_approx = False 
 
         rospy.init_node('image_stitcher')
         self.max_seq_age = max_seq_age
@@ -66,13 +74,13 @@ class ImageStitcher(object):
             self.stamp_to_seq_pool[camera] = {}
             self.image_waiting_pool[camera] = {}
 
-        # Subscript to camera info topics
+        # Subscribe to camera info topics
         self.info_sub ={} 
         for camera, topic  in  self.camera_to_info.iteritems():
             info_handler = functools.partial(self.info_handler, camera)
             self.info_sub[camera] = rospy.Subscriber(topic, CameraInfo, info_handler)
 
-        # Subscript to camera info topics
+        # Subscribe to rectified image topics
         self.image_sub ={} 
         for camera, topic  in  self.camera_to_image.iteritems():
             image_handler = functools.partial(self.image_handler, camera)
@@ -82,6 +90,7 @@ class ImageStitcher(object):
         self.image_pub = rospy.Publisher('image_stitched', Image)
         self.seq_pub = rospy.Publisher('image_stitched/seq', UInt32)
         self.stamp_pub = rospy.Publisher('image_stitched/stamp_info', StampInfo)
+        self.processing_dt_pub = rospy.Publisher('image_stitched/processing_dt', ProcessingInfo)
         self.ready = True
 
     def create_camera_to_image_dict(self):
@@ -114,20 +123,28 @@ class ImageStitcher(object):
         """
         self.tf_data = {}
         for camera in self.camera_list:
+
             # Get modified transform which maps to ROI in stitched image 
             bbox = self.tf2d.get_stitching_plane_bounding_box(region, camera_list=[camera])
             tf_matrix = self.tf2d.get_camera_to_stitching_plane_tf(camera)
             roi_x = int(math.floor(bbox['min_x']))
             roi_y = int(math.floor(bbox['min_y']))
-            roi_w = int(math.ceil(bbox['max_x']) - math.floor(bbox['min_x'] ))
-            roi_h = int(math.ceil(bbox['max_y']) - math.floor(bbox['min_y'] ))
+            roi_w = int(math.floor(bbox['max_x']) - math.floor(bbox['min_x']+5))
+            roi_h = int(math.floor(bbox['max_y']) - math.floor(bbox['min_y']+5))
             shift_matrix = numpy.array([
                 [1.0, 0.0, -bbox['min_x']],
                 [0.0, 1.0, -bbox['min_y']], 
                 [0.0, 0.0, 1.0],
                 ])
             tf_matrix = numpy.dot(shift_matrix, tf_matrix)
-            self.tf_data[camera] = {'matrix': cv.fromarray(tf_matrix), 'roi': (roi_x, roi_y, roi_w, roi_h)}
+
+            if self.affine_approx:
+                # DEBUG ###########################################################################################
+                # This is wrong need to get the real affine approximation
+                # #################################################################################################
+                self.tf_data[camera] = {'matrix': cv.fromarray(tf_matrix[:2,:]), 'roi': (roi_x, roi_y, roi_w, roi_h)}
+            else:
+                self.tf_data[camera] = {'matrix': cv.fromarray(tf_matrix), 'roi': (roi_x, roi_y, roi_w, roi_h)}
 
     def get_stitched_image_size(self):
         """
@@ -190,17 +207,19 @@ class ImageStitcher(object):
                         del self.stamp_to_seq_pool[camera][stamp]
                         del self.image_waiting_pool[camera][stamp]
                         image_data.header.seq = seq 
+                        deleted = True
                         try:
                             self.seq_to_images[seq][camera] = image_data
                         except KeyError:
                             self.seq_to_images[seq] = {camera: image_data}
                     except KeyError:
-                        pass
+                        deleted = False
 
                     # Clear out stale data from image waiting pool
-                    stamp_age = self.get_stamp_age(stamp)
-                    if stamp_age > self.max_stamp_age:
-                        del self.stamp_to_seq_pool[camera][stamp]
+                    if not deleted:
+                        stamp_age = self.get_stamp_age(stamp)
+                        if stamp_age > self.max_stamp_age:
+                            del self.image_waiting_pool[camera][stamp]
 
                 # Clear out any stale data from stamp-to-seq pool
                 for stamp, seq in self.stamp_to_seq_pool[camera].items():
@@ -235,11 +254,13 @@ class ImageStitcher(object):
         """
 
         # Check to see if we have all images for a given sequence number
-        for seq, image_dict in self.seq_to_images.items():
+        for seq, image_dict in sorted(self.seq_to_images.items()): 
 
             # If we have all images for the sequece - stitch into merged view
             if len(image_dict) == len(self.camera_list):
 
+                # Get start time to measure processing dt
+                t0 = rospy.Time.now() 
                 for i, camera in enumerate(self.camera_list):
 
                     # Convert ros image to opencv image
@@ -249,15 +270,6 @@ class ImageStitcher(object):
                             desired_encoding="passthrough"
                             )
                     ipl_image = cv.GetImage(cv_image)
-
-                    # Get max and min time stamps for stamp_info
-                    stamp = ros_image.header.stamp
-                    if i == 0:
-                        stamp_max = stamp 
-                        stamp_min = stamp
-                    else:
-                        stamp_max = stamp if stamp.to_sec() > stamp_max.to_sec() else stamp_max 
-                        stamp_mim = stamp if stamp.to_sec() < stamp_min.to_sec() else stamp_min 
 
                     # Create stitced image if it doesn't exist yet
                     if self.stitched_image is None:
@@ -269,24 +281,34 @@ class ImageStitcher(object):
 
                     # Set image warping flags - if first fill rest of image with zeros
                     if self.is_first_write:
-                        warp_flags = cv.CV_INTER_LINEAR | cv.CV_WARP_FILL_OUTLIERS
+                        warp_flags = self.warp_flags | cv.CV_WARP_FILL_OUTLIERS
                         self.is_first_write = False
                     else:
-                        warp_flags = cv.CV_INTER_LINEAR 
+                        warp_flags = self.warp_flags
 
-                    # Wap into stitched image 
+                    # Warp into stitched image 
                     cv.SetImageROI(self.stitched_image, self.tf_data[camera]['roi'])
-                    cv.WarpPerspective(
-                            ipl_image, 
-                            self.stitched_image, 
-                            self.tf_data[camera]['matrix'],
-                            flags=warp_flags
-                            )
+
+                    # Warp stitched image
+                    if self.affine_approx:
+                        cv.WarpAffine(ipl_image,self.stitched_image,self.tf_data[camera]['matrix'],flags=warp_flags)
+                    else:
+                        cv.WarpPerspective(
+                                ipl_image, 
+                                self.stitched_image, 
+                                self.tf_data[camera]['matrix'],
+                                flags=warp_flags,
+                                )
                     cv.ResetImageROI(self.stitched_image)
 
-                # Remove data from buffer
-                del self.seq_to_images[seq]
-                print('syncd seq: {0}'.format(seq))
+                    # Get max and min time stamps for stamp_info
+                    stamp = ros_image.header.stamp
+                    if i == 0:
+                        stamp_max = stamp 
+                        stamp_min = stamp
+                    else:
+                        stamp_max = stamp if stamp.to_sec() > stamp_max.to_sec() else stamp_max 
+                        stamp_mim = stamp if stamp.to_sec() < stamp_min.to_sec() else stamp_min 
 
                 # Convert stitched image to ros image and publish
                 stitched_ros_image = self.bridge.cv_to_imgmsg(
@@ -300,17 +322,30 @@ class ImageStitcher(object):
                 self.seq_pub.publish(seq)
                 stamp_diff = stamp_max.to_sec() - stamp_min.to_sec()
                 self.stamp_pub.publish(stamp_max, stamp_min, stamp_diff)
+                
+                t1 = rospy.Time.now()
+                dt = t1.to_sec() - t0.to_sec()
+                self.processing_dt_pub.publish(dt,1.0/dt)
+
+                # Remove data from buffer
+                del self.seq_to_images[seq]
+                print('syncd seq: {0}'.format(seq))
 
             # Throw away any stale data in seq to images buffer
             seq_age = self.get_seq_age(seq)
             if seq_age > self.max_seq_age:
                 del self.seq_to_images[seq]
 
+
+
     def run(self):
+
         while not rospy.is_shutdown(): 
+            if self.seq_newest is None:
+                continue
+
             self.process_waiting_images() 
             self.publish_stitched_image()
-            #rospy.sleep(0.01)
 
 
 # -----------------------------------------------------------------------------
