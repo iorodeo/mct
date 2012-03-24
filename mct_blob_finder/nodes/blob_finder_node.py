@@ -32,6 +32,7 @@ class BlobFinderNode(object):
         self.blobFinder.max_area = 200
 
         rospy.init_node('blob_finder')
+        self.ready = False
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_blobs', Image)
         self.blob_data_pub = rospy.Publisher('blob_data', BlobData)
@@ -46,6 +47,7 @@ class BlobFinderNode(object):
                 BlobFinderGetParam, 
                 self.handle_get_param_srv
                 )
+        self.ready = True
 
     def handle_set_param_srv(self, req):
         """
@@ -76,6 +78,9 @@ class BlobFinderNode(object):
         """
         Callback for image topic subscription - finds blobs in image.
         """
+        if not self.ready:
+            return 
+
         with self.lock:
             blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
 
