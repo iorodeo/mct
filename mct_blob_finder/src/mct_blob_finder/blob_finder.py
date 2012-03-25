@@ -21,6 +21,8 @@ class BlobFinder(object):
         self.blob_mask  = cvblob.CV_BLOB_RENDER_CENTROID 
         self.blob_mask |= cvblob.CV_BLOB_RENDER_COLOR 
         self.blobs_image = None
+        self.label_image = None
+        self.thresh_image = None
 
     def findBlobs(self,data, create_image=True):
         """
@@ -33,14 +35,22 @@ class BlobFinder(object):
         # Convert rosimage to opencv image.
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
         raw_image = cv.GetImage(cv_image)
-        thresh_image = cv.CreateImage(cv.GetSize(raw_image),raw_image.depth, raw_image.channels)
+
+        if self.thresh_image is None:
+            if create_image:
+                self.thresh_image = cv.CreateImage(cv.GetSize(raw_image),raw_image.depth, raw_image.channels)
+            else:
+                self.thresh_image = raw_image
 
         # Find blobs in image
-        cv.Threshold(raw_image, thresh_image, self.threshold, 255, cv.CV_THRESH_BINARY)
-        label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
+        cv.Threshold(raw_image, self.thresh_image, self.threshold, 255, cv.CV_THRESH_BINARY)
 
+        if self.label_image is None:
+            self.label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
+
+        # Find blobs
         blobs = cvblob.Blobs()
-        result = cvblob.Label(thresh_image, label_image, blobs)
+        result = cvblob.Label(self.thresh_image, self.label_image, blobs)
 
         # Filter blobs by area
         if self.filter_by_area:
@@ -60,6 +70,7 @@ class BlobFinder(object):
             blob_dict['min_y'] = blobs[k].miny
             blob_dict['max_y'] = blobs[k].maxy
             blobs_list.append(blob_dict)
+        del blobs
 
         if not create_image:
             return blobs_list
@@ -68,6 +79,6 @@ class BlobFinder(object):
             if self.blobs_image is None:
                 self.blobs_image = cv.CreateImage(cv.GetSize(raw_image), cv.IPL_DEPTH_8U, 3)
             cv.CvtColor(raw_image, self.blobs_image,cv.CV_GRAY2BGR)
-            cvblob.RenderBlobs(label_image, blobs, raw_image, self.blobs_image, self.blob_mask, 1.0)
+            cvblob.RenderBlobs(self.label_image, blobs, raw_image, self.blobs_image, self.blob_mask, 1.0)
             blobs_rosimage = self.bridge.cv_to_imgmsg(self.blobs_image,encoding="passthrough")
             return blobs_list, blobs_rosimage
