@@ -14,6 +14,7 @@ from mct_blob_finder import BlobFinder
 
 # Messages
 from sensor_msgs.msg import Image
+from std_msgs.msg import Float32
 
 # Services
 from mct_msg_and_srv.srv import BlobFinderSetParam
@@ -42,6 +43,7 @@ class ZoomToolNode(object):
 
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_zoom_tool', Image)
+        self.devel_pub = rospy.Publisher('develop', Float32)
 
         self.set_param_srv = rospy.Service( 
                 '{0}/set_param'.format(node_name), 
@@ -116,8 +118,8 @@ class ZoomToolNode(object):
             self.image_pub.publish(data)
 
         t1 = rospy.Time.now()
-        dt = t1 - t0
-        print(dt)
+        dt = t1.to_sec() - t0.to_sec()
+        self.devel_pub.publish(dt)
 
 
     def run(self):

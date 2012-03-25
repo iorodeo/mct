@@ -11,6 +11,7 @@
   <depend package="rospy"/>
   <depend package="opencv2"/>
   <depend package="cv_bridge"/>
+  <depend package="std_msgs"/>
   <depend package="sensor_msgs"/>
   <depend package="mct_blob_finder"/>
   <depend package="mct_xml_tools"/>
