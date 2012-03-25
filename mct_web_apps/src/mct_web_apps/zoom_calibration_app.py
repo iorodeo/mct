@@ -104,7 +104,7 @@ def start_nodes():
         # Start mjpeg servers and throttleing 
         print(' * starting mjpeg servers ... ',end='')
         sys.stdout.flush()
-        mjpeg_servers.set_transport('image_zoom_tool')
+        mjpeg_servers.set_topics(['image_zoom_tool'])
         mjpeg_servers.start_servers()
         print('done')
         

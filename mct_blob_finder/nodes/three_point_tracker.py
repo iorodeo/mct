@@ -8,6 +8,7 @@ import threading
 import math
 
 import numpy
+import scipy.optimize
 
 import cv
 from cv_bridge.cv_bridge import CvBridge 
@@ -18,6 +19,7 @@ from mct_utilities import file_tools
 from sensor_msgs.msg import Image
 from mct_msg_and_srv.msg import BlobData
 from mct_msg_and_srv.msg import Blob
+from std_msgs.msg import Float32
 
 # Services
 from mct_msg_and_srv.srv import BlobFinderSetParam
@@ -25,7 +27,7 @@ from mct_msg_and_srv.srv import BlobFinderSetParamResponse
 from mct_msg_and_srv.srv import BlobFinderGetParam
 from mct_msg_and_srv.srv import BlobFinderGetParamResponse
 
-class BlobFinderNode(object):
+class ThreePointTracker(object):
 
     def __init__(self,topic=None):
         self.topic = topic
@@ -33,8 +35,6 @@ class BlobFinderNode(object):
         self.bridge = CvBridge()
         self.camera = get_camera_from_topic(self.topic)
         camera_calibration = file_tools.read_camera_calibration(self.camera)
-        for k,v in camera_calibration.iteritems():
-            print(k,v)
         self.camera_matrix = get_camera_matrix(camera_calibration)
 
         # Blob finder parameters
@@ -45,7 +45,7 @@ class BlobFinderNode(object):
         self.blobFinder.max_area = 200
 
         # Tracking parameters
-        self.tracking_pts_pos = (0.0, 0.04774, 0.07019)
+        self.tracking_pts_dist = (0.0, 0.04774, 0.07019)
         self.tracking_pts_colors = [(0,0,255), (0,255,0), (0,255,255)]
 
         rospy.init_node('blob_finder')
@@ -55,6 +55,8 @@ class BlobFinderNode(object):
         self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
         self.image_blobs_pub = rospy.Publisher('image_blobs', Image)
         self.blob_data_pub = rospy.Publisher('blob_data', BlobData)
+
+        self.devel_pub = rospy.Publisher('devel_data', Float32)
 
         node_name = rospy.get_name()
         self.set_param_srv = rospy.Service( 
@@ -112,26 +114,43 @@ class BlobFinderNode(object):
         tracking_pts_image = cv.CreateImage(cv.GetSize(ipl_image), cv.IPL_DEPTH_8U, 3)
         cv.CvtColor(ipl_image,tracking_pts_image,cv.CV_GRAY2BGR)
 
-        blobs_list = get_synthetic_blobs(self.camera_matrix, self.tracking_pts_pos)
+        #blobs_list = get_synthetic_blobs(self.tracking_pts_dist, self.camera_matrix)
         num_blobs = len(blobs_list)
         if num_blobs == 3:
 
-            print('3 pts found')
+            #print('3 pts found')
             uv_list = self.get_sorted_uv_points(blobs_list)
-            print('uv_list: ', uv_list)
-            #uv_list_synth = self.get_sorted_uv_points(blobs_list_synth)
-            #print('uv_list synth: ', uv_list_synth)
-            
-            get_3pt_object_pose(uv_list, self.camera_matrix, self.tracking_pts_pos)
-            #get_3pt_object_pose(uv_list_synth, self.camera_matrix, self.tracking_pts_pos)
+            t,w = get_object_pose(1.0,2.2, uv_list, self.tracking_pts_dist, self.camera_matrix)
+            uv_list_pred = get_uv_list_from_vects(t,w, self.tracking_pts_dist, self.camera_matrix)
+            elev = math.asin(w[2])
+            head = math.atan2(w[1], w[0])
+            elev_deg = 180.0*elev/math.pi
+            head_deg = 180.0*head/math.pi
+
+            #print('w', ['{0:1.3f}'.format(x) for x in w])
+            #print('t', ['{0:1.3f}'.format(x) for x in t])
+            print('head: {0:1.3f}'.format(head_deg))
+            print('elev: {0:1.3f}'.format(elev_deg))
+            print('tx:   {0:1.3f}'.format(t[0]))
+            print('ty:   {0:1.3f}'.format(t[1]))
+            print('tz:   {0:1.3f}'.format(t[2]))
+            print()
+            self.devel_pub.publish(t[2])
 
             # Draw points on tracking points image
             for i, uv in enumerate(uv_list):
                 color = self.tracking_pts_colors[i]
                 u,v = uv 
-                cv.Circle(tracking_pts_image, (int(u),int(v)),3, color)
+                #cv.Circle(tracking_pts_image, (int(u),int(v)),3, color)
+                cv.Circle(tracking_pts_image, (int(u),int(v)),3, (0,255,0))
+
+            for i, uv in enumerate(uv_list_pred):
+                color = self.tracking_pts_colors[i]
+                u,v = uv 
+                #cv.Circle(tracking_pts_image, (int(u),int(v)),3, color)
+                cv.Circle(tracking_pts_image, (int(u),int(v)),3, (0,0,255))
         else:
-            print('3 pts not found', end='')
+            print('3 pts not found ', end='')
             if num_blobs > 3:
                 print('too many blobs')
             else:
@@ -212,106 +231,182 @@ class BlobFinderNode(object):
 
 # -----------------------------------------------------------------------------
 
-def get_3pt_object_pose(image_pts, camera_matrix, pts_pos):
+def get_lstsq_pose_vects(tz, uv_list, pts_dist, camera_matrix):
     """
+    Calculates the best fit pose vectors (t,w) for the object given the depth tz.
+    p_i = t + d_i * w
+    * tx,ty are computed using the camera model 
+    * vx,vy,vz are calculated by solvng via lstsq the linear set of equations Aw = -Bt 
+    where A and B come from putting the points  p_i , i=0,1,2 into the camera model.  
     """
-    u = [uu for uu,vv in image_pts]
-    v = [vv for uu,vv in image_pts]
+    # Extract the image points
+    u = [uu for uu,vv in uv_list]
+    v = [vv for uu,vv in uv_list]
+
+    # Get the camera parametes
     fx = camera_matrix[0,0]
     fy = camera_matrix[1,1]
     cx = camera_matrix[0,2]
     cy = camera_matrix[1,2]
-    d0 = pts_pos[1]
-    d1 = pts_pos[2]
-    span_u = max(u) - min(u)
-    span_v = max(v) - min(v)
-    if span_u >= span_v:
-        sign = numpy.sign(u[-1]-u[0])
-        print('1')
-    else:
-        print('2')
-        sign = numpy.sign(v[-1]-v[0])
 
-    problem_matrix = numpy.array([
-        [   0.0,     0.0,              0.0,    -fx,    0.0,    u[0] - cx], 
-        [   0.0,     0.0,              0.0,    0.0,    -fy,    v[0] - cy],
-        [-fx*d0,     0.0,   d0*(u[1] + cx),    -fx,    0.0,    u[1] - cx],
-        [   0.0,  -fy*d0,   d0*(v[1] + cy),    0.0,    -fy,    v[1] - cy],
-        [-fx*d1,     0.0,   d1*(u[2] + cx),    -fx,    0.0,    u[2] - cx],
-        [   0.0,  -fy*d1,   d1*(v[2] + cy),    0.0,    -fy,    v[2] - cy],
+    # Get the distance from  point 0 to points 1 and 2
+    d0 = pts_dist[1] 
+    d1 = pts_dist[2]
+
+    # Computer x and y translations
+    tx = (u[0] - cx)*(tz/fx)
+    ty = (v[0] - cy)*(tz/fy)
+    t = numpy.array([tx,ty,tz])
+
+    A = numpy.array([
+        [-fx*d0,     0.0,   d0*(u[1] - cx)],    
+        [   0.0,  -fy*d0,   d0*(v[1] - cy)],    
+        [-fx*d1,     0.0,   d1*(u[2] - cx)],    
+        [   0.0,  -fy*d1,   d1*(v[2] - cy)],    
         ])
 
-    # First pass to solve for orientation
-    if span_u >= span_v:
-        print('1')
-        A = problem_matrix[:,1:]
-        b = -sign*problem_matrix[:,0]
-    else:
-        print('2')
-        A0 = problem_matrix[:,0:1]
-        A1 = problem_matrix[:,2:]
-        A = numpy.concatenate((A0,A1),axis=1)
-        b = -sign*problem_matrix[:,1]
+    B = numpy.array([
+        [-fx,    0.0,    u[1] - cx],
+        [0.0,    -fy,    v[1] - cy],
+        [-fx,    0.0,    u[2] - cx],
+        [0.0,    -fy,    v[2] - cy],
+        ])
+
+    b = -numpy.dot(B,t)
     result = numpy.linalg.lstsq(A,b)
-    sol = result[0]
+    w = list(result[0])
+    #resid = float(result[1])
+    #print(resid)
+    return t, w
 
-    if span_u >= span_v:
-        print('1')
-        v_orien = numpy.array([1.0*sign,sol[0],sol[1]]) 
-        v_orien_mag = numpy.sqrt(numpy.dot(v_orien,v_orien)) 
-        v_orien = v_orien/v_orien_mag
-    else:
-        print('2')
-        v_orien = numpy.array([sol[0],1.0*sign,sol[1]])
-        v_orien_mag = numpy.sqrt(numpy.dot(v_orien,v_orien)) 
-        v_orien = v_orien/v_orien_mag
+def get_object_pose(z_min, z_max, uv_list, pts_dist, camera_matrix):
+    """
+    Finds the pose of the obj (assuming three colinear points). 
 
-    # Second pass solve for translation
-    A = problem_matrix[:,3:]
-    B = problem_matrix[:,:3]
-    b = -numpy.dot(B,v_orien)
-    result = numpy.linalg.lstsq(A,b)
-    v_trans = result[0]
+    z_min    = minimum z-coord. for pose optimization. 
+    z_max    = maximum z-coord. for pose optimization.
+    uv_list  = list of 3 camera image points (u_i, v_i)  
+    pts_dist = distance of the object points along the x-axis, unrotated and untranslated
+    camera_matrix = the camera matrix.
 
-    print('out v_orien', ['{0:1.2f}'.format(x) for x in v_orien])
-    print('out v_trans', ['{0:1.2f}'.format(x) for x in v_trans])
-    print()
+    returns 
 
-def get_synthetic_blobs(camera_matrix,pts_pos):
+    t = optimal translation vector (3,)
+    w = optimal orientation vector (3,)
 
-    v_orien = numpy.array([1,-0.9,0])
-    v_trans = numpy.array([0.090,0.04,1.95])
-    v_orien_mag = numpy.sqrt(numpy.dot(v_orien,v_orien)) 
-    v_orien = v_orien/v_orien_mag
+    such that 
 
-    print('in v_orien', ['{0:1.2f}'.format(x) for x in v_orien])
-    print('in v_trans', ['{0:1.2f}'.format(x) for x in v_trans])
+    p_i = t + d_i*w where d_i=pts_dist[i]
 
+    # -----------------------------------------
+    Note, currently pts_dist[0] must be zero. 
+    # -----------------------------------------
+    """
+
+    def cost_func(tz):
+        """
+        Cost function for finding pose using get_lstsq_pose_vect. Returns 
+        the squared error between  w and the unit 2-sphere.
+        """
+        t,w = get_lstsq_pose_vects(tz, uv_list, pts_dist, camera_matrix)
+        w_mag = numpy.sqrt(numpy.dot(w,w))
+        w = w/w_mag
+
+        ## Extract the image points
+        #u = [uu for uu,vv in uv_list]
+        #v = [vv for uu,vv in uv_list]
+
+        ## Get the camera parametes
+        #fx = camera_matrix[0,0]
+        #fy = camera_matrix[1,1]
+        #cx = camera_matrix[0,2]
+        #cy = camera_matrix[1,2]
+
+        ## Get the distance from  point 0 to points 1 and 2
+        #d0 = pts_dist[1] 
+        #d1 = pts_dist[2]
+
+        #A = numpy.array([
+        #    [-fx*d0,     0.0,   d0*(u[1] - cx)],    
+        #    [   0.0,  -fy*d0,   d0*(v[1] - cy)],    
+        #    [-fx*d1,     0.0,   d1*(u[2] - cx)],    
+        #    [   0.0,  -fy*d1,   d1*(v[2] - cy)],    
+        #    ])
+        #B = numpy.array([
+        #    [-fx,    0.0,    u[1] - cx],
+        #    [0.0,    -fy,    v[1] - cy],
+        #    [-fx,    0.0,    u[2] - cx],
+        #    [0.0,    -fy,    v[2] - cy],
+        #    ])
+        #a = numpy.dot(A,w)
+        #b = numpy.dot(B,t)
+        #c = a + b
+        #cost = c**2
+        #cost = cost.sum()
+
+        cost = (1.0 - w_mag)**2
+        return cost
+
+    # Find optimal z coord.
+    tz_opt =  scipy.optimize.fminbound(cost_func, z_min, z_max)
+    t,w = get_lstsq_pose_vects(tz_opt, uv_list, pts_dist, camera_matrix)
+
+    # Normalize w to ensure unit length - pre-caution 
+    w_mag = numpy.sqrt(numpy.dot(w,w))
+    w = w/w_mag
+    return t,w
+
+def get_uv_list_from_vects(t,w, pts_dist, camera_matrix):
+    w_mag = numpy.sqrt(numpy.dot(w,w)) 
+    w = w/w_mag
+    #print('in w', ['{0:1.3f}'.format(x) for x in w])
+    #print('in t', ['{0:1.3f}'.format(x) for x in t])
     fx = camera_matrix[0,0]
     fy = camera_matrix[1,1]
     cx = camera_matrix[0,2]
     cy = camera_matrix[1,2]
-    d0 = pts_pos[1]
-    d1 = pts_pos[2]
-
-    p0 = v_trans 
-    p1 = v_trans + d0*v_orien
-    p2 = v_trans + d1*v_orien
+    d0 = pts_dist[1]
+    d1 = pts_dist[2]
+    p0 = t 
+    p1 = t + d0*w
+    p2 = t + d1*w
     p_list = (p0,p1,p2)
-
     # Create camera image points
     uv_list = []
     for p in p_list:
-        u = fx*p[0]/p[2] + cx
-        v = fx*p[1]/p[2] + cy
+        x,y,z = p
+        u = fx*x/z + cx
+        v = fy*y/z + cy
         uv_list.append((u,v))
+    return  uv_list
 
+def get_synthetic_blobs(t,w,pts_dist,camera_matrix):
+    uv_list = get_synthetic_uv_list(pts_dist, camera_matrix)
     blobs_list = []
     for u,v in uv_list:
         blob = {'centroid_x': u, 'centroid_y': v}
         blobs_list.append(blob)
     return blobs_list
 
+
+#def fit_uv_list(uv_list, pts_dist):
+#    u = [uu for uu,vv in uv_list]
+#    v = [vv for uu,vv in uv_list]
+#    u_span = max(u) - min(u)
+#    v_span = max(v) - min(v)
+#    if u_span >= v_span:
+#        x,y = u,v
+#    else:
+#        x,y = v,u
+#    fit = scipy.polyfit(x,y,1)
+#    y_fit = scipy.polyval(fit,x)
+#    if u_span >= v_span:
+#        u_fit, v_fit  = x, y_fit
+#    else:
+#        u_fit, v_fit = y_fit, x
+#    uv_list_fit = zip(u_fit,v_fit)
+#    return uv_list_fit
+    
 def distance_2d(p,q):
     return math.sqrt((p[0]-q[0])**2 + (p[1]-q[1])**2)
 
@@ -339,7 +434,38 @@ def get_camera_matrix(calibration):
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+    import pylab
+    import time
 
-    topic = sys.argv[1]
-    node = BlobFinderNode(topic)
-    node.run()
+    if 1:
+        topic = sys.argv[1]
+        node = ThreePointTracker(topic)
+        node.run()
+
+    if 0:
+
+        t = numpy.array([0,0,1])
+        w = numpy.array([1,1,0])
+
+        camera_calibration = file_tools.read_camera_calibration('camera_1')
+        camera_matrix = get_camera_matrix(camera_calibration)
+        pts_dist = (0.0, 0.04774, 0.07019)
+        uv_list = get_uv_list_from_vects(t,w,pts_dist,camea_matrix)
+        t0 = time.time()
+        get_object_pose(1.0,3.0,uv_list, pts_dist, camera_matrix)
+        t1 = time.time()
+        dt = t1-t0
+        print(1/dt)
+
+
+
+        #tz_array = pylab.linspace(1.5,2.5,50) 
+        #cost_list = []
+        #for tz in tz_array:
+        #    cost = get_lstsq_pose_vects(tz, uv_list, pts_dist, camera_matrix)
+        #    cost_list.append(cost)
+
+        #pylab.plot(tz_array, cost_list)
+        #pylab.show()
+
+

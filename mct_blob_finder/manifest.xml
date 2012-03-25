@@ -16,6 +16,7 @@
   <depend package="mct_msg_and_srv"/>
 
   <!-- Temporary  *************** -->
+  <depend package="std_msgs" />
   <depend package="mct_utilities"/>
   <!-- *************************  -->
 
