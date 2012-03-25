@@ -18,15 +18,16 @@ single_camera_view = flask.Blueprint('single_camera_view', __name__, template_fo
 @single_camera_view.route('/<camera>')
 def page(camera):
     camera = str(camera)
-    scale, scale_options = common_args.get_scale(config,flask.request)
+    scale, scale_options = common_args.get_scale(config,flask.request,view='single')
     redis_tools.set_str(db,'scale', scale)
     image_width, image_height = common_tasks.get_image_size(scale)
     ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
 
     try:
         mjpeg_info = mjpeg_info_dict[camera]
     except KeyError:
-        return
+        return ''
 
     render_dict = {
             'scale'             : scale,

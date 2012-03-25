@@ -1,10 +1,17 @@
 
-def get_scale(config, request):
+def get_scale(config, request, view='table'):
     """
     Gets the scale argument from the request object.
     """ 
-    scale_options = config.camera_view_table['scale_options']
-    scale_default = config.camera_view_table['scale_default']
+    if view == 'table':
+        scale_options = config.camera_view_table['scale_options']
+        scale_default = config.camera_view_table['scale_default']
+    elif view == 'single':
+        scale_options = config.camera_view_single['scale_options']
+        scale_default = config.camera_view_single['scale_default']
+    else:
+        raise ValueError, 'unknown view option'
+
     scale = request.args.get('scale',scale_default)
 
     try:
