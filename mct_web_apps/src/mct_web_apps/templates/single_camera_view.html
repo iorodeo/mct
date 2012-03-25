@@ -1,0 +1,31 @@
+{% extends "base.html" %} {% block head %}
+{{ super() }}
+<title> MCT: {{camera}}</title>
+<script type="text/javascript">
+    function reload_page() {
+        var scale = document.getElementById('mjpeg_scale').value;
+        var url = window.location.href;
+        if (url.indexOf("?")>-1){
+            url = url.substr(0,url.indexOf("?"));
+        }
+        window.location.href = url + "?scale=" + scale;
+        return false;
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<h1 style="color:blue" > MCT: {{camera|title}} </h1>
+
+<form id="mjpeg_scale_form">
+    scale
+    <select name="mjpeg_scale" id="mjpeg_scale" onChange="reload_page()">
+        {% for val in scale_options %}
+        <option value="{{val}}" {%if val == scale %} selected="selected" {% endif %}> {{val}} </option>
+        {% endfor %}
+    </select>
+</form>
+<img id="{{camera}}" src="http://{{ip_iface_ext}}:{{mjpeg_info['mjpeg_port']}}/stream?topic={{mjpeg_info['image_topic']}}_throttle?width={{image_width}}?height={{image_height}}" />
+
+{% endblock %}

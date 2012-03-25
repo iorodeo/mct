@@ -32,15 +32,15 @@ while not mct_introspection.zoom_tool_image_ready():
     time.sleep(0.2)
 print('done')
 
-# Start mjpeg servers and throttleing 
-print(' * starting mjpeg servers ... ',end='')
-sys.stdout.flush()
-mjpeg_servers.set_transport('image_zoom_tool')
-mjpeg_servers.start_servers()
-print('done')
-
-# Turn on active target two led patter
-print(' * turn of led pair ... ',end='')
-sys.stdout.flush()
-mct_active_target.led_pair()
-print('done')
+## Start mjpeg servers and throttleing 
+#print(' * starting mjpeg servers ... ',end='')
+#sys.stdout.flush()
+#mjpeg_servers.set_topics(['image_zoom_tool'])
+#mjpeg_servers.start_servers()
+#print('done')
+#
+## Turn on active target two led patter
+#print(' * turn of led pair ... ',end='')
+#sys.stdout.flush()
+#mct_active_target.led_pair()
+#print('done')

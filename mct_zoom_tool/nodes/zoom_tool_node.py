@@ -42,6 +42,7 @@ class ZoomToolNode(object):
 
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_zoom_tool', Image)
+
         self.set_param_srv = rospy.Service( 
                 '{0}/set_param'.format(node_name), 
                 BlobFinderSetParam, 
@@ -82,8 +83,10 @@ class ZoomToolNode(object):
         """
         Callback for image topic subscription - finds blobs in image.
         """
+        t0 = rospy.Time.now()
         with self.lock:
-            blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
+            #blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data, create_image=False)
+            blobs_list = self.blobFinder.findBlobs(data, create_image=False)
 
         if len(blobs_list) == 2:
 
@@ -111,6 +114,10 @@ class ZoomToolNode(object):
             self.image_pub.publish(calib_rosimage)
         else:
             self.image_pub.publish(data)
+
+        t1 = rospy.Time.now()
+        dt = t1 - t0
+        print(dt)
 
 
     def run(self):

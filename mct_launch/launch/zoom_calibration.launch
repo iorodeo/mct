@@ -3,5 +3,5 @@
     <include file="$(find mct_camera_tools)/launch/camera1394_master.launch" />
     <include file="$(find mct_zoom_tool)/launch/zoom_tool_master.launch"/>
     <include file="$(find mct_camera_tools)/launch/mjpeg_manager.launch" />
-    <include file="$(find mct_web_apps)/launch/zoom_calibration_app.launch"/> 
+    <!-- <include file="$(find mct_web_apps)/launch/zoom_calibration_app.launch"/> -->
 </launch>

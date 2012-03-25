@@ -27,7 +27,9 @@ from mct_utilities import redis_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
-DEVELOP = False 
+from single_camera_view_blueprint import single_camera_view
+
+DEVELOP = True 
 DEBUG = True 
 
 ## Setup application w/ sijax
@@ -35,6 +37,8 @@ app = flask.Flask(__name__)
 app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app.config["SIJAX_JSON_URI"] = '/static/js/sijax/json2.js'
 flask_sijax.Sijax(app)
+
+app.register_blueprint(single_camera_view)
 
 @app.route('/')
 def index(): 
@@ -47,6 +51,11 @@ def index():
     ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
     mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
     mjpeg_info = sorted(mjpeg_info_dict.items(), cmp=mjpeg_info_cmp)
+
+    # Build dict of urls for single camera views
+    single_view_url = {}
+    for camera in mjpeg_info_dict:
+        single_view_url[camera] = flask.url_for('single_camera_view.page',camera=camera)
         
     render_dict = {
             'scale'             : scale,
@@ -55,6 +64,7 @@ def index():
             'image_height'      : image_height,
             'ip_iface_ext'      : ip_iface_ext,
             'mjpeg_info'        : mjpeg_info,
+            'single_view_url'   : single_view_url,
             }
 
     return flask.render_template('zoom_calibration.html',**render_dict)
