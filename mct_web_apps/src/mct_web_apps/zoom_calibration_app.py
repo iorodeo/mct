@@ -29,8 +29,8 @@ from mct_utilities import file_tools
 
 from single_camera_view_blueprint import single_camera_view
 
-DEVELOP = True 
-DEBUG = True 
+DEBUG = False 
+DEVELOP = False 
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
