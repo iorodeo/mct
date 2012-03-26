@@ -53,6 +53,9 @@ class BlobFinder(object):
 
             # Get centroid
             moments = cv.Moments(contour)
+            if moments.m00 == 0:
+                continue
+
             centroid_x = moments.m10/moments.m00
             centroid_y = moments.m01/moments.m00
             
