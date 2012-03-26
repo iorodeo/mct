@@ -252,7 +252,8 @@ class Transform_2D_Calibrator(object):
                 return
 
             if self.state == WORKING:
-                self.blobs[topic], blobs_rosimage = self.blobFinder.findBlobs(data)
+                self.blobs[topic], blobs_image = self.blobFinder.findBlobs(data)
+                blobs_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
             else: 
                 self.blobs[topic] = []
 

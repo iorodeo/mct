@@ -27,9 +27,10 @@ from mct_camera_tools import mjpeg_servers
 from mct_utilities import redis_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
+from mct_camera_trigger import camera_trigger
 
-DEVELOP = True 
-DEBUG = True 
+DEVELOP = False 
+DEBUG = False 
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
@@ -204,16 +205,25 @@ def setup_redis_db():
 def start_nodes():
 
     if not DEVELOP: 
+        # Stop camera triggers
+        camera_trigger.stop()
+
+        # Sync the camera calibration files
         file_tools.rsync_camera_calibrations()
 
         # Start camera nodes and wait until they are ready
         camera_master.set_camera_launch_param(
-                frame_rate='homography_calibration',
-                trigger=False
+                frame_rate='camera_driver',
+                trigger=True
                 )
         camera_master.start_cameras()
         while not mct_introspection.camera_nodes_ready(mode='calibration'):
             time.sleep(0.2)
+
+        # Delay until all camera nodes are ready and start triggers
+        time.sleep(10)
+        frame_rates = file_tools.read_frame_rates()
+        camera_trigger.start(frame_rates['homography_calibration'])
 
         # Start image_proc nodes and wait until they are ready
         image_proc_master.start_image_proc()

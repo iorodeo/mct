@@ -28,14 +28,13 @@ file_tools.rsync_camera_calibrations(verbose=True)
 print(' * starting camera nodes ... ',end='')
 sys.stdout.flush()
 camera_master.set_camera_launch_param(
-        frame_rate='tracking_cameras',
+        frame_rate='camera_driver',
         trigger=True
         )
 camera_master.start_cameras()
 while not mct_introspection.camera_nodes_ready(mode='tracking'):
     time.sleep(0.2)
 print('done')
-
 
 # Delay until all camera nodes are ready 
 print(' * camera nodes sync delay ... ', end='')
@@ -45,6 +44,8 @@ print('done')
 
 print(' * starting camera triggers ... ', end='')
 sys.stdout.flush()
+frame_rates = file_tools.read_frame_rates()
+#camera_trigger.start(frame_rates['tracking_2d'])
 camera_trigger.start(10)
 print('done')
 

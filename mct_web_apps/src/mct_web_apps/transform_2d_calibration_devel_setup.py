@@ -13,10 +13,17 @@ from mct_transform_2d import transform_2d_calibrator
 from mct_camera_tools import mjpeg_servers
 from mct_utilities import file_tools
 from mct_utilities import region_tools
+from mct_camera_trigger import camera_trigger
 
 regions_dict = file_tools.read_tracking_2d_regions()
 camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
 region_tools.check_regions_and_camera_pairs(regions_dict, camera_pairs_dict)
+
+# Stop camera triggers
+print(' * stopping camera triggers ... ',end='')
+sys.stdout.flush()
+camera_trigger.stop()
+print('done')
 
 file_tools.rsync_camera_calibrations(verbose=True)
 
@@ -24,12 +31,24 @@ file_tools.rsync_camera_calibrations(verbose=True)
 print(' * starting camera nodes ... ',end='')
 sys.stdout.flush()
 camera_master.set_camera_launch_param(
-        frame_rate='transform_2d_calibration',
-        trigger=False
+        frame_rate='camera_driver',
+        trigger=True
         )
 camera_master.start_cameras()
 while not mct_introspection.camera_nodes_ready(mode='calibration'):
     time.sleep(0.2)
+print('done')
+
+# Delay until all camera nodes are ready 
+print(' * camera nodes sync delay ... ', end='')
+sys.stdout.flush()
+time.sleep(10)
+print('done')
+
+print(' * starting camera triggers ... ', end='')
+sys.stdout.flush()
+frame_rates = file_tools.read_frame_rates()
+camera_trigger.start(frame_rates['transform_2d_calibration'])
 print('done')
 
 # Start image_proc nodes and wait until they are ready

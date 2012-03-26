@@ -81,7 +81,8 @@ def create_inspector_camera_launch(filename, camera_dict):
     template_name = 'inspector_camera_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
     frame_rate_dict = mct_introspection.get_frame_rates()
-    frame_rate = frame_rate_dict['assignment']
+    #frame_rate = frame_rate_dict['assignment']
+    frame_rate = frame_rate_dict['camera_driver']
 
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)

@@ -19,6 +19,7 @@ import common_args
 import mct_introspection
 from mct_camera_tools import camera_inspector_master
 from mct_camera_tools import mjpeg_servers
+from mct_camera_trigger import camera_trigger
 
 from mct_utilities import redis_tools
 from mct_utilities import json_tools
@@ -353,10 +354,18 @@ def start_cameras_and_mjpeg_servers():
     Starts the cameras and mjpeg servers
     """
     if not DEVELOP: 
+        # Stop camera triggers
+        camera_trigger.stop()
+
         # Wait until camera inspectors are running and then start cameras
         while not mct_introspection.camera_inspectors_ready():
             time.sleep(0.2)
         camera_inspector_master.start_cameras()
+
+        # Delay until all camera nodes are ready and start triggers
+        time.sleep(10)
+        frame_rates = file_tools.read_frame_rates()
+        camera_trigger.start(frame_rates['assignment'])
 
         # Wait until the camera nodes are ready and then start the mjpeg servers
         while not mct_introspection.camera_nodes_ready(mode='inspector'):

@@ -3,7 +3,7 @@
     <include file="{{machine_file}}" />
     {% for guid, info in camera_dict.iteritems() %}
     <group ns="/{{info['machine']}}/{{guid}}" >
-        <node pkg="camera1394" type="camera1394_node" name="camera1394_node" machine="{{info['machine']}}" >
+        <node pkg="mct_camera1394_trig" type="camera1394_node" name="camera1394_node" machine="{{info['machine']}}" >
             <rosparam file="$(env MCT_CONFIG)/cameras/camera_common.yaml"/>
             <rosparam file="{{info['yaml_file']}}" />
             <param name="frame_rate" value="{{frame_rate}}" />
