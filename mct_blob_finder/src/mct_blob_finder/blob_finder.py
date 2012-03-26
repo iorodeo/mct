@@ -94,7 +94,12 @@ class BlobFinder(object):
             cv.Line(self.blobs_image, p3, p0, (0,0,255))
             cv.Circle(self.blobs_image, (int(blob['centroid_x']),int(blob['centroid_y'])), 1, (0,255,0))
         blobs_rosimage = self.bridge.cv_to_imgmsg(self.blobs_image,encoding="passthrough")
-        return blobs_list, blobs_rosimage
+
+        # Temporary
+        if create_image == False:
+            return blobs_list
+        else:
+            return blobs_list, blobs_rosimage
 
 
     #def findBlobs(self,data, create_image=True):
