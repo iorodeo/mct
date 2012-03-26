@@ -14,3 +14,5 @@ camera_image = {
         'width': 640, 
         'height': 480,
         }
+
+camera_calib_target_type = 'chessboard'

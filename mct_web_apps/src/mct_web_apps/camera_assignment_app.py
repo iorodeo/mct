@@ -25,6 +25,7 @@ from mct_utilities import json_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
+
 DEVELOP = False 
 DEBUG = False
 
@@ -34,8 +35,6 @@ app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), '
 app.config["SIJAX_JSON_URI"] = '/static/js/sijax/json2.js'
 flask_sijax.Sijax(app)
 
-from adjust_camera_blueprint import adjust_camera
-app.register_blueprint(adjust_camera)
 
 # Routes
 # ----------------------------------------------------------------------------------

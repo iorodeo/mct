@@ -17,7 +17,6 @@ file_tools.rsync_camera_calibrations(verbose=True)
 
 # Start camera nodes and wait until they are ready
 print(' * starting camera nodes ... ',end='')
-sys.stdout.flush()
 camera_master.set_camera_launch_param(
         frame_rate='homography_calibration',
         trigger=False
@@ -43,7 +42,7 @@ while not mct_introspection.image_rect_ready():
     time.sleep(0.2)
 print('done')
 
-# Start transform 2d calibrator nodes and wait until ready
+# Start homography calibrator nodes and wait until ready
 print(' * starting homography calibrators ... ', end='')
 sys.stdout.flush()
 homography_calibrator_master.start()
@@ -54,6 +53,6 @@ print('done')
 # Start mjpeg servers and throttleing 
 print(' * starting mjpeg servers ... ',end='')
 sys.stdout.flush()
-mjpeg_servers.set_transport('image_homography_calibration')
+mjpeg_servers.set_topics(['image_homography_calibration'])
 mjpeg_servers.start_servers()
 print('done')

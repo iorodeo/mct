@@ -30,15 +30,17 @@ from mct_utilities import json_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
+from single_camera_view_blueprint import single_camera_view
+
 DEVELOP = False 
 DEBUG = False 
-TARGET_TYPE = 'chessboard'
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
 app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app.config["SIJAX_JSON_URI"] = '/static/js/sijax/json2.js'
 flask_sijax.Sijax(app)
+app.register_blueprint(single_camera_view)
 
 # Routes
 # ----------------------------------------------------------------------------------
@@ -67,8 +69,12 @@ def index():
 
         # Get list of current camera calibration files
         calibration_info = get_camera_calibration_info()
-            
 
+        # Build dict of urls for single camera views
+        single_view_url = {}
+        for camera in mjpeg_info_dict:
+            single_view_url[camera] = flask.url_for('single_camera_view.page',camera=camera)
+            
         render_dict = {
                 'scale'             : scale,
                 'scale_options'     : scale_options,
@@ -78,6 +84,7 @@ def index():
                 'mjpeg_info'        : mjpeg_info,
                 'target_info'       : target_info,
                 'calibration_info'  : calibration_info,
+                'single_view_url'   : single_view_url,
                 }
 
         return flask.render_template('camera_calibration.html',**render_dict)
@@ -234,7 +241,7 @@ def setup_redis_db():
     scale_default = config.camera_view_table['scale_default']
     redis_tools.set_str(db,'scale', scale_default)
 
-    target_info = file_tools.read_target_info(TARGET_TYPE)
+    target_info = file_tools.read_target_info(config.camera_calib_target_type)
     redis_tools.set_dict(db, 'target_info', target_info)
 
     return db
@@ -253,7 +260,7 @@ def start_cameras_and_mjpeg_servers():
             time.sleep(0.2)
         mjpeg_servers.set_topics(['image_raw'])
         mjpeg_servers.start_servers()
-        target_info = file_tools.read_target_info(TARGET_TYPE)
+        target_info = file_tools.read_target_info(config.camera_calib_target_type)
         calibrator_master.start(target_info['size'], target_info['square'])
 
 def stop_cameras_and_mjpeg_servers():

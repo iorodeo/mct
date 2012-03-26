@@ -28,6 +28,6 @@
     &nbsp;
     <a href="{{url_for('index')}}"> table view </a>
 </form>
-<img id="{{camera}}" src="http://{{ip_iface_ext}}:{{mjpeg_info['mjpeg_port']}}/stream?topic={{mjpeg_info['image_topic']}}_throttle?width={{image_width}}?height={{image_height}}" />
+<img id="{{camera}}" src="http://{{ip_iface_ext}}:{{mjpeg_info['mjpeg_port']}}/stream?topic={{mjpeg_info['image_topic']}}?width={{image_width}}?height={{image_height}}" />
 
 {% endblock %}

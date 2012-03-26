@@ -37,7 +37,6 @@ app = flask.Flask(__name__)
 app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app.config["SIJAX_JSON_URI"] = '/static/js/sijax/json2.js'
 flask_sijax.Sijax(app)
-
 app.register_blueprint(single_camera_view)
 
 @app.route('/')

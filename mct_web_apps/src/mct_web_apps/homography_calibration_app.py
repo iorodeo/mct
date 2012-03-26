@@ -28,8 +28,8 @@ from mct_utilities import redis_tools
 from mct_utilities import iface_tools
 from mct_utilities import file_tools
 
-DEVELOP = False 
-DEBUG = False 
+DEVELOP = True 
+DEBUG = True 
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)

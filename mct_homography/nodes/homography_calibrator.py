@@ -202,7 +202,8 @@ class HomographyCalibratorNode(object):
                 return
 
             if self.state == WORKING:
-                self.blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
+                self.blobs_list, blobs_image = self.blobFinder.findBlobs(data)
+                blobs_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
             else: 
                 self.blobs_list = []
                 blobs_rosimage = data
