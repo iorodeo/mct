@@ -32,7 +32,7 @@ class ZoomToolNode(object):
         node_name = rospy.get_name()
 
         self.blobFinder = BlobFinder()
-        self.blobFinder.threshold = rospy.get_param('/zoom_tool_params/threshold', 150)
+        self.blobFinder.threshold = rospy.get_param('/zoom_tool_params/threshold', 200)
         self.blobFinder.filter_by_area = rospy.get_param('/zoom_tool_params/filter_by_area', False) 
         self.blobFinder.min_area = rospy.get_param('/zoom_tool_params/min_area', 0) 
         self.blobFinder.max_area = rospy.get_param('/zoom_tool_params/max_area', 200) 
@@ -43,7 +43,7 @@ class ZoomToolNode(object):
 
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.image_pub = rospy.Publisher('image_zoom_tool', Image)
-        self.devel_pub = rospy.Publisher('develop', Float32)
+        #self.devel_pub = rospy.Publisher('develop', Float32)
 
         self.set_param_srv = rospy.Service( 
                 '{0}/set_param'.format(node_name), 
@@ -85,41 +85,34 @@ class ZoomToolNode(object):
         """
         Callback for image topic subscription - finds blobs in image.
         """
-        t0 = rospy.Time.now()
+
+        #t0 = rospy.Time.now()
         with self.lock:
-            #blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data, create_image=False)
-            blobs_list = self.blobFinder.findBlobs(data, create_image=False)
+            blobs_list, blobs_image = self.blobFinder.findBlobs(data, create_image=True)
 
         if len(blobs_list) == 2:
 
             # If two blobs are found computer the distance between them and
             # show it on the published image.
-
-            # Create calibration data  image
-            cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
-            ipl_image = cv.GetImage(cv_image)
-            calib_image = cv.CreateImage(cv.GetSize(ipl_image), cv.IPL_DEPTH_8U, 3)
-            cv.CvtColor(ipl_image,calib_image,cv.CV_GRAY2BGR)
             x0 = blobs_list[0]['centroid_x']
             y0 = blobs_list[0]['centroid_y']
             x1 = blobs_list[1]['centroid_x']
             y1 = blobs_list[1]['centroid_y']
             point_list = [(x0,y0),(x1,y1)]
             dist = math.sqrt((x0-x1)**2 + (y0-y1)**2)
-            for x,y in point_list:
-                cv.Circle(calib_image, (int(x),int(y)),3, self.circle_color)
             message = 'dist = {0:1.1f} px'.format(dist)
-            cv.PutText(calib_image,message,(10,25),self.cv_text_font,self.text_color)
+            cv.PutText(blobs_image,message,(10,25),self.cv_text_font,self.text_color)
 
-            # Publish calibration progress image
-            calib_rosimage = self.bridge.cv_to_imgmsg(calib_image,encoding="passthrough")
-            self.image_pub.publish(calib_rosimage)
+            ## Publish calibration progress image
+            blobs_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
+            self.image_pub.publish(blobs_rosimage)
         else:
             self.image_pub.publish(data)
 
-        t1 = rospy.Time.now()
-        dt = t1.to_sec() - t0.to_sec()
-        self.devel_pub.publish(dt)
+        #t1 = rospy.Time.now()
+        #dt = t1.to_sec() - t0.to_sec()
+        #print(1.0/dt)
+        #self.devel_pub.publish(dt)
 
 
     def run(self):
