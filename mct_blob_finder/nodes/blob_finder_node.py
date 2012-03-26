@@ -26,7 +26,7 @@ class BlobFinderNode(object):
         self.lock = threading.Lock()
 
         self.blobFinder = BlobFinder()
-        self.blobFinder.threshold = 150
+        self.blobFinder.threshold = 220 
         self.blobFinder.filter_by_area = False
         self.blobFinder.min_area = 0
         self.blobFinder.max_area = 200
