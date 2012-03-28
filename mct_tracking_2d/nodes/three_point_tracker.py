@@ -36,9 +36,12 @@ class ThreePointTracker(object):
         self.bridge = CvBridge()
         self.camera = get_camera_from_topic(self.topic)
 
+        # Get tracking parameters
+        self.tracking_pts_roi_size = 200,200
+
         # Blob finder parameters
         self.blobFinder = BlobFinder()
-        self.blobFinder.threshold = 200 
+        self.blobFinder.threshold = 150 
         self.blobFinder.filter_by_area = False
         self.blobFinder.min_area = 0
         self.blobFinder.max_area = 200
@@ -59,6 +62,7 @@ class ThreePointTracker(object):
         self.seq_to_data = {}
 
         self.ready = False
+        self.tracking_pts_image = None
         rospy.init_node('blob_finder')
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
         self.info_sub = rospy.Subscriber(self.topic, CameraInfo, self.camera_info_callback)
@@ -117,27 +121,46 @@ class ThreePointTracker(object):
         """
         if not self.ready:
             return 
-
+        
         with self.lock:
             blobs_list = self.blobFinder.findBlobs(data,create_image=False)
 
         # Create trakcing points  image
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
         ipl_image = cv.GetImage(cv_image)
-        tracking_pts_image = cv.CreateImage(cv.GetSize(ipl_image), cv.IPL_DEPTH_8U, 3)
-        cv.CvtColor(ipl_image,tracking_pts_image,cv.CV_GRAY2BGR)
+
+
+        if self.tracking_pts_image is None:
+            #self.tracking_pts_image = cv.CreateImage(cv.GetSize(ipl_image), cv.IPL_DEPTH_8U, 3)
+            self.tracking_pts_image = cv.CreateImage(
+                    self.tracking_pts_roi_size,
+                    cv.IPL_DEPTH_8U, 
+                    3
+                    )
+        cv.Zero(self.tracking_pts_image)
+        #cv.CvtColor(ipl_image,self.tracking_pts_image,cv.CV_GRAY2BGR)
+
 
         num_blobs = len(blobs_list)
+        print(num_blobs)
         if num_blobs == 3:
             found_pts = True
             uv_list = self.get_sorted_uv_points(blobs_list)
+            roi = self.get_tracking_pts_roi(uv_list,cv.GetSize(ipl_image))
+
+            cv.SetImageROI(ipl_image,roi)
+            cv.CvtColor(ipl_image,self.tracking_pts_image,cv.CV_GRAY2BGR)
+            cv.ResetImageROI(ipl_image)
+
             for i, uv in enumerate(uv_list):
                 color = self.tracking_pts_colors[i]
                 u,v = uv 
-                cv.Circle(tracking_pts_image, (int(u),int(v)),3, color)
+                u = u - roi[0]
+                v = v - roi[1]
+                cv.Circle(self.tracking_pts_image, (int(u),int(v)),3, color)
         else:
             found_pts = False
-            uv_list = [(0,0) (0,0),(0,0)]
+            uv_list = [(0,0),(0,0),(0,0)]
 
         # Add data to pool
         stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
@@ -147,8 +170,34 @@ class ThreePointTracker(object):
                 }
             
         # Publish calibration progress image
-        ros_image = self.bridge.cv_to_imgmsg(tracking_pts_image,encoding="passthrough")
-        self.image_tracking_pts_pub.publish(ros_image)
+        tracking_pts_rosimage = self.bridge.cv_to_imgmsg(self.tracking_pts_image,encoding="passthrough")
+        self.image_tracking_pts_pub.publish(tracking_pts_rosimage)
+
+
+    def get_tracking_pts_roi(self, uv_list, image_size):
+        image_width, image_height = image_size
+        roi_width, roi_height = self.tracking_pts_roi_size
+        u_mid, v_mid = get_midpoint_uv_list(uv_list)
+        u_min = int(math.floor(u_mid - roi_width/2))
+        u_max = int(math.floor(u_mid + roi_width/2))
+        v_min = int(math.floor(v_mid - roi_height/2))
+        v_max = int(math.floor(v_mid + roi_height/2))
+        if u_min < 0:
+            u_max = u_max + (-u_min)
+            u_min = 0
+        if u_max >= image_width:
+            u_min = u_min - (u_max - image_width + 1)
+            u_max = image_width-1
+        if v_min < 0:
+            v_max = v_max + (-v_min)
+            v_min = 0
+        if v_max >= image_height:
+            v_min = v_min - (v_max - image_height + 1)
+            v_max = image_height-1
+        #print('u:', u_min, u_max, u_max - u_min)
+        #print('v:', v_min, v_max, v_max - v_min)
+        #print()
+        return u_min, v_min, u_max-u_min, v_max-v_min
 
 
     def get_sorted_uv_points(self,blobs_list):
@@ -194,7 +243,7 @@ class ThreePointTracker(object):
     def run(self):
         while not rospy.is_shutdown():
             with self.lock:
-                print(len(self.stamp_to_seq), len(self.stamp_to_data), len(self.seq_to_data))
+                #print(len(self.stamp_to_seq), len(self.stamp_to_data), len(self.seq_to_data))
 
                 # Associate data with image seq numbers
                 for stamp, data in self.stamp_to_data.items():
@@ -211,8 +260,23 @@ class ThreePointTracker(object):
                     # To do create tracking_data message and publish
                     del self.seq_to_data[seq]
 
+            #rospy.sleep(0.1)
+
+
+
+# -------------------------------------------------------------------------------
+def get_midpoint_uv_list(uv_list):
+    """
+    Gets the mid point of the sorted 2d points in uv_list.
+    """
+    u_mid = 0.5*(uv_list[0][0] + uv_list[-1][0])
+    v_mid = 0.5*(uv_list[0][1] + uv_list[-1][1])
+    return u_mid, v_mid
 
 def distance_2d(p,q):
+    """
+    Returns the distance between the 2d points p and q
+    """
     return math.sqrt((p[0]-q[0])**2 + (p[1]-q[1])**2)
 
 def get_camera_from_topic(topic):
