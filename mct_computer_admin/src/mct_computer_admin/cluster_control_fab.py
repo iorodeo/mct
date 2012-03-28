@@ -41,6 +41,7 @@ cmd_msgs = {
         'rsync_camera_calibrations': 'rsyncing camera calibraitons',
         'clean_camera_calibrations': 'cleaning camera calibrations',
         'show_camera_info':  'launching camera_info viewers',
+        'show_camera_info_seq': 'launch camera_info/seq viewers',
         'test': 'test command for development',
         }
 
@@ -298,8 +299,33 @@ def show_camera_info():
         filename_list.append(filename)
         pos_x += step_x
         pos_y += step_y
-        time.sleep(0.05)
+        time.sleep(0.1)
+    # Wait a bit before deleting files
+    time.sleep(5)
+    for filename in filename_list:
+        os.remove(filename)
 
+def show_camera_info_seq():
+    """
+    Launch rostopic echo for all camera info topics.
+    """
+    camera_info_topics = mct_introspection.find_camera_info_topics()
+    popen_list = []
+    filename_list = []
+    tmp_dir = tempfile.gettempdir()
+    pos_x, pos_y, step_x, step_y = 10, 50, 170, 0
+    for i, topic in enumerate(camera_info_topics):
+        filename = os.path.join(tmp_dir, 'camera_info_{0}.bash'.format(i))
+        with open(filename, 'w') as f:
+            f.write('rostopic echo {0}/header/seq\n'.format(topic))
+        os.chmod(filename,0755)
+        geometry = '{0}x{1}+{2}+{3}'.format(80,28,pos_x,pos_y)
+        popen = subprocess.Popen(['gnome-terminal', '--geometry', geometry, '-x', filename])
+        popen_list.append(popen)
+        filename_list.append(filename)
+        pos_x += step_x
+        pos_y += step_y
+        time.sleep(0.1)
     # Wait a bit before deleting files
     time.sleep(5)
     for filename in filename_list:

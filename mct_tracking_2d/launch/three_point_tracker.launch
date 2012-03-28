@@ -1,0 +1,7 @@
+<launch>
+    <arg name="topic" default="/mct_slave2/camera_7/camera/image_rect"/>
+    <group ns="three_point_tracker_params">
+        <rosparam command="load" file= "$(env MCT_CONFIG)/tracking_2d/tracking_params.yaml"/>
+    </group>
+    <node pkg="mct_tracking_2d" type="three_point_tracker.py" name="three_point_tracker" args="$(arg topic)"/>
+</launch>

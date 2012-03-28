@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/mct_msg_and_srv</url>
   <depend package="rospy"/>
   <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
 
 </package>
 

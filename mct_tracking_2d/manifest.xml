@@ -9,6 +9,13 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mct_tracking_2d</url>
   <depend package="rospy"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="sensor_msgs"/>
+  <depend package="std_msgs" />
+  <depend package="mct_utilities"/>
+  <depend package="mct_msg_and_srv"/>
+  <depend package="mct_blob_finder"/>
 
 </package>
 
