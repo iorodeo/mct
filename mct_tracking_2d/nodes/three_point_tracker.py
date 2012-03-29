@@ -315,7 +315,7 @@ class ThreePointTracker(object):
                     del self.seq_to_stamp_and_data[seq]
 
             # Temporary - may want to get this from frame rate.
-            rospy.sleep(0.01)
+            rospy.sleep(1.0/50.0)
 
 
 # -------------------------------------------------------------------------------
