@@ -314,12 +314,13 @@ def create_static_tf_publisher_2d_launch(filename):
     """
     Create static transform publisher launch file.
 
-    This is not currently used.
+    Note, This function is not currently being used as ROS's tf system didn't do exactly
+    what I was looking for.
     """
     template_name = 'static_tf_publisher_2d_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
 
-    # Generate lauch list (frame_0, frame_1
+    # Generate lauch list 
     launch_list = []
     camera_pairs_dict = mct_utilities.file_tools.read_tracking_2d_camera_pairs()
     for pairs_list in camera_pairs_dict.values():
@@ -348,7 +349,40 @@ def create_static_tf_publisher_2d_launch(filename):
             machine_file=machine_file, 
             launch_list=launch_list
             )
+    with open(filename,'w') as f:
+        f.write(xml_str)
 
+
+def create_three_point_tracker_launch(filename):
+    """
+    Creates luanch file for three point tracker nodes based on the camera_lists
+    in the regions.yaml.  
+    """
+    template_name = 'three_point_tracker_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+    regions_dict = mct_utilities.file_tools.read_tracking_2d_regions()
+    rect_topic_list = mct_introspection.find_camera_image_topics(transport='image_rect')
+
+    # Create launch dictionary keyed by region.
+    launch_dict = {}
+    for region, camera_list in regions_dict.iteritems():
+        region_launch_list = []
+        for camera in camera_list:
+            for rect_topic in rect_topic_list:
+                rect_topic_split = rect_topic.split('/')
+                if camera in rect_topic_split:
+                    camera_topic = '/'.join(rect_topic_split[:-1])
+                    machine = rect_topic_split[1]
+                    region_launch_list.append((camera_topic, rect_topic, machine))
+        launch_dict[region] = region_launch_list
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            launch_dict=launch_dict,
+            )
     with open(filename,'w') as f:
         f.write(xml_str)
 
@@ -454,9 +488,13 @@ if __name__ == '__main__':
         filename = 'transform_2d_calibrator.launch'
         create_transform_2d_calibrator_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'static_tf_publisher_2d.launch'
         create_static_tf_publisher_2d_launch(filename)
+
+    if 1:
+        filename = 'three_point_tracker.launch'
+        create_three_point_tracker_launch(filename)
 
 
        
