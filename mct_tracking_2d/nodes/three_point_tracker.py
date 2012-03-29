@@ -314,6 +314,9 @@ class ThreePointTracker(object):
                     
                     del self.seq_to_stamp_and_data[seq]
 
+            # Temporary - may want to get this from frame rate.
+            rospy.sleep(0.01)
+
 
 # -------------------------------------------------------------------------------
 def get_midpoint_uv_list(uv_list):
