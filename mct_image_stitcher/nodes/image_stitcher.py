@@ -32,7 +32,7 @@ class ImageStitcher(object):
     data to stitch the images together. Publishes image_stitched and image_stitched/seq.
     """
 
-    def __init__(self, region, max_seq_age=50, max_stamp_age=1.0):
+    def __init__(self, region, max_seq_age=150, max_stamp_age=1.5):
 
         self.warp_flags = cv.CV_INTER_LINEAR 
         self.stitching_params = file_tools.read_tracking_2d_stitching_params()
@@ -325,10 +325,16 @@ class ImageStitcher(object):
             # Throw away any stale data in seq to images buffer
             seq_age = self.get_seq_age(seq)
             if seq_age > self.max_seq_age:
+                # DEBUG ####################################################################
                 if seq%int(self.stitching_params['frame_skip']) == 0:
                     print('throwing away seq: {0}, len = {1}'.format(seq,len(image_dict)))
-                    print(image_dict.keys())
+                    missing_list = []
+                    for c in self.camera_list:
+                        if c not in image_dict:
+                            missing_list.append(c)
+                    print(missing_list)
                     print()
+                ###########################################################################
                 del self.seq_to_images[seq]
 
 
