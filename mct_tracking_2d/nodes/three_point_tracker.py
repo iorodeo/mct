@@ -217,7 +217,7 @@ class ThreePointTracker(object):
         """
         img_mid = 0.5*image_size[0], 0.5*image_size[1] 
         pts_mid = get_midpoint_uv_list(uv_list)
-        return distance_2d(pts_mid,img_mid):
+        return distance_2d(pts_mid,img_mid)
 
     def get_tracking_pts_roi(self, uv_list, img_size):
         """
