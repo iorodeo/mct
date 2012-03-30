@@ -195,6 +195,9 @@ class ThreePointTracker(object):
         # Convert tracking points image to rosimage
         rosimage_tracking_pts = self.bridge.cv_to_imgmsg(image_tracking_pts,encoding="passthrough")
 
+        # Compute distance to image center
+        # dist_to_image_center = self.get_dist_to_image_center(uv_list, cv.GetSize(ipl_image))
+
         # Add data to pool
         stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
         with self.lock:
@@ -207,12 +210,20 @@ class ThreePointTracker(object):
         # Publish calibration progress image
         self.image_tracking_pts_pub.publish(rosimage_tracking_pts)
 
+    def get_dist_to_image_center(self, uv_list, img_size):
+        """
+        Computes the distance from the mid point of the tracking points to the
+        middle of the image.
+        """
+        img_mid = 0.5*image_size[0], 0.5*image_size[1] 
+        pts_mid = get_midpoint_uv_list(uv_list)
+        return distance_2d(pts_mid,img_mid):
 
-    def get_tracking_pts_roi(self, uv_list, image_size):
+    def get_tracking_pts_roi(self, uv_list, img_size):
         """
         Get the coordinates of region of interest about the tracking points
         """
-        image_width, image_height = image_size
+        img_width, img_height = img_size
         roi_width, roi_height = self.tracking_pts_roi_size
         u_mid, v_mid = get_midpoint_uv_list(uv_list)
         u_min = int(math.floor(u_mid - roi_width/2))
@@ -222,15 +233,15 @@ class ThreePointTracker(object):
         if u_min < 0:
             u_max = u_max + (-u_min)
             u_min = 0
-        if u_max >= image_width:
-            u_min = u_min - (u_max - image_width + 1)
-            u_max = image_width-1
+        if u_max >= img_width:
+            u_min = u_min - (u_max - img_width + 1)
+            u_max = img_width-1
         if v_min < 0:
             v_max = v_max + (-v_min)
             v_min = 0
-        if v_max >= image_height:
-            v_min = v_min - (v_max - image_height + 1)
-            v_max = image_height-1
+        if v_max >= img_height:
+            v_min = v_min - (v_max - img_height + 1)
+            v_max = img_height-1
         return u_min, v_min, u_max-u_min, v_max-v_min
 
 
@@ -281,6 +292,7 @@ class ThreePointTracker(object):
         """
         while not rospy.is_shutdown():
             with self.lock:
+
                 # Associate data with image seq numbers
                 for stamp, data in self.stamp_to_data.items():
                     try:
@@ -314,8 +326,12 @@ class ThreePointTracker(object):
                     
                     del self.seq_to_stamp_and_data[seq]
 
-            # Temporary - may want to get this from frame rate.
+            # ################################################################
+            # Temporary - may want to get this from frame rate or remove 
+            # altogether. 
+            # ################################################################
             rospy.sleep(1.0/50.0)
+            ##################################################################
 
 
 # -------------------------------------------------------------------------------

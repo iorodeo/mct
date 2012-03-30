@@ -10,11 +10,11 @@ import threading
 import functools
 import math
 import numpy
-from cv_bridge.cv_bridge import CvBridge 
 
 import mct_introspection
 from mct_utilities import file_tools
 from mct_transform_2d import transform_2d
+from cv_bridge.cv_bridge import CvBridge 
 
 # Messages
 from mct_msg_and_srv.msg import StampInfo
@@ -338,13 +338,11 @@ class ImageStitcher(object):
                 del self.seq_to_images[seq]
 
 
-
     def run(self):
 
         while not rospy.is_shutdown(): 
             if self.seq_newest is None:
                 continue
-
             self.process_waiting_images() 
             self.publish_stitched_image()
 

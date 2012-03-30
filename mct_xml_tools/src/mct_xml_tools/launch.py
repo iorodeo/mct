@@ -386,7 +386,6 @@ def create_three_point_tracker_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
-
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
