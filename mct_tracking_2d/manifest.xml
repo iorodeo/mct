@@ -18,6 +18,8 @@
   <depend package="mct_blob_finder"/>
   <depend package="mct_xml_tools"/>
 
+  <depend package="dynamic_reconfigure"/>
+      
 </package>
 
 

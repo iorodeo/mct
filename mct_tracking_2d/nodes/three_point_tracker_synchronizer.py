@@ -72,9 +72,9 @@ class ThreePointTracker_Synchronizer:
         found = False
         for camera, msg in sorted(tracking_pts_dict.items(),cmp=camera_name_cmp):
             found |= msg.data.found
-            print(camera, msg.data.found)
+            #print(camera, msg.data.found)
         print(found)
-        print()
+        #print()
 
     def run(self):
         """
