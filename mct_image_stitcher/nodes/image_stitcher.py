@@ -349,6 +349,9 @@ class ImageStitcher(object):
 
 # -----------------------------------------------------------------------------
 def stamp_tuple_to_secs(stamp):
+    """
+    Converts a stamp tuple (secs,nsecs) to seconds.
+    """
     return stamp[0] + stamp[1]*1.0e-9
 
 

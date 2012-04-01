@@ -7,9 +7,6 @@ import sys
 import threading
 import math
 
-import numpy
-import scipy.optimize
-
 import cv
 from cv_bridge.cv_bridge import CvBridge 
 from mct_blob_finder import BlobFinder
@@ -31,12 +28,19 @@ from mct_msg_and_srv.srv import BlobFinderGetParamResponse
 
 class ThreePointTracker(object):
 
-    def __init__(self,topic=None):
+    """
+    Three point object tracker. Looks for objects in the image stream with
+    three bright unequally spaced points.
+    """
+
+    def __init__(self, topic=None, max_stamp_age=1.5):
         self.topic = topic
         self.lock = threading.Lock() 
         self.bridge = CvBridge()
         self.camera = get_camera_from_topic(self.topic)
         self.camera_info_topic = get_camera_info_from_image_topic(self.topic)
+        self.max_stamp_age = max_stamp_age
+        self.latest_stamp = None
 
         # Get parameters from the parameter server
         params_ns = 'three_point_tracker_params'
@@ -145,6 +149,7 @@ class ThreePointTracker(object):
         """
         stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
         with self.lock:
+            self.latest_stamp = stamp_tuple
             self.stamp_to_seq[stamp_tuple] = data.header.seq
 
     def image_callback(self,data):
@@ -196,7 +201,7 @@ class ThreePointTracker(object):
         rosimage_tracking_pts = self.bridge.cv_to_imgmsg(image_tracking_pts,encoding="passthrough")
 
         # Compute distance to image center
-        # dist_to_image_center = self.get_dist_to_image_center(uv_list, cv.GetSize(ipl_image))
+        dist_to_image_center = self.get_dist_to_image_center(uv_list, cv.GetSize(ipl_image))
 
         # Add data to pool
         stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
@@ -204,7 +209,8 @@ class ThreePointTracker(object):
             self.stamp_to_data[stamp_tuple] = {
                     'found': found,
                     'tracking_pts': uv_list,
-                    'image_tracking_pts' : rosimage_tracking_pts, 
+                    'image_tracking_pts': rosimage_tracking_pts, 
+                    'dist_to_image_center': dist_to_image_center,
                     }
             
         # Publish calibration progress image
@@ -215,7 +221,7 @@ class ThreePointTracker(object):
         Computes the distance from the mid point of the tracking points to the
         middle of the image.
         """
-        img_mid = 0.5*image_size[0], 0.5*image_size[1] 
+        img_mid = 0.5*img_size[0], 0.5*img_size[1] 
         pts_mid = get_midpoint_uv_list(uv_list)
         return distance_2d(pts_mid,img_mid)
 
@@ -274,6 +280,7 @@ class ThreePointTracker(object):
             v_list = [v for v,u in vu_list]
 
         # Look at distances and sort so that either the large gap occurs first
+        # or last based on the spacing data.
         uv_list= zip(u_list,v_list)
         dist_0_to_1 = distance_2d(uv_list[0], uv_list[1])
         dist_1_to_2 = distance_2d(uv_list[1], uv_list[2])
@@ -291,6 +298,7 @@ class ThreePointTracker(object):
         numbers and publishes the tracking data.
         """
         while not rospy.is_shutdown():
+
             with self.lock:
 
                 # Associate data with image seq numbers
@@ -302,6 +310,14 @@ class ThreePointTracker(object):
                     self.seq_to_stamp_and_data[seq] = stamp, data 
                     del self.stamp_to_data[stamp]
                     del self.stamp_to_seq[stamp]
+
+                    # Throw away data greater than the maximum allowed age
+                    if self.latest_stamp is not None:
+                        latest_stamp_secs = stamp_tuple_to_secs(self.latest_stamp)
+                        stamp_secs = stamp_tuple_to_secs(stamp)
+                        stamp_age = latest_stamp_secs - stamp_secs
+                        if stamp_age > self.max_stamp_age:
+                            del self.stamp_to_data[stamp]
 
                 # Publish data
                 for seq, stamp_and_data in sorted(self.seq_to_stamp_and_data.items()):
@@ -320,18 +336,13 @@ class ThreePointTracker(object):
                     tracking_pts_msg.data.nsecs = stamp[1]
                     tracking_pts_msg.data.camera = self.camera
                     tracking_pts_msg.data.found = data['found']
+                    tracking_pts_msg.data.distance = data['dist_to_image_center']
                     tracking_pts_msg.data.points = tracking_pts 
                     tracking_pts_msg.image = data['image_tracking_pts']
                     self.tracking_pts_pub.publish(tracking_pts_msg)
                     
+                    # Remove data for this sequence number.
                     del self.seq_to_stamp_and_data[seq]
-
-            # ################################################################
-            # Temporary - may want to get this from frame rate or remove 
-            # altogether. 
-            # ################################################################
-            rospy.sleep(1.0/50.0)
-            ##################################################################
 
 
 # -------------------------------------------------------------------------------
@@ -365,6 +376,12 @@ def get_camera_info_from_image_topic(topic):
     info_topic.append('camera_info')
     info_topic = '/'.join(info_topic)
     return info_topic
+
+def stamp_tuple_to_secs(stamp):
+    """
+    Converts a stamp tuple (secs,nsecs) to seconds.
+    """
+    return stamp[0] + stamp[1]*1.0e-9
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':

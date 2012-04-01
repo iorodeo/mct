@@ -3,4 +3,5 @@ uint32 secs
 uint32 nsecs
 string camera
 bool found
+float32 distance
 ImagePt[] points 
