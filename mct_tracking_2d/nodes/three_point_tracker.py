@@ -18,7 +18,7 @@ from std_msgs.msg import Time
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo 
 from mct_msg_and_srv.msg import ThreePointTrackerRaw
-from mct_msg_and_srv.msg import ImagePt
+from mct_msg_and_srv.msg import Point2d 
 
 # Services
 from mct_msg_and_srv.srv import BlobFinderSetParam
@@ -327,7 +327,7 @@ class ThreePointTracker(object):
                     # Create list of tracking points 
                     tracking_pts = []
                     for u,v in data['tracking_pts']:
-                        tracking_pts.append(ImagePt(u,v))
+                        tracking_pts.append(Point2d(u,v))
 
                     # Create the tracking points message and publish
                     tracking_pts_msg = ThreePointTrackerRaw()

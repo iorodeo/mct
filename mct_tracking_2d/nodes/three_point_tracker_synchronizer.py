@@ -9,10 +9,14 @@ import threading
 
 import mct_introspection
 from mct_utilities import file_tools
+from mct_transform_2d import transform_2d
 
 from mct_msg_and_srv.msg import ThreePointTrackerRaw
 
 class ThreePointTracker_Synchronizer:
+    """
+    Synchronization node for all three point tracker in a given tracking region.
+    """
 
     def __init__(self,region,max_seq_age=200):
         self.lock = threading.Lock()
@@ -23,6 +27,9 @@ class ThreePointTracker_Synchronizer:
         self.latest_seq = None
         self.max_seq_age = max_seq_age
         self.tracking_pts_pool = {}
+
+        # Get transforms from cameras to tracking and stitched image planes
+        self.tf2d = transform_2d.Transform2d()
 
         self.ready = False
         rospy.init_node('three_point_tracker_synchronizer')
@@ -52,7 +59,6 @@ class ThreePointTracker_Synchronizer:
                 if camera in topic_split:
                     self.camera_to_tracking[camera] = topic
 
-
     def tracking_pts_handler(self,camera,msg):
         """
         Handler for messages from the individual tracker nodes. Sticks the tracking
@@ -67,46 +73,87 @@ class ThreePointTracker_Synchronizer:
             except KeyError:
                 self.tracking_pts_pool[msg.data.seq] = {camera: msg}
 
-
     def process_tracking_pts(self,tracking_pts_dict):
-        found = False
-        for camera, msg in sorted(tracking_pts_dict.items(),cmp=camera_name_cmp):
-            found |= msg.data.found
-            #print(camera, msg.data.found)
-        print(found)
-        #print()
+        """
+        Determines whether the object has been found in any of the three point
+        trackers for the region. If is has been found than best tracking point
+        data is selected in a winner takes all fashion. The best tracking point
+        data is that which is nearest to the center of the image on camera upon
+        which is was captured. 
+        """
+        # Get list of messages in which the object was found
+        found_list = [msg for msg in tracking_pts_dict.values() if msg.data.found]
+        if found_list:
+            # Object found - select points whose distance to center of image is the smallest 
+            found_list.sort(cmp=tracking_pts_sort_cmp)
+            best_pts = found_list[0]
+            camera = best_pts.data.camera
+            distance = best_pts.data.distance
+            print(camera,distance)
+
+            # Get coords of points in tracking and stitching planes
+            xy_tracking_plane, xy_stitching_plane = [], []
+            for p in best_pts.data.points:
+                x,y = self.tf2d.camera_pts_to_anchor_plane(camera, p.x, p.y)
+                xy_tracking_plane.append((x,y))
+                x,y = self.tf2d.camera_pts_to_stitching_plane(camera, p.x, p.y)
+                xy_stitching_plane.append((x,y))
+
+            # Get mid point of object in tracking and stitching planes
+            x_mid, y_mid = get_midpoint(xy_tracking_plane)
+            x_mid, y_mid = get_midpoint(xy_stitching_plane)
+
+            # Transform image to stitching plane
+
+        else:
+            # Object not found.
+            print('not found')
 
     def run(self):
         """
-        Node main loop - consolidates the tracking points messages by acquisition
-        sequence number.
+        Node main loop - consolidates the tracking points messages by
+        acquisition sequence number and proccess them by passing them to the
+        process_tracking_pts function.
         """
         while not rospy.is_shutdown():
-            #print('len(tracking_pts_pool', len(self.tracking_pts_pool))
+
             with self.lock:
+
                 for seq, tracking_pts_dict in sorted(self.tracking_pts_pool.items()):
-                    # For sequences where we have data from all cameras process the 
-                    # the tracking points messages
+
+                    # Check if we have all the tracking data for the given sequence number
                     if len(tracking_pts_dict) == len(self.camera_list):
                         self.process_tracking_pts(tracking_pts_dict)
                         del self.tracking_pts_pool[seq]
-                    # Check to see if the sequence is older that maximum allowed age 
-                    # and if so throw it away.
+
+                    # Throw away tracking data greater than the maximum allowed age  
                     if self.latest_seq - seq > self.max_seq_age:
                         print('Thowing away: ', seq)
                         del self.tracking_pts_pool[seq]
 
-def camera_name_cmp(x,y):
-    num_x = int(x[0].split('_')[1])
-    num_y = int(y[0].split('_')[1])
-    if num_x > num_y:
+# Utility functions
+# -----------------------------------------------------------------------------
+def tracking_pts_sort_cmp(msg_x, msg_y):
+    """
+    Comparison function for sorting the the tracking pts messages. Used for sorting
+    the based on the distance to the center of the image in which they were found.
+    """
+    dist_x = msg_x.data.distance
+    dist_y = msg_y.data.distance
+    if dist_x > dist_y:
         return 1
-    elif num_y > num_x:
+    elif dist_y > dist_x:
         return -1
     else:
         return 0
 
-
+def get_midpoint(xy_list):
+    """
+    Gets the mid point of the sorted 2d points in the given list.
+    """
+    x_mid = 0.5*(xy_list[0][0] + xy_list[-1][0])
+    y_mid = 0.5*(xy_list[0][1] + xy_list[-1][1])
+    return x_mid, y_mid
 # -----------------------------------------------------------------------------
 if __name__  == '__main__':
     region = sys.argv[1]

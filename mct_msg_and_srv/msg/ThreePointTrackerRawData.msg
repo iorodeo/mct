@@ -4,4 +4,4 @@ uint32 nsecs
 string camera
 bool found
 float32 distance
-ImagePt[] points 
+Point2d[] points 

@@ -17,6 +17,7 @@
   <depend package="mct_msg_and_srv"/>
   <depend package="mct_blob_finder"/>
   <depend package="mct_xml_tools"/>
+  <depend package="mct_transform_2d"/>
 
   <depend package="dynamic_reconfigure"/>
       
