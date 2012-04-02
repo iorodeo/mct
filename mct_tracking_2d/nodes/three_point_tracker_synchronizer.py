@@ -11,6 +11,8 @@ import mct_introspection
 from mct_utilities import file_tools
 from mct_transform_2d import transform_2d
 
+from mct_msg_and_srv.msg import Point2d
+from mct_msg_and_srv.msg import ThreePointTracker
 from mct_msg_and_srv.msg import ThreePointTrackerRaw
 
 class ThreePointTracker_Synchronizer:
@@ -34,7 +36,7 @@ class ThreePointTracker_Synchronizer:
         self.ready = False
         rospy.init_node('three_point_tracker_synchronizer')
 
-        # Subscribe to tracking pts topics
+        # Subscribe to raw tracking pts topics
         self.tracking_pts_sub = {}
         for camera, topic in self.camera_to_tracking.iteritems():
             handler = functools.partial(self.tracking_pts_handler, camera)
@@ -43,6 +45,9 @@ class ThreePointTracker_Synchronizer:
                     ThreePointTrackerRaw,
                     handler
                     )
+
+        # Create publishers
+        self.tracking_pts_pub = rospy.Publisher('tracking_pts', ThreePointTracker)
 
         self.ready = True
 
@@ -83,31 +88,38 @@ class ThreePointTracker_Synchronizer:
         """
         # Get list of messages in which the object was found
         found_list = [msg for msg in tracking_pts_dict.values() if msg.data.found]
+        tracking_pts_msg = ThreePointTracker()
         if found_list:
             # Object found - select points whose distance to center of image is the smallest 
             found_list.sort(cmp=tracking_pts_sort_cmp)
-            best_pts = found_list[0]
-            camera = best_pts.data.camera
-            distance = best_pts.data.distance
-            print(camera,distance)
+            best = found_list[0]
+            camera = best.data.camera
 
             # Get coords of points in tracking and stitching planes
-            xy_tracking_plane, xy_stitching_plane = [], []
-            for p in best_pts.data.points:
+            pts_tracking_plane, pts_stitching_plane = [], []
+            for p in best.data.points:
                 x,y = self.tf2d.camera_pts_to_anchor_plane(camera, p.x, p.y)
-                xy_tracking_plane.append((x,y))
+                pts_tracking_plane.append(Point2d(x,y))
                 x,y = self.tf2d.camera_pts_to_stitching_plane(camera, p.x, p.y)
-                xy_stitching_plane.append((x,y))
+                pts_stitching_plane.append(Point2d(x,y))
 
             # Get mid point of object in tracking and stitching planes
-            x_mid, y_mid = get_midpoint(xy_tracking_plane)
-            x_mid, y_mid = get_midpoint(xy_stitching_plane)
+            midpt_tracking_plane = get_midpoint(pts_tracking_plane)
+            midpt_stitching_plane = get_midpoint(pts_stitching_plane)
 
             # Transform image to stitching plane
 
+            # Publish tracking data
+            tracking_pts_msg.found = True
+            tracking_pts_msg.camera = camera
+            tracking_pts_msg.pts_tracking_plane = pts_tracking_plane
+            tracking_pts_msg.pts_stitching_plane = pts_stitching_plane
+            tracking_pts_msg.midpt_tracking_plane = midpt_tracking_plane
+            tracking_pts_msg.midpt_stitching_plane = midpt_stitching_plane
         else:
-            # Object not found.
-            print('not found')
+            tracking_pts_msg.found = False
+
+        self.tracking_pts_pub.publish(tracking_pts_msg)
 
     def run(self):
         """
@@ -147,13 +159,13 @@ def tracking_pts_sort_cmp(msg_x, msg_y):
     else:
         return 0
 
-def get_midpoint(xy_list):
+def get_midpoint(point_list):
     """
     Gets the mid point of the sorted 2d points in the given list.
     """
-    x_mid = 0.5*(xy_list[0][0] + xy_list[-1][0])
-    y_mid = 0.5*(xy_list[0][1] + xy_list[-1][1])
-    return x_mid, y_mid
+    x_mid = 0.5*(point_list[0].x + point_list[-1].x)
+    y_mid = 0.5*(point_list[0].y + point_list[-1].y)
+    return Point2d(x_mid, y_mid)
 # -----------------------------------------------------------------------------
 if __name__  == '__main__':
     region = sys.argv[1]

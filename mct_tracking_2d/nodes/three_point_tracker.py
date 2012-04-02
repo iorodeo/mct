@@ -305,19 +305,22 @@ class ThreePointTracker(object):
                 for stamp, data in self.stamp_to_data.items():
                     try:
                         seq = self.stamp_to_seq[stamp]
+                        seq_found = True
                     except KeyError:
-                        continue
-                    self.seq_to_stamp_and_data[seq] = stamp, data 
-                    del self.stamp_to_data[stamp]
-                    del self.stamp_to_seq[stamp]
+                        seq_found = False
 
-                    # Throw away data greater than the maximum allowed age
-                    if self.latest_stamp is not None:
-                        latest_stamp_secs = stamp_tuple_to_secs(self.latest_stamp)
-                        stamp_secs = stamp_tuple_to_secs(stamp)
-                        stamp_age = latest_stamp_secs - stamp_secs
-                        if stamp_age > self.max_stamp_age:
-                            del self.stamp_to_data[stamp]
+                    if seq_found:
+                        self.seq_to_stamp_and_data[seq] = stamp, data 
+                        del self.stamp_to_data[stamp]
+                        del self.stamp_to_seq[stamp]
+                    else:
+                        # Throw away data greater than the maximum allowed age
+                        if self.latest_stamp is not None:
+                            latest_stamp_secs = stamp_tuple_to_secs(self.latest_stamp)
+                            stamp_secs = stamp_tuple_to_secs(stamp)
+                            stamp_age = latest_stamp_secs - stamp_secs
+                            if stamp_age > self.max_stamp_age:
+                                del self.stamp_to_data[stamp]
 
                 # Publish data
                 for seq, stamp_and_data in sorted(self.seq_to_stamp_and_data.items()):
