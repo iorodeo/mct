@@ -6,6 +6,7 @@ import rospy
 import sys
 import functools
 import threading
+import math
 
 import mct_introspection
 from mct_utilities import file_tools
@@ -107,15 +108,19 @@ class ThreePointTracker_Synchronizer:
             midpt_tracking_plane = get_midpoint(pts_tracking_plane)
             midpt_stitching_plane = get_midpoint(pts_stitching_plane)
 
-            # Transform image to stitching plane
+            # Get the orientation angle
+            angle = get_angle(pts_tracking_plane)
 
             # Publish tracking data
             tracking_pts_msg.found = True
             tracking_pts_msg.camera = camera
-            tracking_pts_msg.pts_tracking_plane = pts_tracking_plane
-            tracking_pts_msg.pts_stitching_plane = pts_stitching_plane
+            tracking_pts_msg.angle = angle
             tracking_pts_msg.midpt_tracking_plane = midpt_tracking_plane
             tracking_pts_msg.midpt_stitching_plane = midpt_stitching_plane
+            tracking_pts_msg.pts_tracking_plane = pts_tracking_plane
+            tracking_pts_msg.pts_stitching_plane = pts_stitching_plane
+
+            # Transform tracking points image to stitching plane
         else:
             tracking_pts_msg.found = False
 
@@ -161,11 +166,24 @@ def tracking_pts_sort_cmp(msg_x, msg_y):
 
 def get_midpoint(point_list):
     """
-    Gets the mid point of the sorted 2d points in the given list.
+    Retuns the mid-point of the sorted 2d points of the three-point tracking object.
     """
     x_mid = 0.5*(point_list[0].x + point_list[-1].x)
     y_mid = 0.5*(point_list[0].y + point_list[-1].y)
     return Point2d(x_mid, y_mid)
+
+def get_angle(point_list):
+    """
+    Returns the orientation angle given the sort 2d point of the three-point tracking
+    object.
+    """
+    p = point_list[0]
+    q = point_list[-1]
+    dy = q.y - p.y
+    dx = q.x - p.x
+    angle = math.atan2(dy, dx)
+    return angle
+
 # -----------------------------------------------------------------------------
 if __name__  == '__main__':
     region = sys.argv[1]
