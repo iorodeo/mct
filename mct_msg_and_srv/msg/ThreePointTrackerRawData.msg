@@ -4,4 +4,5 @@ uint32 nsecs
 string camera
 bool found
 float32 distance
+uint32[] roi
 Point2d[] points 

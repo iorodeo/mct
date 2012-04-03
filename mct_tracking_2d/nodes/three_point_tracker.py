@@ -166,7 +166,7 @@ class ThreePointTracker(object):
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
         ipl_image = cv.GetImage(cv_image)
 
-        # Create trakcing points  image
+        # Create tracking points  image
         image_tracking_pts = cv.CreateImage(
                 self.tracking_pts_roi_size,
                 cv.IPL_DEPTH_8U, 
@@ -179,8 +179,10 @@ class ThreePointTracker(object):
             found = True
             uv_list = self.get_sorted_uv_points(blobs_list)
             self.tracking_pts_roi = self.get_tracking_pts_roi(uv_list,cv.GetSize(ipl_image))
+            dist_to_image_center = self.get_dist_to_image_center(uv_list, cv.GetSize(ipl_image))
         else:
             found = False
+            dist_to_image_center = 0.0
             uv_list = [(0,0),(0,0),(0,0)]
 
         # Create tracking pts image using ROI around tracking points
@@ -196,25 +198,27 @@ class ThreePointTracker(object):
                     v = v - self.tracking_pts_roi[1]
                     cv.Circle(image_tracking_pts, (int(u),int(v)),3, color)
 
-
-        # Convert tracking points image to rosimage
+        # Convert tracking points image to rosimage and publish
         rosimage_tracking_pts = self.bridge.cv_to_imgmsg(image_tracking_pts,encoding="passthrough")
-
-        # Compute distance to image center
-        dist_to_image_center = self.get_dist_to_image_center(uv_list, cv.GetSize(ipl_image))
+        self.image_tracking_pts_pub.publish(rosimage_tracking_pts)
 
         # Add data to pool
         stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
+        if self.tracking_pts_roi is None:
+            tracking_pts_roi = (0,0,0,0)
+        else:
+            tracking_pts_roi = self.tracking_pts_roi
+
         with self.lock:
             self.stamp_to_data[stamp_tuple] = {
                     'found': found,
                     'tracking_pts': uv_list,
                     'image_tracking_pts': rosimage_tracking_pts, 
                     'dist_to_image_center': dist_to_image_center,
+                    'tracking_pts_roi': tracking_pts_roi,
                     }
+
             
-        # Publish calibration progress image
-        self.image_tracking_pts_pub.publish(rosimage_tracking_pts)
 
     def get_dist_to_image_center(self, uv_list, img_size):
         """
@@ -340,6 +344,7 @@ class ThreePointTracker(object):
                     tracking_pts_msg.data.camera = self.camera
                     tracking_pts_msg.data.found = data['found']
                     tracking_pts_msg.data.distance = data['dist_to_image_center']
+                    tracking_pts_msg.data.roi = data['tracking_pts_roi']
                     tracking_pts_msg.data.points = tracking_pts 
                     tracking_pts_msg.image = data['image_tracking_pts']
                     self.tracking_pts_pub.publish(tracking_pts_msg)

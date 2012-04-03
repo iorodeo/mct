@@ -13,7 +13,7 @@ rospy.init_node('camera_config', anonymous=True)
 
 camera_params = {
         'brightness': 800,
-        'shutter': 300,
+        'shutter': 250,
         'gain': 300,
         }
 

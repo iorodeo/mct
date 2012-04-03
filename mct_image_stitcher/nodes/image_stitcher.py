@@ -271,6 +271,8 @@ class ImageStitcher(object):
                                     ipl_image.depth,
                                     ipl_image.channels
                                     )
+                        if i==0:
+                            cv.Zero(self.stitched_image)
 
                         # Set image warping flags - if first fill rest of image with zeros
                         if self.is_first_write:
