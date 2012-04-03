@@ -6,6 +6,7 @@ import rospy
 import threading
 import sys
 
+from cv_bridge.cv_bridge import CvBridge 
 from mct_blob_finder import BlobFinder
 
 # Messages
@@ -24,10 +25,10 @@ class BlobFinderNode(object):
     def __init__(self,topic=None):
         self.topic = topic
         self.lock = threading.Lock()
-
+        self.bridge = CvBridge()
         self.blobFinder = BlobFinder()
-        self.blobFinder.threshold = 220 
-        self.blobFinder.filter_by_area = False
+        self.blobFinder.threshold = 150 
+        self.blobFinder.filter_by_area = True 
         self.blobFinder.min_area = 0
         self.blobFinder.max_area = 200
 
@@ -82,9 +83,12 @@ class BlobFinderNode(object):
             return 
 
         with self.lock:
-            blobs_list, blobs_rosimage = self.blobFinder.findBlobs(data)
+            blobs_list, blobs_image = self.blobFinder.findBlobs(data)
+
+        print(len(blobs_list))
 
         # Publish image of blobs
+        blobs_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
         self.image_pub.publish(blobs_rosimage)
 
         # Create the blob data message and publish
