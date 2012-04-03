@@ -43,11 +43,10 @@ class BlobFinder(object):
 
         # Threshold image 
         cv.Threshold(raw_image, self.thresh_image, self.threshold, 255, cv.CV_THRESH_BINARY)
-        #cv.AdaptiveThreshold(raw_image, self.thresh_image, 255, cv.CV_ADAPTIVE_THRESH_MEAN_C, cv.CV_THRESH_BINARY,3,2) 
 
-        ## Erode and dilate - problematic when tracking points are close together
-        cv.Erode(self.thresh_image, self.thresh_image, None, 2)
-        cv.Dilate(self.thresh_image, self.thresh_image, None, 1)
+        ### Erode and dilate - problematic when tracking points are close together
+        #cv.Dilate(self.thresh_image, self.thresh_image, None, 1)
+        #cv.Erode(self.thresh_image, self.thresh_image, None, 1)
 
         # Find contours
         storage = cv.CreateMemStorage(0)
