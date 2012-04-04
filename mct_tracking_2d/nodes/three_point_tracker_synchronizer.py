@@ -7,11 +7,15 @@ import sys
 import functools
 import threading
 import math
+import cv
+import numpy
+from cv_bridge.cv_bridge import CvBridge 
 
 import mct_introspection
 from mct_utilities import file_tools
 from mct_transform_2d import transform_2d
 
+from sensor_msgs.msg import Image
 from mct_msg_and_srv.msg import Point2d
 from mct_msg_and_srv.msg import ThreePointTracker
 from mct_msg_and_srv.msg import ThreePointTrackerRaw
@@ -23,6 +27,7 @@ class ThreePointTracker_Synchronizer:
 
     def __init__(self,region,max_seq_age=200):
         self.lock = threading.Lock()
+
         self.region = region
         regions_dict = file_tools.read_tracking_2d_regions()
         self.camera_list = regions_dict[region]
@@ -34,6 +39,7 @@ class ThreePointTracker_Synchronizer:
         # Get transforms from cameras to tracking and stitched image planes
         self.tf2d = transform_2d.Transform2d()
 
+        self.bridge = CvBridge()
         self.ready = False
         rospy.init_node('three_point_tracker_synchronizer')
 
@@ -49,6 +55,8 @@ class ThreePointTracker_Synchronizer:
 
         # Create publishers
         self.tracking_pts_pub = rospy.Publisher('tracking_pts', ThreePointTracker)
+        self.image_tracking_pts = None
+        self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
 
         self.ready = True
 
@@ -138,22 +146,57 @@ class ThreePointTracker_Synchronizer:
             dim_max = max([dx_max, dy_max])
 
             # Convert tracking points image to opencv image.
+            image_tracking_pts = self.bridge.imgmsg_to_cv(best.image,desired_encoding="passthrough")
+            image_tracking_pts = cv.GetImage(image_tracking_pts)
+            image_size = cv.GetSize(image_tracking_pts)
+            image_dim_max = max(image_size)
+
+            # Get matrix for homography from camera to  anchor plane
+            tf_matrix = self.tf2d.get_camera_to_anchor_plane_tf(camera)
+
+            # Shift for local ROI
+            tf_shift = numpy.array([ 
+                [1.0, 0.0, roi[0]],
+                [0.0, 1.0, roi[1]],
+                [0.0, 0.0,    1.0],
+                ])
+            tf_matrix = numpy.dot(tf_matrix, tf_shift)
 
             # Get scaling factor
+            shift_x = -min([x for x,y in bndry_pts_anchor])
+            shift_y = -min([y for x,y in bndry_pts_anchor])
+            scale_factor = float(image_dim_max)/dim_max
 
-            # Get homography matrix to anchor plaen
-            tf_matrix = self.tf2d.get_camera_to_anchor_plane_tf(camera)
-            print(tf_matrix)
-
-            # Add shift and scaling to homography matrix
+            # Scale and shift transform so that homography maps the tracking points
+            # sub-image into a image_size image starting at coord. 0,0
+            tf_shift_and_scale = numpy.array([
+                [scale_factor,           0.0,   scale_factor*shift_x],
+                [         0.0,  scale_factor,   scale_factor*shift_y], 
+                [         0.0,           0.0,                    1.0],
+                ])
+            tf_matrix = numpy.dot(tf_shift_and_scale, tf_matrix)
 
             # Warp image using homography
-
+            image_tracking_pts_mod = cv.CreateImage(
+                    image_size, 
+                    image_tracking_pts.depth, 
+                    image_tracking_pts.channels
+                    )
+            cv.WarpPerspective(
+                    image_tracking_pts, 
+                    image_tracking_pts_mod,
+                    cv.fromarray(tf_matrix),
+                    cv.CV_INTER_LINEAR | cv.CV_WARP_FILL_OUTLIERS,
+                    )
+            self.image_tracking_pts = self.bridge.cv_to_imgmsg(image_tracking_pts_mod,encoding="passthrough")
 
         else:
             tracking_pts_msg.found = False
 
+        # Publish messages
         self.tracking_pts_pub.publish(tracking_pts_msg)
+        if self.image_tracking_pts is not None:
+            self.image_tracking_pts_pub.publish(self.image_tracking_pts)
 
     def run(self):
         """

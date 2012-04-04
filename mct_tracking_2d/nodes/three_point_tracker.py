@@ -178,7 +178,7 @@ class ThreePointTracker(object):
         if num_blobs == 3:
             found = True
             uv_list = self.get_sorted_uv_points(blobs_list)
-            self.tracking_pts_roi = self.get_tracking_pts_roi(uv_list,cv.GetSize(ipl_image))
+            self.tracking_pts_roi = self.get_tracking_pts_roi(uv_list, cv.GetSize(ipl_image))
             dist_to_image_center = self.get_dist_to_image_center(uv_list, cv.GetSize(ipl_image))
         else:
             found = False
@@ -187,9 +187,12 @@ class ThreePointTracker(object):
 
         # Create tracking pts image using ROI around tracking points
         if self.tracking_pts_roi is not None:
-            cv.SetImageROI(ipl_image,self.tracking_pts_roi)
-            cv.CvtColor(ipl_image,image_tracking_pts,cv.CV_GRAY2BGR)
+            src_roi, dst_roi = truncate_roi(self.tracking_pts_roi, cv.GetSize(ipl_image))
+            cv.SetImageROI(ipl_image, src_roi)
+            cv.SetImageROI(image_tracking_pts, dst_roi)
+            cv.CvtColor(ipl_image, image_tracking_pts, cv.CV_GRAY2BGR)
             cv.ResetImageROI(ipl_image)
+            cv.ResetImageROI(image_tracking_pts)
             if found:
                 for i, uv in enumerate(uv_list):
                     color = self.tracking_pts_colors[i]
@@ -218,8 +221,6 @@ class ThreePointTracker(object):
                     'tracking_pts_roi': tracking_pts_roi,
                     }
 
-            
-
     def get_dist_to_image_center(self, uv_list, img_size):
         """
         Computes the distance from the mid point of the tracking points to the
@@ -229,7 +230,8 @@ class ThreePointTracker(object):
         pts_mid = get_midpoint_uv_list(uv_list)
         return distance_2d(pts_mid,img_mid)
 
-    def get_tracking_pts_roi(self, uv_list, img_size):
+
+    def get_tracking_pts_roi(self, uv_list, img_size, trunc=False):
         """
         Get the coordinates of region of interest about the tracking points
         """
@@ -240,18 +242,6 @@ class ThreePointTracker(object):
         v_min = int(math.floor(v_mid - roi_height/2))
         u_max = u_min + roi_width  
         v_max = v_min + roi_height 
-        if u_min < 0:
-            u_max = u_max + (-u_min)
-            u_min = 0
-        if u_max >= img_width:
-            u_min = u_min - (u_max - img_width + 1)
-            u_max = img_width-1
-        if v_min < 0:
-            v_max = v_max + (-v_min)
-            v_min = 0
-        if v_max >= img_height:
-            v_min = v_min - (v_max - img_height + 1)
-            v_max = img_height-1
         return u_min, v_min, u_max-u_min, v_max-v_min
 
 
@@ -354,6 +344,45 @@ class ThreePointTracker(object):
 
 
 # -------------------------------------------------------------------------------
+def truncate_roi(orig_roi, src_image_size):
+    """
+    Returns truncated ROI for source and destination images. Crops ROI so that
+    image edges are handled correctly.
+    """
+    # Set x position of ROI
+    if orig_roi[0] < 0:
+        src_x = 0
+        dst_x = -orig_roi[0]
+        w = orig_roi[2] + orig_roi[0]
+    else:
+        src_x = orig_roi[0]
+        dst_x = 0
+        w = orig_roi[2]
+
+    # Set y position of ROI
+    if orig_roi[1] < 0:
+        src_y = 0
+        dst_y = -orig_roi[1]
+        h = orig_roi[3] + orig_roi[1]
+    else:
+        src_y = orig_roi[1]
+        dst_y = 0
+        h = orig_roi[3]
+
+    # Set width of ROI
+    if (src_x + w) >= src_image_size[0]:
+        w = src_image_size[0] - src_x - 1
+
+    # Set height of ROI
+    if (src_y + h) >= src_image_size[1]:
+        h = src_image_size[1] - src_y - 1
+
+    # Create source and destiniatin image ROI's
+    src_roi = src_x, src_y, w, h
+    dst_roi = dst_x, dst_y, w, h
+
+    return src_roi, dst_roi
+
 def get_midpoint_uv_list(uv_list):
     """
     Gets the mid point of the sorted 2d points in uv_list.
