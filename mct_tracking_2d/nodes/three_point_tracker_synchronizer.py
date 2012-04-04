@@ -120,7 +120,36 @@ class ThreePointTracker_Synchronizer:
             tracking_pts_msg.pts_tracking_plane = pts_tracking_plane
             tracking_pts_msg.pts_stitching_plane = pts_stitching_plane
 
-            # Transform tracking points image to stitching plane
+            # Get size of tracking points image in the anchor (tracking) plane 
+            roi = best.data.roi
+            x0, x1 = roi[0], roi[0] + roi[2]
+            y0, y1 = roi[1], roi[1] + roi[3]
+            bndry_pts_camera = [(x0,y0), (x1,y0), (x1,y1), (x0,y1)]
+            bndry_pts_anchor = []
+            for x,y in bndry_pts_camera:
+                xx, yy = self.tf2d.camera_pts_to_anchor_plane(camera,x,y)
+                bndry_pts_anchor.append((xx,yy))
+            dx1 = abs(bndry_pts_anchor[1][0] - bndry_pts_anchor[0][0])
+            dx2 = abs(bndry_pts_anchor[3][0] - bndry_pts_anchor[2][0])
+            dy1 = abs(bndry_pts_anchor[2][1] - bndry_pts_anchor[1][1])
+            dy2 = abs(bndry_pts_anchor[3][1] - bndry_pts_anchor[0][1])
+            dx_max = max([dx1, dx2])
+            dy_max = max([dy1, dy2])
+            dim_max = max([dx_max, dy_max])
+
+            # Convert tracking points image to opencv image.
+
+            # Get scaling factor
+
+            # Get homography matrix to anchor plaen
+            tf_matrix = self.tf2d.get_camera_to_anchor_plane_tf(camera)
+            print(tf_matrix)
+
+            # Add shift and scaling to homography matrix
+
+            # Warp image using homography
+
+
         else:
             tracking_pts_msg.found = False
 
