@@ -46,27 +46,27 @@ class ThreePointTracker(object):
         params_ns = 'three_point_tracker_params'
         self.blobFinder = BlobFinder()
         self.tracking_pts_roi_size = rospy.get_param(
-                '{0}/roi_size'.format(params_ns), 
+                '/{0}/roi_size'.format(params_ns), 
                 (200,200),
                 )
         self.blobFinder.threshold = rospy.get_param( 
-                '{0}/threshold'.format(params_ns), 
+                '/{0}/threshold'.format(params_ns), 
                 100,
                 )
         self.blobFinder.filter_by_area = rospy.get_param(
-                '{0}/filter_by_area'.format(params_ns), 
-                False,
+                '/{0}/filter_by_area'.format(params_ns), 
+                False
                 )
         self.blobFinder.min_area = rospy.get_param(
-                '{0}/min_area'.format(params_ns),
+                '/{0}/min_area'.format(params_ns),
                 0,
                 )
         self.blobFinder.max_area = rospy.get_param( 
-                '{0}/max_area'.format(params_ns), 
+                '/{0}/max_area'.format(params_ns), 
                 200,
                 )
         self.tracking_pts_spacing = rospy.get_param(
-                '{0}/pts_spacing'.format(params_ns), 
+                '/{0}/pts_spacing'.format(params_ns), 
                 (0.0, 0.04774, 0.07019),
                 )
         self.tracking_pts_colors =[(0,0,255), (0,255,0), (0,255,255)]

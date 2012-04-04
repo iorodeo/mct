@@ -150,6 +150,7 @@ class ThreePointTracker_Synchronizer:
             image_tracking_pts = self.bridge.imgmsg_to_cv(best.image,desired_encoding="passthrough")
             image_tracking_pts = cv.GetImage(image_tracking_pts)
             image_size = cv.GetSize(image_tracking_pts)
+            print(image_size)
             image_dim_max = max(image_size)
 
             # Get matrix for homography from camera to  anchor plane
