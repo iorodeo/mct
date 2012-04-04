@@ -219,8 +219,8 @@ class ThreePointTracker(object):
             tracking_pts_roi_dst = (0,0,0,0)
         else:
             tracking_pts_roi = self.tracking_pts_roi
-            tracking_pts_roi = self.tracking_pts_roi_src
-            tracking_pts_roi = self.tracking_pts_roi_dst
+            tracking_pts_roi_src = self.tracking_pts_roi_src
+            tracking_pts_roi_dst = self.tracking_pts_roi_dst
 
         with self.lock:
             self.stamp_to_data[stamp_tuple] = {

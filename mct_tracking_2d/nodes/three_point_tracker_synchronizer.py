@@ -228,8 +228,8 @@ def tracking_pts_sort_cmp(msg_x, msg_y):
     Comparison function for sorting the the tracking pts messages. Used for sorting
     the based on the distance to the center of the image in which they were found.
     """
-    roi_x = msg_x.data.roi
-    roi_y = msg_y.data.roi
+    roi_x = msg_x.data.roi_src
+    roi_y = msg_y.data.roi_src
     area_roi_x = roi_x[2]*roi_x[3]
     area_roi_y = roi_y[2]*roi_y[3]
     if area_roi_x < area_roi_y:
