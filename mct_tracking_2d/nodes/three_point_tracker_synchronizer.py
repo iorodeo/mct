@@ -101,6 +101,7 @@ class ThreePointTracker_Synchronizer:
         if found_list:
             # Object found - select points whose distance to center of image is the smallest 
             found_list.sort(cmp=tracking_pts_sort_cmp)
+            print([x.data.distance for x in found_list])
             best = found_list[0]
             camera = best.data.camera
 
@@ -227,14 +228,23 @@ def tracking_pts_sort_cmp(msg_x, msg_y):
     Comparison function for sorting the the tracking pts messages. Used for sorting
     the based on the distance to the center of the image in which they were found.
     """
-    dist_x = msg_x.data.distance
-    dist_y = msg_y.data.distance
-    if dist_x > dist_y:
+    roi_x = msg_x.data.roi
+    roi_y = msg_y.data.roi
+    area_roi_x = roi_x[2]*roi_x[3]
+    area_roi_y = roi_y[2]*roi_y[3]
+    if area_roi_x < area_roi_y:
         return 1
-    elif dist_y > dist_x:
+    elif area_roi_x > area_roi_y:
         return -1
     else:
-        return 0
+        dist_x = msg_x.data.distance
+        dist_y = msg_y.data.distance
+        if dist_x > dist_y:
+            return 1
+        elif dist_y > dist_x:
+            return -1
+        else:
+            return 0
 
 def get_midpoint(point_list):
     """

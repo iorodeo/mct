@@ -5,4 +5,6 @@ string camera
 bool found
 float32 distance
 int32[] roi
+uint32[] roi_src
+uint32[] roi_dst
 Point2d[] points 

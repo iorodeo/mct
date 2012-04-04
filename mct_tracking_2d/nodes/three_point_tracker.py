@@ -86,6 +86,8 @@ class ThreePointTracker(object):
 
         self.ready = False
         self.tracking_pts_roi = None
+        self.tracking_pts_roi_src = None
+        self.tracking_pts_roi_dst = None
         rospy.init_node('blob_finder')
 
         # Subscribe to image and camera info topics
@@ -193,6 +195,8 @@ class ThreePointTracker(object):
             cv.CvtColor(ipl_image, image_tracking_pts, cv.CV_GRAY2BGR)
             cv.ResetImageROI(ipl_image)
             cv.ResetImageROI(image_tracking_pts)
+            self.tracking_pts_roi_src = src_roi
+            self.tracking_pts_roi_dst = dst_roi
             if found:
                 for i, uv in enumerate(uv_list):
                     color = self.tracking_pts_colors[i]
@@ -207,10 +211,16 @@ class ThreePointTracker(object):
 
         # Add data to pool
         stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
+
+        # If tracking points roi doesn't exist yet just send zeros
         if self.tracking_pts_roi is None:
             tracking_pts_roi = (0,0,0,0)
+            tracking_pts_roi_src = (0,0,0,0)
+            tracking_pts_roi_dst = (0,0,0,0)
         else:
             tracking_pts_roi = self.tracking_pts_roi
+            tracking_pts_roi = self.tracking_pts_roi_src
+            tracking_pts_roi = self.tracking_pts_roi_dst
 
         with self.lock:
             self.stamp_to_data[stamp_tuple] = {
@@ -219,6 +229,8 @@ class ThreePointTracker(object):
                     'image_tracking_pts': rosimage_tracking_pts, 
                     'dist_to_image_center': dist_to_image_center,
                     'tracking_pts_roi': tracking_pts_roi,
+                    'tracking_pts_roi_src': tracking_pts_roi_src,
+                    'tracking_pts_roi_dst': tracking_pts_roi_dst,
                     }
 
     def get_dist_to_image_center(self, uv_list, img_size):
@@ -335,6 +347,8 @@ class ThreePointTracker(object):
                     tracking_pts_msg.data.found = data['found']
                     tracking_pts_msg.data.distance = data['dist_to_image_center']
                     tracking_pts_msg.data.roi = data['tracking_pts_roi']
+                    tracking_pts_msg.data.roi_src = data['tracking_pts_roi_src']
+                    tracking_pts_msg.data.roi_dst = data['tracking_pts_roi_dst']
                     tracking_pts_msg.data.points = tracking_pts 
                     tracking_pts_msg.image = data['image_tracking_pts']
                     self.tracking_pts_pub.publish(tracking_pts_msg)
