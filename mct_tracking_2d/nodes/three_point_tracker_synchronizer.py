@@ -99,49 +99,43 @@ class ThreePointTracker_Synchronizer:
         found_list = [msg for msg in tracking_pts_dict.values() if msg.data.found]
         tracking_pts_msg = ThreePointTracker()
         if found_list:
-            # Object found - select points whose distance to center of image is the smallest 
+
+            # Object found - select object with largest ROI or if the ROIs are  equal in size 
+            # select the object whose distance to center of the # image is the smallest 
             found_list.sort(cmp=tracking_pts_sort_cmp)
-            print([x.data.distance for x in found_list])
             best = found_list[0]
             camera = best.data.camera
 
             # Get coords of points in tracking and stitching planes
-            pts_tracking_plane, pts_stitching_plane = [], []
+            pts_anchor_plane, pts_stitching_plane = [], []
             for p in best.data.points:
                 x,y = self.tf2d.camera_pts_to_anchor_plane(camera, p.x, p.y)
-                pts_tracking_plane.append(Point2d(x,y))
+                pts_anchor_plane.append(Point2d(x,y))
                 x,y = self.tf2d.camera_pts_to_stitching_plane(camera, p.x, p.y)
                 pts_stitching_plane.append(Point2d(x,y))
 
-            # Get mid point of object in tracking and stitching planes
-            midpt_tracking_plane = get_midpoint(pts_tracking_plane)
+            # Get orientation angle and mid point of object in anchor and stitching planes 
+            angle = get_angle(pts_anchor_plane)
+            midpt_anchor_plane = get_midpoint(pts_anchor_plane)
             midpt_stitching_plane = get_midpoint(pts_stitching_plane)
 
-            # Get the orientation angle
-            angle = get_angle(pts_tracking_plane)
-
-            # Publish tracking data
-            tracking_pts_msg.found = True
-            tracking_pts_msg.camera = camera
-            tracking_pts_msg.angle = angle
-            tracking_pts_msg.midpt_tracking_plane = midpt_tracking_plane
-            tracking_pts_msg.midpt_stitching_plane = midpt_stitching_plane
-            tracking_pts_msg.pts_tracking_plane = pts_tracking_plane
-            tracking_pts_msg.pts_stitching_plane = pts_stitching_plane
 
             # Get size of tracking points image in the anchor (tracking) plane 
             roi = best.data.roi
             x0, x1 = roi[0], roi[0] + roi[2]
             y0, y1 = roi[1], roi[1] + roi[3]
-            bndry_pts_camera = [(x0,y0), (x1,y0), (x1,y1), (x0,y1)]
-            bndry_pts_anchor = []
-            for x,y in bndry_pts_camera:
+            bndry_camera = [(x0,y0), (x1,y0), (x1,y1), (x0,y1)]
+            bndry_anchor = []
+            bndry_stitching = []
+            for x,y in bndry_camera:
                 xx, yy = self.tf2d.camera_pts_to_anchor_plane(camera,x,y)
-                bndry_pts_anchor.append((xx,yy))
-            dx1 = abs(bndry_pts_anchor[1][0] - bndry_pts_anchor[0][0])
-            dx2 = abs(bndry_pts_anchor[3][0] - bndry_pts_anchor[2][0])
-            dy1 = abs(bndry_pts_anchor[2][1] - bndry_pts_anchor[1][1])
-            dy2 = abs(bndry_pts_anchor[3][1] - bndry_pts_anchor[0][1])
+                bndry_anchor.append((xx,yy))
+                xx, yy = self.tf2d.camera_pts_to_stitching_plane(camera,x,y)
+                bndry_stitching.append((xx,yy))
+            dx1 = abs(bndry_anchor[1][0] - bndry_anchor[0][0])
+            dx2 = abs(bndry_anchor[3][0] - bndry_anchor[2][0])
+            dy1 = abs(bndry_anchor[2][1] - bndry_anchor[1][1])
+            dy2 = abs(bndry_anchor[3][1] - bndry_anchor[0][1])
             dx_max = max([dx1, dx2])
             dy_max = max([dy1, dy2])
             dim_max = max([dx_max, dy_max])
@@ -150,7 +144,6 @@ class ThreePointTracker_Synchronizer:
             image_tracking_pts = self.bridge.imgmsg_to_cv(best.image,desired_encoding="passthrough")
             image_tracking_pts = cv.GetImage(image_tracking_pts)
             image_size = cv.GetSize(image_tracking_pts)
-            print(image_size)
             image_dim_max = max(image_size)
 
             # Get matrix for homography from camera to  anchor plane
@@ -165,8 +158,8 @@ class ThreePointTracker_Synchronizer:
             tf_matrix = numpy.dot(tf_matrix, tf_shift)
 
             # Get scaling factor
-            shift_x = -min([x for x,y in bndry_pts_anchor])
-            shift_y = -min([y for x,y in bndry_pts_anchor])
+            shift_x = -min([x for x,y in bndry_anchor])
+            shift_y = -min([y for x,y in bndry_anchor])
             scale_factor = float(image_dim_max)/dim_max
 
             # Scale and shift transform so that homography maps the tracking points
@@ -192,7 +185,26 @@ class ThreePointTracker_Synchronizer:
                     )
             self.image_tracking_pts = self.bridge.cv_to_imgmsg(image_tracking_pts_mod,encoding="passthrough")
 
+            # Create tracking points message
+            tracking_pts_msg.seq = best.data.seq
+            tracking_pts_msg.secs = best.data.secs
+            tracking_pts_msg.nsecs = best.data.nsecs
+            tracking_pts_msg.camera = camera
+            tracking_pts_msg.found = True
+            tracking_pts_msg.angle = angle
+            tracking_pts_msg.angle_deg = (180.0*angle)/math.pi
+            tracking_pts_msg.midpt_anchor_plane = midpt_anchor_plane
+            tracking_pts_msg.midpt_stitching_plane = midpt_stitching_plane
+            tracking_pts_msg.pts_anchor_plane = pts_anchor_plane
+            tracking_pts_msg.pts_stitching_plane = pts_stitching_plane
+            tracking_pts_msg.bndry_anchor_plane = [Point2d(x,y) for x,y in bndry_anchor]
+            tracking_pts_msg.bndry_stitching_plane =[Point2d(x,y) for x,y in bndry_stitching]
         else:
+            sample = tracking_pts_dict.values()[0]
+            tracking_pts_msg.seq = sample.data.seq
+            tracking_pts_msg.secs = sample.data.secs
+            tracking_pts_msg.nsecs = sample.data.nsecs
+            tracking_pts_msg.camera = '' 
             tracking_pts_msg.found = False
 
         # Publish messages
