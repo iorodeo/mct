@@ -19,6 +19,7 @@ from cv_bridge.cv_bridge import CvBridge
 # Messages
 from mct_msg_and_srv.msg import StampInfo
 from mct_msg_and_srv.msg import ProcessingInfo
+from mct_msg_and_srv.msg import SeqAndImage
 from sensor_msgs.msg import CameraInfo 
 from sensor_msgs.msg import Image 
 from std_msgs.msg import UInt32
@@ -85,6 +86,7 @@ class ImageStitcher(object):
 
         # Stitched image publisher and seq publisher
         self.image_pub = rospy.Publisher('image_stitched', Image)
+        self.image_and_seq_pub = rospy.Publisher('seq_and_image_stitched', SeqAndImage)
         self.seq_pub = rospy.Publisher('image_stitched/seq', UInt32)
         self.stamp_pub = rospy.Publisher('image_stitched/stamp_info', StampInfo)
         self.processing_dt_pub = rospy.Publisher('image_stitched/processing_dt', ProcessingInfo)
@@ -309,6 +311,7 @@ class ImageStitcher(object):
                             )
                     stitched_ros_image.header.seq = seq
                     self.image_pub.publish(stitched_ros_image)
+                    self.image_and_seq_pub.publish(seq, stitched_ros_image)
                     self.seq_pub.publish(seq)
 
                     # Compute time stamp spread
