@@ -36,6 +36,9 @@ class ThreePointTracker_Synchronizer:
         self.max_seq_age = max_seq_age
         self.tracking_pts_pool = {}
 
+        self.magenta = (255,255,0)
+        self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.6, 0.6, thickness=0)
+
         # Get transforms from cameras to tracking and stitched image planes
         self.tf2d = transform_2d.Transform2d()
 
@@ -100,13 +103,13 @@ class ThreePointTracker_Synchronizer:
         tracking_pts_msg = ThreePointTracker()
         if found_list:
 
-            # Object found - select object with largest ROI or if the ROIs are  equal in size 
+            # Object found - select object with largest ROI or if the ROIs are of equal size 
             # select the object whose distance to center of the # image is the smallest 
             found_list.sort(cmp=tracking_pts_sort_cmp)
             best = found_list[0]
             camera = best.data.camera
 
-            # Get coords of points in tracking and stitching planes
+            # Get coordintates of points in tracking and stitching planes
             pts_anchor_plane, pts_stitching_plane = [], []
             for p in best.data.points:
                 x,y = self.tf2d.camera_pts_to_anchor_plane(camera, p.x, p.y)
@@ -183,6 +186,10 @@ class ThreePointTracker_Synchronizer:
                     cv.fromarray(tf_matrix),
                     cv.CV_INTER_LINEAR | cv.CV_WARP_FILL_OUTLIERS,
                     )
+
+            # Add sequence number to image
+            message = '{0}'.format(best.data.seq)
+            cv.PutText(image_tracking_pts_mod, message, (2,15), self.cv_text_font, self.magenta)
             self.image_tracking_pts = self.bridge.cv_to_imgmsg(image_tracking_pts_mod,encoding="passthrough")
 
             # Create tracking points message
