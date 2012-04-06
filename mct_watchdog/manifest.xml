@@ -1,0 +1,17 @@
+<package>
+  <description brief="mct_watchdog">
+
+     mct_watchdog
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_watchdog</url>
+  <depend package="rospy"/>
+  <depend package="sensor_msgs"/>
+  <depend package="mct_introspection"/>
+
+</package>
+
+

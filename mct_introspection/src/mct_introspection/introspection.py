@@ -22,6 +22,18 @@ def get_nodes():
     node_list = node_str.split()
     return node_list
 
+def get_camera_nodes():
+    """
+    Returns a list of all currently running camera nodes.
+    """
+    node_list = get_nodes()
+    camera_node_list = []
+    for node in node_list:
+        node_split = node.split('/')
+        if 'camera1394_node' in node_split:
+            camera_node_list.append(node)
+    return camera_node_list
+
 def exists_node(node):
     """
     Returns True if node is in list of currently running nodes
@@ -667,9 +679,13 @@ if __name__ == '__main__':
         print(len(topic_list))
         print(topic_list)
 
-    if 1:
+    if 0:
         topic_list = find_camera_info_topics()
         print(topic_list)
+
+    if 1:
+        node_list = get_camera_nodes()
+        print(node_list)
 
 
 
