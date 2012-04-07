@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_watchdog" type="time_stamp_watchdog.py" name="time_stamp_watchdog" machine="mct_master" />
+</launch>

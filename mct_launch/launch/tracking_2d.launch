@@ -3,4 +3,6 @@
     <include file="$(find mct_camera_trigger)/launch/camera_trigger.launch" />
     <include file="$(find mct_camera_tools)/launch/camera1394_master.launch" />
     <include file="$(find mct_camera_tools)/launch/image_proc_master.launch" /> 
+    <!-- <include file="$(find mct_image_stitcher)/launch/image_stitcher_devel.launch" /> -->
+    <!-- <include file="$(find mct_watchdog)/launch/time_stamp_watchdog.launch" /> -->
 </launch>
