@@ -87,8 +87,11 @@ class TimeStampWatchdog(object):
                 stamp_max = stamp 
                 stamp_min = stamp
             else:
-                stamp_max = stamp if stamp.to_sec() > stamp_max.to_sec() else stamp_max 
-                stamp_mim = stamp if stamp.to_sec() < stamp_min.to_sec() else stamp_min 
+                stamp_max = stamp if (stamp.to_sec() > stamp_max.to_sec()) else stamp_max 
+                stamp_min = stamp if (stamp.to_sec() < stamp_min.to_sec()) else stamp_min 
+            print('max {0:1.6f}'.format(stamp_max.to_sec()))
+            print('min {0:1.6f}'.format(stamp_min.to_sec()))
+            print('cur {0:1.6f}'.format(stamp.to_sec()))
         print()
 
         stamp_max_sec = stamp_max.to_sec()
