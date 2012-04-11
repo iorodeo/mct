@@ -20,7 +20,8 @@ class TimeStampWatchdog(object):
     def __init__(self, max_seq_age=200, max_allowed_stamp_spread=10.0e-3):
         self.max_seq_age = max_seq_age
         self.max_allowed_stamp_spread = max_allowed_stamp_spread
-        self.max_stamp_spread = 0.0
+        self.stamp_spread_max = {}
+        self.stamp_spread_max_overall = 0
         self.lock = threading.Lock()
         self.seq_to_camera_stamps = {}
         self.ready = False
@@ -35,8 +36,9 @@ class TimeStampWatchdog(object):
         camera_info_topics = mct_introspection.find_camera_info_topics()
         self.camera_info_sub = {}
         for topic in camera_info_topics:
+            machine = get_machine_from_topic(topic)
             camera = get_camera_from_topic(topic)
-            handler = functools.partial(self.camera_info_handler,camera)
+            handler = functools.partial(self.camera_info_handler, machine, camera)
             self.camera_info_sub[camera] = rospy.Subscriber(topic, CameraInfo, handler)
         self.number_of_cameras = len(camera_info_topics)
 
@@ -44,7 +46,7 @@ class TimeStampWatchdog(object):
         self.watchdog_pub = rospy.Publisher('time_stamp_watchdog', TimeStampWatchDog)
         self.ready = True
 
-    def camera_info_handler(self, camera, data):
+    def camera_info_handler(self, machine, camera, data):
         """
         Handler for camera info messages. Stores the time stamps based on
         seqeunce number and camera.
@@ -52,13 +54,14 @@ class TimeStampWatchdog(object):
         if not self.ready:
             return
 
+
         with self.lock:
             seq = data.header.seq
             stamp = data.header.stamp
             try:
-                self.seq_to_camera_stamps[seq][camera] = stamp
+                self.seq_to_camera_stamps[seq][(machine, camera)] = stamp
             except KeyError:
-                self.seq_to_camera_stamps[seq] = {camera: stamp}
+                self.seq_to_camera_stamps[seq] = {(machine, camera): stamp}
             self.most_recent_seq = seq
 
     def check_camera_stamps(self, seq, camera_stamps):
@@ -78,50 +81,82 @@ class TimeStampWatchdog(object):
 
         # Compute time stamp spread
         print('seq:', seq)
-        for i, camera in enumerate(camera_stamps):
-            stamp = camera_stamps[camera]
-            print(' camera:', camera)
-            print('  stamp.secs:', stamp.secs)
-            print('  stamp.nsecs:', stamp.nsecs)
-            if i == 0:
-                stamp_max = stamp 
-                stamp_min = stamp
-            else:
-                stamp_max = stamp if (stamp.to_sec() > stamp_max.to_sec()) else stamp_max 
-                stamp_min = stamp if (stamp.to_sec() < stamp_min.to_sec()) else stamp_min 
-            print('max {0:1.6f}'.format(stamp_max.to_sec()))
-            print('min {0:1.6f}'.format(stamp_min.to_sec()))
-            print('cur {0:1.6f}'.format(stamp.to_sec()))
+        cnt = 0
+
+        # Get the max and min time stamps for cameras on the same machine
+        stamp_min, stamp_max = {}, {}
+        machine_set = set()
+        for key, stamp in camera_stamps.iteritems():
+            machine, camera = key
+            if machine in ('mct_slave1','mct_slave2'):
+                machine = 'mct_slave '
+            machine_set.add(machine)
+            try:
+                stamp_max[machine] = stamp if (stamp.to_sec() > stamp_max[machine].to_sec()) else stamp_max[machine] 
+            except KeyError:
+                stamp_max[machine] = stamp
+            try:
+                stamp_min[machine] = stamp if (stamp.to_sec() < stamp_min[machine].to_sec()) else stamp_min[machine] 
+            except KeyError:
+                stamp_min[machine] = stamp
+
+        # Get time stamp spreads
+        stamp_spread = {}
+        stamp_max_list = []
+        stamp_min_list = []
+        for machine in machine_set:
+            stamp_max_sec = stamp_max[machine].to_sec()
+            stamp_min_sec = stamp_min[machine].to_sec()
+            stamp_max_list.append(stamp_max_sec)
+            stamp_min_list.append(stamp_min_sec)
+            stamp_spread[machine] = stamp_max_sec - stamp_min_sec
+            try:
+                self.stamp_spread_max[machine] = max([stamp_spread[machine], self.stamp_spread_max[machine]])
+            except KeyError:
+                self.stamp_spread_max[machine] = stamp_spread[machine]
+            print('{0}: {1:1.6f}, {2:1.6f}, {3:1.6f}, {4:1.6f}'.format(machine, stamp_max_sec, stamp_min_sec,stamp_spread[machine], self.stamp_spread_max[machine]))
+
+
+        stamp_max_overall = max(stamp_max_list)
+        stamp_min_overall = min(stamp_min_list)
+        stamp_spread_overall = stamp_max_overall - stamp_min_overall
+        self.stamp_spread_max_overall = max([stamp_spread_overall,self.stamp_spread_max_overall])
+        print('overall spread:', stamp_spread_overall)
+        print('max overall spread:', self.stamp_spread_max_overall)
         print()
 
-        stamp_max_sec = stamp_max.to_sec()
-        stamp_min_sec = stamp_min.to_sec()
-        stamp_spread = stamp_max_sec - stamp_min_sec
-        self.max_stamp_spread = max([self.max_stamp_spread, stamp_spread])
+        
 
-        # Check to see if time stamp spread in within range
-        if stamp_spread > self.max_allowed_stamp_spread:
-            cur_ok = False
-            error_list.append('maximum allowed stamp spread exceeded')
 
-        # Record first occurance of failed time stamp.
-        if not cur_ok and self.all_ok:
-            self.all_ok = False 
-            self.seq_fail = seq
-            self.error_msg = ', '.join(error_list)
 
-        self.last_checked_seq = seq
+        #stamp_max_sec = stamp_max.to_sec()
+        #stamp_min_sec = stamp_min.to_sec()
+        #stamp_spread = stamp_max_sec - stamp_min_sec
+        #self.max_stamp_spread = max([self.max_stamp_spread, stamp_spread])
 
-        # Create watchdog message and publish
-        watchdog_msg = TimeStampWatchDog()
-        watchdog_msg.seq = seq
-        watchdog_msg.seq_fail = self.seq_fail
-        watchdog_msg.all_ok = self.all_ok
-        watchdog_msg.cur_ok = cur_ok
-        watchdog_msg.max_spread = self.max_stamp_spread
-        watchdog_msg.cur_spread = stamp_spread
-        watchdog_msg.error_msg = self.error_msg
-        self.watchdog_pub.publish(watchdog_msg)
+        ## Check to see if time stamp spread in within range
+        #if stamp_spread > self.max_allowed_stamp_spread:
+        #    cur_ok = False
+        #    error_list.append('maximum allowed stamp spread exceeded')
+
+        ## Record first occurance of failed time stamp.
+        #if not cur_ok and self.all_ok:
+        #    self.all_ok = False 
+        #    self.seq_fail = seq
+        #    self.error_msg = ', '.join(error_list)
+
+        #self.last_checked_seq = seq
+
+        ## Create watchdog message and publish
+        #watchdog_msg = TimeStampWatchDog()
+        #watchdog_msg.seq = seq
+        #watchdog_msg.seq_fail = self.seq_fail
+        #watchdog_msg.all_ok = self.all_ok
+        #watchdog_msg.cur_ok = cur_ok
+        #watchdog_msg.max_spread = self.max_stamp_spread
+        #watchdog_msg.cur_spread = stamp_spread
+        #watchdog_msg.error_msg = self.error_msg
+        #self.watchdog_pub.publish(watchdog_msg)
 
 
     def process_camera_stamps(self):
@@ -158,6 +193,10 @@ class TimeStampWatchdog(object):
 def get_camera_from_topic(topic):
     camera = topic.split('/')[2]
     return camera
+
+def get_machine_from_topic(topic):
+    machine = topic.split('/')[1]
+    return machine
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':

@@ -27,16 +27,23 @@ camera_list = region_dict[region]
 
 # Get list of camers nodes in region
 node_list = mct_introspection.get_nodes()
-region_camera_nodes = []
-for camera in camera_list:
+
+camera_nodes = []
+if 0:
+    for camera in camera_list:
+        for node in node_list:
+            node_split = node.split('/')
+            if camera in node_split and 'camera1394_node' in node_split: 
+                camera_nodes.append(node)
+else:
     for node in node_list:
         node_split = node.split('/')
-        if camera in node_split and 'camera1394_node' in node_split:
-            region_camera_nodes.append(node)
+        if 'camera1394_node' in node_split:
+            camera_nodes.append(node)
 
-for camera_node in region_camera_nodes:
-    print('updating:', camera_node)
-    client = dynamic_reconfigure.client.Client(camera_node)
+for node in camera_nodes:
+    print('updating:', node)
+    client = dynamic_reconfigure.client.Client(node)
     client.update_configuration(camera_params)
 
 
