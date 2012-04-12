@@ -1,7 +1,7 @@
 uint32 seq
+bool ok
+float64 frame_rate
+float64 max_allowed_error
+float64 max_error
 uint32 seq_fail
-bool all_ok
-bool cur_ok 
-float32 max_spread
-float32 cur_spread
 string error_msg

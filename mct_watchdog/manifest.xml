@@ -12,6 +12,7 @@
   <depend package="sensor_msgs"/>
   <depend package="mct_introspection"/>
   <depend package="mct_msg_and_srv"/>
+  <depend package="std_srvs"/>
 
 </package>
 
