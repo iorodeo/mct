@@ -14,6 +14,7 @@
   <depend package="mct_xml_tools"/>
   <depend package="mct_introspection"/>
   <depend package="mct_utilities"/>
+  <depend package="dynamic_reconfigure"/>
 
   <rosdep name="ros_remote_lab"/>
   <rosdep name="bzr"/>
