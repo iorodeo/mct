@@ -18,10 +18,10 @@ class MightexLedControl(object):
     Provides an interface to the Mightex Led current controllers.
     """
 
-    def __init__(self):
+    def __init__(self, port, default_imax=100):
         self.lock = threading.Lock()
-        self.port = rospy.get_param('port', '/dev/mightex-serial')
-        self.default_imax = rospy.get_param('default_led_imax',1000)
+        self.port = port 
+        self.default_imax = default_imax 
 
         # Create device object and initialize
         self.dev = pymightled.LedController(self.port)
@@ -222,6 +222,10 @@ class MightexLedControl(object):
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-
-    node = MightexLedControl()
+    import sys
+    try:
+        port = sys.argv[1]
+    except IndexError:
+        port = '/dev/mightex-serial'
+    node = MightexLedControl(port)
     node.run()

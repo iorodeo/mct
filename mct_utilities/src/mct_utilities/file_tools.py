@@ -10,6 +10,7 @@ import shutil
 config_dir = os.environ['MCT_CONFIG']
 cameras_dir = os.path.join(config_dir,'cameras')
 camera_calibration_dir = os.path.join(cameras_dir, 'calibrations')
+camera_parameters_dir = os.path.join(cameras_dir, 'parameters')
 machine_dir = os.path.join(config_dir,'machine')
 targets_dir = os.path.join(config_dir, 'targets')
 tracking_2d_dir = os.path.join(config_dir, 'tracking_2d')
@@ -38,6 +39,21 @@ def read_yaml_file(filename):
         yaml_dict = yaml.load(f)
     return yaml_dict
 
+def write_camera_params(camera, params):
+    """
+    Write camera parameters to file
+    """
+    filename = os.path.join(camera_parameters_dir,'{0}.yaml'.format(camera))
+    with open(filename,'w') as f:
+        yaml.dump(params,f, default_flow_style=False)
+
+def read_camera_params(camera):
+    """
+    Read camera parameters from file.
+    """
+    filename = os.path.join(camera_parameters_dir,'{0}.yaml'.format(camera))
+    return read_yaml_file(filename)
+    
 def read_tracking_2d_stitching_params():
     """
     Reads the stitching_params.yaml file from the tracking 2d directory.
@@ -280,6 +296,7 @@ def rsync_camera_calibrations(verbose=False):
         # Remove temporary guid calibration file
         os.remove(guid_yaml_temp)
 
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -359,6 +376,25 @@ if __name__ == '__main__':
         transform = read_transform_2d_calibration('camera_1', 'camera_4')
         print(transform)
 
-    if 1:
+    if 0:
         data = read_tracking_2d_stitching_params()
         print(data)
+
+    if 0:
+        params = {
+                'brightness': 800, 
+                'shutter': 250,
+                'gain': 300,
+                }
+
+        camera_list = ['camera_{0}'.format(i) for i in range(1,12+1)]
+        for camera in camera_list:
+            write_camera_params(camera,params)
+
+    if 1:
+        camera_list = ['camera_{0}'.format(i) for i in range(1,12+1)]
+        for camera in camera_list:
+            params = read_camera_params(camera)
+            print(camera, params)
+
+

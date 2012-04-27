@@ -3,6 +3,9 @@ import roslib
 roslib.load_manifest('mct_camera_tools')
 import rospy
 
+import mct_introspection
+from mct_utilities import file_tools
+
 from mct_msg_and_srv.srv import SetCameraParam
 from mct_msg_and_srv.srv import GetCameraParam
 
@@ -48,33 +51,78 @@ def get_camera_param(camera):
     return param, flag, message
 
 
+def set_camera_param_from_file(camera=None):
+    """
+    Sets the given camera parametes from the parameters file in the mct
+    configuration directory. If camera is none then sets the camera parameters
+    for all cameras.
+    """
+    if not camera is None:
+        camera_list = [camera]
+    else:
+        camera_list = get_camera_list()
+
+    for camera in camera_list:
+        param = file_tools.read_camera_params(camera)
+        set_camera_param(camera, param)
+
+def get_all_camera_param():
+    """
+    Returns a dictionary of all camera parameters.
+    """
+    camera_list = get_camera_list()
+    camera_param_dict ={}
+    for camera in camera_list:
+        param, flag, messages = get_camera_param(camera)
+        camera_param_dict[camera] = param
+    return camera_param_dict
+    
+def get_camera_list(): 
+    """
+    Returns list of cameras.
+    """
+    camera_nodes = mct_introspection.get_camera_nodes()
+    camera_list = []
+    for node in camera_nodes:
+        camera_list.append(node.split('/')[2])
+    return camera_list
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
 
-    camera = 'camera_1'
-    param_orig, flag, message = get_camera_param(camera)
-    print('param_orig', param_orig)
-    print('flag', flag)
-    print('message', message)
-    print()
+    if 0:
+        camera = 'camera_1'
+        param_orig, flag, message = get_camera_param(camera)
+        print('param_orig', param_orig)
+        print('flag', flag)
+        print('message', message)
+        print()
 
-    param_new_req = {'brightness': 700, 'shutter': 200, 'gain' : 150}
-    flag, message = set_camera_param(camera, param_new_req)
+        param_new_req = {'brightness': 700, 'shutter': 200, 'gain' : 150}
+        flag, message = set_camera_param(camera, param_new_req)
 
-    param_new_rsp, flag, message = get_camera_param(camera)
-    print('param_req', param_new_req)
-    print('param_rsp', param_new_rsp)
-    print('flag', flag)
-    print('message', message)
-    print()
+        param_new_rsp, flag, message = get_camera_param(camera)
+        print('param_req', param_new_req)
+        print('param_rsp', param_new_rsp)
+        print('flag', flag)
+        print('message', message)
+        print()
 
-    flag, message = set_camera_param(camera, param_orig)
-    param_final, flag, message = get_camera_param(camera)
-    print('param_final', param_final)
-    print('flag', flag)
-    print('message', message)
-    print()
+        flag, message = set_camera_param(camera, param_orig)
+        param_final, flag, message = get_camera_param(camera)
+        print('param_final', param_final)
+        print('flag', flag)
+        print('message', message)
+        print()
+
+    if 0:
+        set_camera_param_from_file()
+
+    if 1:
+        param_dict = get_all_camera_param()
+        for k, v in param_dict.iteritems():
+            print(k,v)
 
 
 
