@@ -17,6 +17,7 @@ tracking_2d_dir = os.path.join(config_dir, 'tracking_2d')
 homographies_dir = os.path.join(tracking_2d_dir, 'homographies')
 transforms_2d_dir = os.path.join(tracking_2d_dir,'transforms')
 ros_camera_info_dir = os.path.join(os.environ['HOME'],'.ros', 'camera_info')
+lighting_dir = os.path.join(config_dir, 'lighting')
 
 # Configuration files
 camera_assignment_file  = os.path.join(config_dir, 'cameras', 'camera_assignment.yaml')
@@ -29,6 +30,7 @@ zoom_tool_params_file = os.path.join(cameras_dir,'zoom_tool_params.yaml')
 tracking_2d_regions_file = os.path.join(tracking_2d_dir,'regions.yaml')
 tracking_2d_camera_pairs_file = os.path.join(tracking_2d_dir,'camera_pairs.yaml')
 tracking_2d_stitching_params_file = os.path.join(tracking_2d_dir,'stitching_params.yaml')
+lighting_mightex_params_file = os.path.join(lighting_dir, 'mightex_controllers.yaml')
 
 
 def read_yaml_file(filename):
@@ -39,13 +41,36 @@ def read_yaml_file(filename):
         yaml_dict = yaml.load(f)
     return yaml_dict
 
+def write_yaml_file(filename,yaml_dict):
+    """
+    Writes the given dictionary to the specified yaml file.
+    """
+    with open(filename,'w') as f:
+        yaml.dump(yaml_dict, f, default_flow_style=False)
+
+def read_mightex_params():
+    """
+    Reads the mightex controller parameters from the file in the  lighting directory.
+    """
+    return read_yaml_file(lighting_mightex_params_file)
+
+def write_mightex_params(params):
+    """
+    writes the mightex controller parameters to the file in the lighting directory.
+    """
+    try:
+        curr_params = read_mightex_params()
+    except IOError:
+        curr_params = {}
+    curr_params.update(params)
+    write_yaml_file(lighting_mightex_params_file, params)
+
 def write_camera_params(camera, params):
     """
     Write camera parameters to file
     """
     filename = os.path.join(camera_parameters_dir,'{0}.yaml'.format(camera))
-    with open(filename,'w') as f:
-        yaml.dump(params,f, default_flow_style=False)
+    write_yaml_file(filename,params)
 
 def read_camera_params(camera):
     """
@@ -303,6 +328,29 @@ if __name__ == '__main__':
     # Development/testing
 
     if 0:
+        params = read_mightex_params()
+        print(params)
+        for ctlr, ctlr_params in params.iteritems():
+            print(ctlr)
+            ctlr_params = ctlr_params.items()
+            ctlr_params.sort()
+            for chan, chan_params in ctlr_params:
+                print('  ', chan, chan_params)
+
+    if 1:
+        params = {
+                'ir_lighting': {
+                    'channel_1': {'enabled': True, 'current': 500}, 
+                    'channel_2': {'enabled': True, 'current': 500},
+                    'channel_3': {'enabled': True, 'current': 500}, 
+                    'channel_4': {'enabled': True, 'current': 500}, 
+                    'port': '/dev/mightex-serial', 
+                    }
+                }
+        write_mightex_params(params)
+
+
+    if 0:
         frame_rates = read_frame_rates()
         print(frame_rates)
         
@@ -391,7 +439,7 @@ if __name__ == '__main__':
         for camera in camera_list:
             write_camera_params(camera,params)
 
-    if 1:
+    if 0:
         camera_list = ['camera_{0}'.format(i) for i in range(1,12+1)]
         for camera in camera_list:
             params = read_camera_params(camera)
