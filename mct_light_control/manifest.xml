@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/mct_light_control</url>
   <depend package="rospy"/>
   <depend package="mct_msg_and_srv"/>
+  <depend package="mct_utilities"/>
   <rosdep name="pyserial"/>
 
 </package>

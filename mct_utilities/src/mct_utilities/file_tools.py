@@ -327,7 +327,7 @@ if __name__ == '__main__':
 
     # Development/testing
 
-    if 0:
+    if 1:
         params = read_mightex_params()
         print(params)
         for ctlr, ctlr_params in params.iteritems():
@@ -337,7 +337,7 @@ if __name__ == '__main__':
             for chan, chan_params in ctlr_params:
                 print('  ', chan, chan_params)
 
-    if 1:
+    if 0:
         params = {
                 'ir_lighting': {
                     'channel_1': {'enabled': True, 'current': 500}, 
