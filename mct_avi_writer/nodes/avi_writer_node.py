@@ -14,7 +14,7 @@ import math
 from sensor_msgs.msg import Image
 from cv_bridge.cv_bridge import CvBridge 
 from cv_bridge.cv_bridge import CvBridgeError
-from mct_msg_and_srv.msg import ProgressMsg
+from mct_msg_and_srv.msg import RecordingProgressMsg
 
 # Services
 from mct_msg_and_srv.srv import RecordingCmd
@@ -25,7 +25,6 @@ class AVI_Writer(object):
     def __init__(self,topic):
 
         self.topic = topic
-        self.record_t = 10.0 
         self.start_t = 0.0
         self.current_t = 0.0
         self.progress_t = 0.0 
@@ -45,7 +44,7 @@ class AVI_Writer(object):
 
         # Set up publications
         self.progress_msg = ProgressMsg()
-        self.progress_pub = rospy.Publisher('progress',ProgressMsg)
+        self.progress_pub = rospy.Publisher('progress',RecordingProgressMsg)
 
         # Subscribe to messages
         self.image_sub = rospy.Subscriber(self.topic,Image,self.image_handler)
@@ -71,9 +70,8 @@ class AVI_Writer(object):
                 return RecordingCmdResponse(False)
 
             self.filename = req.filename
-            self.record_t = req.duration
-
             command = req.command.lower()
+
             if command == 'start':
                 # Get start time and create video writer
                 self.writer = cv.CreateVideoWriter(
@@ -125,19 +123,10 @@ class AVI_Writer(object):
             with self.lock:
                 self.frame_count += 1
                 self.progress_t = self.current_t - self.start_t
-                
-                # Check to see if we are done recording - if so stop writing frames 
-                if self.current_t >= self.start_t + self.record_t:
-                    self.done = True
-                    del self.writer
-                    self.writer = None
-                    self.recording_message = 'finished'
-                    #self.redis_db.set('recording_flag',0)
 
         # Publish progress message
         with self.lock:
             self.progress_msg.frame_count = self.frame_count
-            self.progress_msg.record_t = self.record_t
             self.progress_msg.progress_t = self.progress_t
             self.progress_msg.recording_message = self.recording_message
         self.progress_pub.publish(self.progress_msg)

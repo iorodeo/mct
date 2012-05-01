@@ -386,6 +386,28 @@ def create_three_point_tracker_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def create_image_stitcher_launch(filename):
+    """
+    Creates launch file for the image stitcher nodes based on the regions in
+    the regions.yaml file. 
+    """
+    template_name = 'image_stitcher_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+    regions_dict = mct_utilities.file_tools.read_tracking_2d_regions()
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            regions_dict=regions_dict,
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
+    
+
+
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -491,9 +513,13 @@ if __name__ == '__main__':
         filename = 'static_tf_publisher_2d.launch'
         create_static_tf_publisher_2d_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'three_point_tracker.launch'
         create_three_point_tracker_launch(filename)
+
+    if 1:
+        filename = 'image_stitcher.launch'
+        create_image_stitcher_launch(filename)
 
 
        

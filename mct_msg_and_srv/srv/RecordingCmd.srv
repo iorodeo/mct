@@ -1,6 +1,5 @@
 string command 
 string filename
-float32 duration
 ---
 bool flag
 

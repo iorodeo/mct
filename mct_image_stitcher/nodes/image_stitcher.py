@@ -256,7 +256,6 @@ class ImageStitcher(object):
 
                     t0 = rospy.Time.now() 
 
-                    print('seq:', seq)
                     for i, camera in enumerate(self.camera_list):
 
                         # Convert ros image to opencv image
@@ -298,9 +297,6 @@ class ImageStitcher(object):
 
                         # Get max and min time stamps for stamp_info
                         stamp = ros_image.header.stamp
-                        print(' camera:', camera)
-                        print('  stamp.secs:', stamp.secs)
-                        print('  stamp.nsecs:', stamp.nsecs)
                         if i == 0:
                             stamp_max = stamp 
                             stamp_min = stamp
@@ -326,25 +322,12 @@ class ImageStitcher(object):
                     dt = t1.to_sec() - t0.to_sec()
                     self.processing_dt_pub.publish(dt,1.0/dt)
 
-                    #print('stitched seq: {0}, 1/dt = {1:1.3f}'.format(seq,1.0/dt))
-                    print()
-
                 # Remove data from buffer
                 del self.seq_to_images[seq]
 
             # Throw away any stale data in seq to images buffer
             seq_age = self.get_seq_age(seq)
             if seq_age > self.max_seq_age:
-                # DEBUG ####################################################################
-                if seq%int(self.stitching_params['frame_skip']) == 0:
-                    print('throwing away seq: {0}, len = {1}'.format(seq,len(image_dict)))
-                    missing_list = []
-                    for c in self.camera_list:
-                        if c not in image_dict:
-                            missing_list.append(c)
-                    print(missing_list)
-                    print()
-                ###########################################################################
                 del self.seq_to_images[seq]
 
 

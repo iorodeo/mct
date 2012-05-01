@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_image_stitcher" type="image_stitcher_master.py" name="image_stitcher_master" machine="mct_master"/>
+</launch>
