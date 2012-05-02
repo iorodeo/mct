@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_frame_skipper" type="frame_skipper_master.py" name="frame_skipper_master" machine="mct_master" required="true"/>
+</launch>

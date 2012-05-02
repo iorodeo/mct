@@ -5,8 +5,9 @@ roslib.load_manifest('mct_watchdog')
 import rospy
 import threading
 import functools
-import mct_introspection
 import numpy
+import mct_introspection
+from mct_utilities import file_tools
 
 # Services
 from std_srvs.srv import Empty
@@ -22,11 +23,11 @@ class TimeStampWatchdog(object):
     Watchdog for hardware triggered cameras. Checks for correct sequence order
     and maximum allowed time stamp error.
     """
-    def __init__(self, frame_rate=30.0, max_allowed_error=1.0e-3, max_seq_age=200):
+    def __init__(self, frame_rate, max_allowed_error=1.0e-3, max_seq_age=200):
 
+        self.frame_rate = frame_rate
 
         self.lock = threading.Lock()
-        self.frame_rate = frame_rate
         self.max_allowed_error = max_allowed_error
         self.max_seq_age = max_seq_age
 
@@ -47,6 +48,7 @@ class TimeStampWatchdog(object):
         rospy.init_node('time_stamp_watchdog')
 
         # Subscribe to camera info topics
+        self.wait_for_camera_info_topics()
         camera_info_topics = mct_introspection.find_camera_info_topics()
         self.camera_info_sub = {}
         for topic in camera_info_topics:
@@ -61,6 +63,20 @@ class TimeStampWatchdog(object):
         # Create time stamp watchdog publication
         self.watchdog_pub = rospy.Publisher('time_stamp_watchdog', TimeStampWatchDog)
         self.ready = True
+
+    def wait_for_camera_info_topics(self):
+        """
+        Wait until the number of camera info topics is equal to the number of
+        cameras in the current camera assignment.
+        """
+        camera_assignment = file_tools.read_camera_assignment()
+        number_of_cameras = len(camera_assignment)
+        while 1:
+            camera_info_topics = mct_introspection.find_camera_info_topics()
+            if len(camera_info_topics) == number_of_cameras:
+                break
+            rospy.sleep(0.25)
+
 
     def reset_handler(self,req):
         """
@@ -195,5 +211,10 @@ def get_machine_from_topic(topic):
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    node = TimeStampWatchdog()
+    # Temporary get tracking 2d frame rate. When/if we have more tracking modes
+    # we will probably want to pass this to the node at launch.
+    frame_rate_dict = file_tools.read_frame_rates()
+    frame_rate = frame_rate_dict['tracking_2d']
+
+    node = TimeStampWatchdog(frame_rate)
     node.run()

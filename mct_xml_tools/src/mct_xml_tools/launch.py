@@ -395,6 +395,13 @@ def create_image_stitcher_launch(filename):
     machine_file = mct_utilities.file_tools.machine_launch_file
     regions_dict = mct_utilities.file_tools.read_tracking_2d_regions()
 
+    # Debug --------------------------------------------------------------------
+    ## Remove regions with only one camera - no point in stitching these regions
+    #for region, camera_list in regions_dict.items():
+    #    if len(camera_list) <= 1:
+    #        del regions_dict[region]
+    # --------------------------------------------------------------------------
+
     # Create xml launch file
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
@@ -438,7 +445,6 @@ def create_frame_skipper_launch(filename):
     """
     template_name = 'frame_skipper_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
-
 
     # Get frame skip parameter
     stitching_params = mct_utilities.file_tools.read_tracking_2d_stitching_params()
@@ -603,11 +609,11 @@ if __name__ == '__main__':
         filename = 'image_stitcher.launch'
         create_image_stitcher_launch(filename)
 
-    if 0:
+    if 1:
         filename = 'stitched_image_labeler.launch'
         create_stitched_image_labeler_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'frame_skipper.launch'
         create_frame_skipper_launch(filename)
 

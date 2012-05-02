@@ -57,7 +57,7 @@ class Frame_Skipper_Master(object):
         Launches the image stitcher  nodes.
         """
         if self.skipper_popen is None:
-            launch.create_image_stitcher_launch(self.launch_file)
+            launch.create_frame_skipper_launch(self.launch_file)
             self.skipper_popen = subprocess.Popen(['roslaunch',self.launch_file])
 
     def kill_frame_skippers(self):

@@ -35,10 +35,10 @@ class ThreePointTracker_Master(object):
         self.camera_srv = rospy.Service(
                 'three_point_tracker_master',
                 CommandString,
-                self.handle_calibrator_srv,
+                self.handle_tracker_srv,
                 )
 
-    def handle_calibrator_srv(self,req):
+    def handle_tracker_srv(self,req):
         """
         Handles requests to launch/kill the three point tracker nodes
         """
