@@ -38,6 +38,10 @@ class ImageStitcher(object):
         self.warp_flags = cv.CV_INTER_LINEAR 
         self.stitching_params = file_tools.read_tracking_2d_stitching_params()
 
+        # Trying new frame skipper nodes #############
+        self.stitching_params['frame_skip'] = 1
+        ##############################################
+
         rospy.init_node('image_stitcher')
         self.max_seq_age = max_seq_age
         self.max_stamp_age = max_stamp_age
@@ -97,7 +101,10 @@ class ImageStitcher(object):
         Create camera to image topic dictionary
         """
         self.camera_to_image = {}
-        rect_topics = mct_introspection.find_camera_image_topics(transport='image_rect')
+        # Trying new frame skipper nodes ####################################################
+        rect_topics = mct_introspection.find_camera_image_topics(transport='image_rect_skip')
+        #####################################################################################
+        #rect_topics = mct_introspection.find_camera_image_topics(transport='image_rect')
         for topic in rect_topics:
             topic_split = topic.split('/')
             for camera in self.camera_list:

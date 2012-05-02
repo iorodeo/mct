@@ -356,6 +356,11 @@ class ThreePointTracker(object):
                     # Remove data for this sequence number.
                     del self.seq_to_stamp_and_data[seq]
 
+            # Debug ---------------
+            rospy.sleep(1.0/60.0)
+            # --------------------
+
+
 
 # -------------------------------------------------------------------------------
 def truncate_roi(orig_roi, src_image_size):

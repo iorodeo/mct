@@ -27,7 +27,7 @@ cmd_msgs = {
         'shutdown': 'shutting down camera computers',
         'list_slaves': 'listing slaves',
         'rospack_profile': 'run rospack profile on all slave computers', 
-        'pull': 'pulling latest version of mct from repository on slave computers',
+        'pull': 'pulling latest version of mct from repository to slave computers',
         'pull_master': 'pulling laster version of mct form repository on master',
         'pull_all': 'pull latest version of mct form repository for all computers in current machine',
         'clone': 'clone new version of mct from repository of slave computers',
