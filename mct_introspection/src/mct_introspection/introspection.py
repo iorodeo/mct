@@ -498,6 +498,24 @@ def transform_2d_calibrator_nodes_ready():
     else:
         return False
 
+def get_camera_fullpath_topic(camera):
+    """
+    Returns the fullpath topic (base) name of all topics associate with the given camera
+    """
+    topic_list = rospy.get_published_topics()
+    camera_topic_base = None
+    for topic, dummy in topic_list:
+        topic_split = topic.split('/')
+        if camera in topic_split and 'camera' in topic_split:
+            camera_topic_base = topic_split
+            break
+    ind = camera_topic_base.index('camera')
+    camera_topic_base = camera_topic_base[:ind+1]
+    camera_topic_base = '/'.join(camera_topic_base)
+    return camera_topic_base
+            
+
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -683,9 +701,17 @@ if __name__ == '__main__':
         topic_list = find_camera_info_topics()
         print(topic_list)
 
-    if 1:
+    if 0:
         node_list = get_camera_nodes()
         print(node_list)
+
+    if 0:
+        topics = find_topics_w_name('tracking_pts')
+        print(topics,len(topics))
+
+    if 1:
+        base = get_camera_fullpath_topic('camera_1')
+        print(base)
 
 
 

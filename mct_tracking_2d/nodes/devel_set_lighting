@@ -1,8 +1,0 @@
-rosservice call /set_led_current 1 800 
-rosservice call /set_led_current 2 800 
-rosservice call /set_led_current 3 800 
-rosservice call /set_led_current 4 800
-rosservice call /led_enable 1 true
-rosservice call /led_enable 2 true
-rosservice call /led_enable 3 true
-rosservice call /led_enable 4 true

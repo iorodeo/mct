@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_tracking_2d" type="three_point_tracker_master.py" name="three_point_tracker_master" machine="mct_master" required="true"/>
+</launch>

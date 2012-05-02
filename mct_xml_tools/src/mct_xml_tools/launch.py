@@ -513,11 +513,11 @@ if __name__ == '__main__':
         filename = 'static_tf_publisher_2d.launch'
         create_static_tf_publisher_2d_launch(filename)
 
-    if 0:
+    if 1:
         filename = 'three_point_tracker.launch'
         create_three_point_tracker_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'image_stitcher.launch'
         create_image_stitcher_launch(filename)
 

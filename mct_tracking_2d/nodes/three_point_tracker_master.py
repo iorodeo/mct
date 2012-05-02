@@ -20,7 +20,8 @@ class ThreePointTracker_Master(object):
 
     """
     Master controller for three point tracker nodes. Launches three point
-    trackers for all cameras in a tracking region in the current layout.
+    trackers for all cameras which belong to a tracking region in the current
+    layout.
     """
 
     def __init__(self):
@@ -55,7 +56,7 @@ class ThreePointTracker_Master(object):
                 self.kill_trackers()
             else:
                 response = False
-                message = 'transform 2d calibrators not running'
+                message = 'three point trackers not running'
         return CommandStringResponse(response,message)
 
     def launch_trackers(self):

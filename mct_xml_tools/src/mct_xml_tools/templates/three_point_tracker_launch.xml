@@ -11,5 +11,8 @@
         <node pkg="mct_tracking_2d" type="three_point_tracker.py" name="three_point_tracker" args="{{topic}}" machine="{{machine}}"/>
     </group>
     {% endfor %}
+    <group ns="{{region}}">
+        <node pkg="mct_tracking_2d" type="three_point_tracker_synchronizer.py" name="three_point_tracker_synchronizer" args="{{region}}" machine="mct_master"/>
+    </group>
     {% endfor %}
 </launch>

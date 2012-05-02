@@ -44,10 +44,11 @@ class ThreePointTracker_Synchronizer:
 
         self.bridge = CvBridge()
         self.ready = False
-        rospy.init_node('three_point_tracker_synchronizer')
+        rospy.init_node('three_point_tracker_synchronizer', log_level=rospy.DEBUG)
 
         # Subscribe to raw tracking pts topics
         self.tracking_pts_sub = {}
+        
         for camera, topic in self.camera_to_tracking.iteritems():
             handler = functools.partial(self.tracking_pts_handler, camera)
             self.tracking_pts_sub[camera] = rospy.Subscriber(
@@ -62,6 +63,7 @@ class ThreePointTracker_Synchronizer:
         self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
 
         self.ready = True
+        
 
     def create_camera_to_tracking_dict(self):
         """
@@ -69,12 +71,18 @@ class ThreePointTracker_Synchronizer:
         corresponding three point tracker nodes.
         """
         self.camera_to_tracking = {}
-        tracking_pts_topics = mct_introspection.find_topics_w_name('tracking_pts')
-        for topic in tracking_pts_topics:
-            topic_split = topic.split('/')
-            for camera in self.camera_list:
-                if camera in topic_split:
-                    self.camera_to_tracking[camera] = topic
+        for camera in self.camera_list:
+            camera_fullpath_topic = mct_introspection.get_camera_fullpath_topic(camera)
+            tracking_pts_topic = '{0}/tracking_pts'.format(camera_fullpath_topic)
+            self.camera_to_tracking[camera] = tracking_pts_topic
+        
+
+        #tracking_pts_topics = mct_introspection.find_topics_w_name('tracking_pts')
+        #for topic in tracking_pts_topics:
+        #    topic_split = topic.split('/')
+        #    for camera in self.camera_list:
+        #        if camera in topic_split:
+        #            self.camera_to_tracking[camera] = topic
 
     def tracking_pts_handler(self,camera,msg):
         """
