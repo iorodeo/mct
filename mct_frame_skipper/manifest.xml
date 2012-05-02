@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mct_frame_skipper</url>
   <depend package="rospy"/>
+  <depend package="mct_msg_and_srv" />
 
 </package>
 
