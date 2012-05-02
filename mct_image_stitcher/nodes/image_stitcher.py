@@ -328,7 +328,10 @@ class ImageStitcher(object):
             # Throw away any stale data in seq to images buffer
             seq_age = self.get_seq_age(seq)
             if seq_age > self.max_seq_age:
-                del self.seq_to_images[seq]
+                try:
+                    del self.seq_to_images[seq]
+                except KeyError:
+                    pass
 
 
     def run(self):

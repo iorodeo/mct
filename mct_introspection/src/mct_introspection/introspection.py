@@ -515,8 +515,6 @@ def get_camera_fullpath_topic(camera):
     return camera_topic_base
             
 
-
-
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     
@@ -701,7 +699,7 @@ if __name__ == '__main__':
         topic_list = find_camera_info_topics()
         print(topic_list)
 
-    if 0:
+    if 1:
         node_list = get_camera_nodes()
         print(node_list)
 
@@ -709,7 +707,7 @@ if __name__ == '__main__':
         topics = find_topics_w_name('tracking_pts')
         print(topics,len(topics))
 
-    if 1:
+    if 0:
         base = get_camera_fullpath_topic('camera_1')
         print(base)
 

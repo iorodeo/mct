@@ -61,10 +61,8 @@ class ThreePointTracker_Synchronizer:
         self.tracking_pts_pub = rospy.Publisher('tracking_pts', ThreePointTracker)
         self.image_tracking_pts = None
         self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
-
         self.ready = True
         
-
     def create_camera_to_tracking_dict(self):
         """
         Creates a dictionary relating the cameras in the tracking region to their
@@ -75,14 +73,6 @@ class ThreePointTracker_Synchronizer:
             camera_fullpath_topic = mct_introspection.get_camera_fullpath_topic(camera)
             tracking_pts_topic = '{0}/tracking_pts'.format(camera_fullpath_topic)
             self.camera_to_tracking[camera] = tracking_pts_topic
-        
-
-        #tracking_pts_topics = mct_introspection.find_topics_w_name('tracking_pts')
-        #for topic in tracking_pts_topics:
-        #    topic_split = topic.split('/')
-        #    for camera in self.camera_list:
-        #        if camera in topic_split:
-        #            self.camera_to_tracking[camera] = topic
 
     def tracking_pts_handler(self,camera,msg):
         """

@@ -404,8 +404,90 @@ def create_image_stitcher_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
+
+def create_stitched_image_labeler_launch(filename):
+    """
+    Creates launch file for the stitched image labeler nodes based on the regions 
+    in the regions.yaml file.
+    """
+    template_name = 'stitched_image_labeler_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+    regions_dict = mct_utilities.file_tools.read_tracking_2d_regions()
+
+    launch_dict = {}
+    for region in regions_dict:
+        arg0 = '/{0}/seq_and_image_stitched'.format(region)
+        arg1 = '/{0}/tracking_pts'.format(region)
+        launch_dict[region] = (arg0, arg1)
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            launch_dict=launch_dict,
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
     
 
+def create_frame_skipper_launch(filename):
+    """
+    Creates launch file for frame skipper nodes. One for every camera.
+    """
+    template_name = 'frame_skipper_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+
+
+    # Get frame skip parameter
+    stitching_params = mct_utilities.file_tools.read_tracking_2d_stitching_params()
+    skip_param = stitching_params['frame_skip']
+
+    # Get list of currently running camera names
+    camera_node_list = mct_introspection.get_camera_nodes()
+    camera_list = [node.split('/')[2] for node in camera_node_list]
+
+    # Get lists of rectified and raw image topics
+    image_raw_list = mct_introspection.find_camera_image_topics(transport='image_raw')
+    image_rect_list = mct_introspection.find_camera_image_topics(transport='image_rect')
+    
+    # Create dictionaries mapping cameras to raw and rectified images
+    camera_to_image_raw = {}
+    camera_to_image_rect = {}
+    camera_to_camera_topic = {}
+    for camera in camera_list:
+        for image_raw in image_raw_list:
+            if camera in image_raw.split('/'):
+                camera_to_image_raw[camera] = image_raw
+        for image_rect in image_rect_list:
+            if camera in image_rect.split('/'):
+                camera_to_image_rect[camera] = image_rect
+
+    # Assign image topic to frame skipper for each camera.  Use rectified image
+    # if it exists otherwise use raw image.
+    launch_list = []
+    for camera in camera_list:
+        try:
+            topic = camera_to_image_rect[camera]
+        except KeyError:
+            topic = camera_to_image_raw[camera]
+        topic_split = topic.split('/')
+        namespace = '/'.join(topic_split[:4])
+        machine = topic_split[1]
+        launch_list.append((namespace, topic, machine))
+
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            launch_list=launch_list,
+            skip_param = skip_param,
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
 
 
 # -----------------------------------------------------------------------------
@@ -513,13 +595,21 @@ if __name__ == '__main__':
         filename = 'static_tf_publisher_2d.launch'
         create_static_tf_publisher_2d_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'three_point_tracker.launch'
         create_three_point_tracker_launch(filename)
 
     if 0:
         filename = 'image_stitcher.launch'
         create_image_stitcher_launch(filename)
+
+    if 0:
+        filename = 'stitched_image_labeler.launch'
+        create_stitched_image_labeler_launch(filename)
+
+    if 1:
+        filename = 'frame_skipper.launch'
+        create_frame_skipper_launch(filename)
 
 
        

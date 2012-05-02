@@ -136,7 +136,7 @@ class StitchedImageLabeler(object):
                         # Remove any elements seq_to_tracking_pts dict older than maximum allowed age
                         seq_age = self.latest_seq - seq
                         if seq_age > self.max_seq_age:
-                            del self.seq_to_trackig_pts[seq]
+                            del self.seq_to_tracking_pts[seq]
 
                 # Remove and elements form seq_to_stitched_image dict older than maximum allowed age
                 for seq in self.seq_to_stitched_image.keys():
