@@ -11,6 +11,11 @@ from mct_utilities import region_tools
 from mct_camera_tools import camera_master
 from mct_camera_tools import image_proc_master
 from mct_camera_trigger import camera_trigger
+from mct_frame_skipper import frame_skipper_master
+from mct_image_stitcher import image_stitcher_master
+from mct_tracking_2d import three_point_tracker_master 
+from mct_tracking_2d import stitched_image_labeler_master
+from mct_avi_writer import avi_writer_master
 
 regions_dict = file_tools.read_tracking_2d_regions()
 camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
@@ -57,12 +62,58 @@ while not mct_introspection.image_proc_nodes_ready():
     time.sleep(0.2)
 print('done')
 
-# Wait for rectified images to be ready - required for launching transform 
-# calibrators.
-print(' * waiting for image rect topics ...', end='')
+# Wait for image rect topics
+print(' * waiting for image_rect topics ... ', end='')
 sys.stdout.flush()
 while not mct_introspection.image_rect_ready():
     time.sleep(0.2)
 print('done')
+
+# Start frame skipper nodes and wait unti they are ready
+print(' * starting frame skippers ... ', end='')
+sys.stdout.flush()
+frame_skipper_master.start_frame_skippers()
+while not mct_introspection.frame_skippers_ready():
+    time.sleep(0.2)
+print('done')
+
+# Start image stitcher nodes and wait until stitched image topics ready
+print(' * starting image stitchers ... ', end='')
+sys.stdout.flush()
+image_stitcher_master.start_image_stitchers()
+while not mct_introspection.stitched_images_ready():
+    time.sleep(0.2)
+print('done')
+
+# Start three point tracker nodes and wait until they are ready.
+print(' * starting three point trackers ... ', end='')
+sys.stdout.flush()
+three_point_tracker_master.start_three_point_trackers()
+while not mct_introspection.three_point_trackers_ready():
+    time.sleep(0.2)
+while not mct_introspection.three_point_tracker_synchronizers_ready():
+    time.sleep(0.2)
+print('done')
+
+# Start stitched image labeler and wait until stitched images are published.
+print(' * starting stitched image lablers ... ',end='')
+sys.stdout.flush()
+stitched_image_labeler_master.start_stitched_image_labelers()
+while not mct_introspection.stitched_image_labelers_ready():
+    time.sleep(0.2)
+print('done')
+
+# Start avi writer nodes 
+print(' * starting avi writers ... ', end='')
+sys.stdout.flush()
+avi_writer_master.start_avi_writers()
+print('done')
+
+
+
+
+
+
+
 
 

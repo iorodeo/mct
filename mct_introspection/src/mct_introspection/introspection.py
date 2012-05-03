@@ -228,6 +228,139 @@ def camera_nodes_ready(mode='inspector'):
     else:
         return False
 
+def frame_skippers_ready():
+    """
+    Checks to see if the frame skipper topics are all being published. There
+    should be a frame skipper topic for each camera.
+    """
+    camera_assignment = get_camera_assignment() 
+    number_of_cameras = len(camera_assignment)
+    number_of_skippers = get_number_of_frame_skipper_topics()
+    if number_of_cameras == number_of_skippers:
+        return True
+    else:
+        return False
+    
+def get_number_of_frame_skipper_topics():
+    """
+    Returns the number of currently published frame skipper topics.
+    """
+    topic_list = rospy.get_published_topics()
+    cnt = 0
+    for topic in topic_list:
+        topic_end = topic[0].split('/')[-1]
+        if 'skip' in topic_end:
+            cnt+= 1
+    return cnt
+
+def stitched_images_ready():
+    """
+    Check to see if the stitched images topics are ready. There should be one
+    per region.
+    """
+    regions_dict = file_tools.read_tracking_2d_regions() 
+    num_regions = len(regions_dict)
+    num_stitched = get_number_of_stitched_image_topics()
+    num_seq_and_stitched = get_number_of_seq_and_image_stitched_topics()
+    if num_regions == num_stitched and num_regions == num_seq_and_stitched:
+        return True
+    else:
+        return False
+
+def get_number_of_stitched_image_topics():
+    """
+    Returns the number of currently published stitched image topics.
+    """
+    topic_list = find_topics_w_ending('image_stitched')
+    return len(topic_list)
+
+def get_number_of_seq_and_image_stitched_topics():
+    """
+    Returns number of seq_and_image_stitched topics
+    """
+    topic_list = find_topics_w_ending('seq_and_image_stitched')
+    return len(topic_list)
+
+def three_point_trackers_ready():
+    """
+    Checks to see if the three point trackers are ready. They are considered ready
+    if for every camera in a tracking 
+    """
+    regions_dict = file_tools.read_tracking_2d_regions()
+    camera_set = set()
+    for region, camera_list in regions_dict.iteritems():
+        camera_set.update(camera_list)
+    num_cameras = len(camera_set)
+    num_tracking_pts = len(find_camera_tracking_pts_topics())
+    num_image_tracking_pts =len(find_camera_image_tracking_pts_topics())
+    if num_cameras == num_tracking_pts and num_cameras == num_image_tracking_pts:
+        return True
+    else:
+        return False
+
+def find_camera_tracking_pts_topics():
+    """
+    Returns list of all tracking_pts topics associated with a camera
+    """
+    topic_list = find_topics_w_ending('tracking_pts')
+    topic_list = [topic for topic in topic_list if 'camera' in topic.split('/')]
+    return topic_list
+
+def find_camera_image_tracking_pts_topics():
+    """
+    Returns a list of all image_tracking_pts topics associated with a camera
+    """
+    topic_list = find_topics_w_ending('image_tracking_pts')
+    topic_list = [topic for topic in topic_list if 'camera' in topic.split('/')]
+    return topic_list
+
+def three_point_tracker_synchronizers_ready():
+    """
+    Checks to see if the three point tracker synchronizers are ready. They are 
+    considered to be ready if the tracking_pts and image_tracking_pts topics are
+    being published for every tracking region.
+    """
+    regions_dict = file_tools.read_tracking_2d_regions()
+    num_regions = len(regions_dict)
+    num_tracking_pts = sum([len(find_region_tracking_pts_topics(r)) for r in regions_dict])
+    num_image_tracking_pts = sum([len(find_region_image_tracking_pts_topics(r)) for r in regions_dict])
+    if num_regions == num_tracking_pts and num_regions == num_image_tracking_pts:
+        return True
+    else:
+        return False
+            
+def find_region_tracking_pts_topics(region):
+    """
+    Returns a list of all tracking_pts topics associated with the given
+    tracking region.
+    """
+    topic_list = find_topics_w_ending('tracking_pts')
+    topic_list = [topic for topic in topic_list if region in topic.split('/')]
+    return topic_list
+
+def find_region_image_tracking_pts_topics(region):
+    """
+    Returns a list of all image_tracking_pts topics associated with a given
+    tracking region.
+    """
+    topic_list = find_topics_w_ending('image_tracking_pts')
+    topic_list = [topic for topic in topic_list if region in topic.split('/')]
+    return topic_list
+
+def stitched_image_labelers_ready():
+    """
+    Checks to see if the stitched image labelers are ready. They are considered
+    ready if a image_stitched_labeled topic is being published for every
+    tracking region.
+    """
+    regions_dict = file_tools.read_tracking_2d_regions()
+    number_of_regions = len(regions_dict)
+    number_of_labeled = len(find_topics_w_ending('image_stitched_labeled'))
+    if number_of_regions == number_of_labeled:
+        return True
+    else:
+        return False
+
 def get_machine_def():
     """
     Reads the machine definition file.
@@ -722,9 +855,37 @@ if __name__ == '__main__':
         base = get_camera_fullpath_topic('camera_1')
         print(base)
 
-    if 1:
+    if 0:
         node_list = get_avi_writer_nodes()
         print(node_list)
+
+    if 0:
+        number = get_number_of_frame_skipper_topics()
+        print(number)
+
+    if 0:
+        ready = frame_skippers_ready()
+        print(ready)
+
+    if 0:
+        number = get_number_of_stitched_image_topics()
+        print(number)
+
+    if 0:
+        ready = stitched_images_ready()
+        print(ready)
+
+    if 0:
+        ready = three_point_trackers_ready()
+        print(ready)
+
+    if 0:
+        ready = three_point_tracker_synchronizers_ready()
+        print(ready)
+
+    if 1:
+        ready = stitched_image_labelers_ready()
+        print(ready)
 
 
 

@@ -17,6 +17,10 @@
   <depend package="mct_zoom_tool"/>
   <depend package="mct_transform_2d"/>
   <depend package="mct_camera_trigger"/>
+  <depend package="mct_frame_skipper"/>
+  <depend package="mct_image_stitcher"/>
+  <depend package="mct_tracking_2d"/>
+  <depend package="mct_avi_writer"/>
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>

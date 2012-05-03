@@ -1,0 +1,1 @@
+import image_stitcher_master
