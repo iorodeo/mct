@@ -23,7 +23,7 @@ from mct_msg_and_srv.srv import RecordingCmdResponse
 
 class AVI_Writer(object):
 
-    def __init__(self,topic,frame_rate):
+    def __init__(self,topic,frame_rate=30.0):
 
         self.topic = topic
         self.frame_rate = frame_rate
@@ -70,6 +70,8 @@ class AVI_Writer(object):
                 return RecordingCmdResponse(False)
 
             self.filename = req.filename
+            self.frame_rate = req.frame_rate
+            
             command = req.command.lower()
 
             if command == 'start':
@@ -135,9 +137,7 @@ class AVI_Writer(object):
 if __name__ == '__main__':
 
     topic = sys.argv[1]
-    frame_rate = float(sys.argv[2])
-
-    node = AVI_Writer(topic,frame_rate)
+    node = AVI_Writer(topic)
     node.run()
 
 

@@ -1,5 +1,6 @@
 string command 
 string filename
+float32 frame_rate
 ---
 bool flag
 
