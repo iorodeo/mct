@@ -4,7 +4,7 @@ import rospy
 from mct_msg_and_srv.srv import RecordingCmd
 
 def test_recording_cmd(cmd):
-    recording_cmd_proxy = rospy.ServiceProxy('recording_cmd',RecordingCmd)
+    recording_cmd_proxy = rospy.ServiceProxy('/avi_writer/recording_cmd',RecordingCmd)
     try:
         response = recording_cmd_proxy(cmd,'dummy_file.avi', 15.0)
         print response

@@ -41,6 +41,7 @@ class AVI_Writer(object):
         self.lock = threading.Lock()
         self.bridge = CvBridge()
         rospy.init_node('avi_writer')
+        self.node_name = rospy.get_name()
 
         # Set up publications
         self.progress_msg = RecordingProgressMsg()
@@ -51,7 +52,7 @@ class AVI_Writer(object):
 
         # Set up services
         self.recording_srv = rospy.Service(
-                'recording_cmd', 
+                '{0}/recording_cmd'.format(self.node_name), 
                 RecordingCmd, 
                 self.handle_recording_cmd
                 )
