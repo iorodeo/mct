@@ -514,6 +514,17 @@ def get_camera_fullpath_topic(camera):
     camera_topic_base = '/'.join(camera_topic_base)
     return camera_topic_base
             
+def get_avi_writer_nodes():
+    """
+    Returns list of avi writer nodes.
+    """
+    node_list = get_nodes()
+    avi_writer_list = []
+    for node in node_list:
+        if 'avi_writer' in node.split('/'):
+            avi_writer_list.append(node)
+    return avi_writer_list
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -699,7 +710,7 @@ if __name__ == '__main__':
         topic_list = find_camera_info_topics()
         print(topic_list)
 
-    if 1:
+    if 0:
         node_list = get_camera_nodes()
         print(node_list)
 
@@ -710,6 +721,10 @@ if __name__ == '__main__':
     if 0:
         base = get_camera_fullpath_topic('camera_1')
         print(base)
+
+    if 1:
+        node_list = get_avi_writer_nodes()
+        print(node_list)
 
 
 
