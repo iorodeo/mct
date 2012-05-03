@@ -8,7 +8,8 @@ import os.path
 import cv
 import threading
 import math
-#import redis
+
+from mct_utilities import file_tools
 
 # Messages
 from sensor_msgs.msg import Image
@@ -22,28 +23,27 @@ from mct_msg_and_srv.srv import RecordingCmdResponse
 
 class AVI_Writer(object):
 
-    def __init__(self,topic):
+    def __init__(self,topic,frame_rate):
 
         self.topic = topic
+        self.frame_rate = frame_rate
         self.start_t = 0.0
         self.current_t = 0.0
         self.progress_t = 0.0 
         self.frame_count = 0
         self.recording_message = 'stopped'
 
-        self.frame_rate = rospy.get_param('frame_rate':, 30) 
         self.writer = None 
         self.done = True 
         self.cv_image_size = None
         self.filename = os.path.join(os.environ['HOME'],'default.avi')
 
         self.lock = threading.Lock()
-        #self.redis_db = redis.Redis('localhost', db=lia_config.redis_db)
         self.bridge = CvBridge()
         rospy.init_node('avi_writer')
 
         # Set up publications
-        self.progress_msg = ProgressMsg()
+        self.progress_msg = RecordingProgressMsg()
         self.progress_pub = rospy.Publisher('progress',RecordingProgressMsg)
 
         # Subscribe to messages
@@ -135,7 +135,9 @@ class AVI_Writer(object):
 if __name__ == '__main__':
 
     topic = sys.argv[1]
-    node = AVI_Writer(topic)
+    frame_rate = float(sys.argv[2])
+
+    node = AVI_Writer(topic,frame_rate)
     node.run()
 
 
