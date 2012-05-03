@@ -495,6 +495,41 @@ def create_frame_skipper_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def create_avi_writer_launch(filename):
+    """
+    Creates launch file for avi writer nodes.
+    """
+    template_name = 'avi_writer_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+
+    extra_video_dict = mct_utilities.file_tools.read_logging_extra_video()
+    regions_dict = mct_utilities.file_tools.read_tracking_2d_regions()
+
+    launch_list = []
+    for region in regions_dict:
+
+        namespace = '/{0}/image_stitched_labeled'.format(region)
+        topic = '/{0}/image_stitched_labeled'.format(region)
+        launch_list.append((namespace, topic))
+
+        namespace = '/{0}/image_tracking_pts'.format(region)
+        topic = '/{0}/image_tracking_pts'.format(region)
+        launch_list.append((namespace, topic))
+
+    for name, topic in extra_video_dict.iteritems():
+        namespace = '/extra_video/{0}'.format(name)
+        launch_list.append((namespace,topic))
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            launch_list=launch_list,
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -609,13 +644,17 @@ if __name__ == '__main__':
         filename = 'image_stitcher.launch'
         create_image_stitcher_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'stitched_image_labeler.launch'
         create_stitched_image_labeler_launch(filename)
 
     if 0:
         filename = 'frame_skipper.launch'
         create_frame_skipper_launch(filename)
+
+    if 1:
+        filename = 'avi_writer.launch'
+        create_avi_writer_launch(filename)
 
 
        

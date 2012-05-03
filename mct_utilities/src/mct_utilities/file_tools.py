@@ -18,6 +18,7 @@ homographies_dir = os.path.join(tracking_2d_dir, 'homographies')
 transforms_2d_dir = os.path.join(tracking_2d_dir,'transforms')
 ros_camera_info_dir = os.path.join(os.environ['HOME'],'.ros', 'camera_info')
 lighting_dir = os.path.join(config_dir, 'lighting')
+logging_dir = os.path.join(config_dir, 'logging')
 
 # Configuration files
 camera_assignment_file  = os.path.join(config_dir, 'cameras', 'camera_assignment.yaml')
@@ -31,6 +32,8 @@ tracking_2d_regions_file = os.path.join(tracking_2d_dir,'regions.yaml')
 tracking_2d_camera_pairs_file = os.path.join(tracking_2d_dir,'camera_pairs.yaml')
 tracking_2d_stitching_params_file = os.path.join(tracking_2d_dir,'stitching_params.yaml')
 lighting_mightex_params_file = os.path.join(lighting_dir, 'mightex_controllers.yaml')
+logging_params_file = os.path.join(logging_dir, 'logging_params.yaml')
+logging_extra_video_file = os.path.join(logging_dir, 'extra_video.yaml')
 
 
 def read_yaml_file(filename):
@@ -47,6 +50,18 @@ def write_yaml_file(filename,yaml_dict):
     """
     with open(filename,'w') as f:
         yaml.dump(yaml_dict, f, default_flow_style=False)
+
+def read_logging_params():
+    """
+    Reads the logging parameters file.
+    """
+    return read_yaml_file(logging_params_file)
+
+def read_logging_extra_video():
+    """
+    Reads the logging parameters extra video file.
+    """
+    return read_yaml_file(logging_extra_video_file)
 
 def read_mightex_params():
     """
@@ -327,7 +342,7 @@ if __name__ == '__main__':
 
     # Development/testing
 
-    if 1:
+    if 0:
         params = read_mightex_params()
         print(params)
         for ctlr, ctlr_params in params.iteritems():
@@ -444,5 +459,13 @@ if __name__ == '__main__':
         for camera in camera_list:
             params = read_camera_params(camera)
             print(camera, params)
+
+    if 0:
+        params = read_logging_params()
+        print(params)
+
+    if 1:
+        params = read_logging_extra_video()
+        print(params)
 
 
