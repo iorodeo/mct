@@ -27,13 +27,18 @@ class TrackingPtsLogger(object):
         self.lock = threading.Lock()
         rospy.init_node('three_points_logger')
         topic_type = self.get_topic_type(topic)
+        self.node_name = rospy.get_name()
 
 
         # Subscribe to topic
         self.topic_sub = rospy.Subscriber(topic,topic_type,self.topic_sub_handler)
 
         # Setup start/stop service
-        self.logging_srv = rospy.Service('logging_cmd', LoggingCmd, self.logging_srv_handler)
+        self.logging_srv = rospy.Service(
+                '{0}/logging_cmd'.format(self.node_name), 
+                LoggingCmd, 
+                self.logging_srv_handler
+                )
 
         self.ready = True
 

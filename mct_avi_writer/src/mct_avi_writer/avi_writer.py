@@ -7,8 +7,8 @@ import rospy
 from mct_msg_and_srv.srv import RecordingCmd
 
 
-def recording_cmd_proxy(node,command,filename,frame_rate):
-    srv = '{0}/recording_cmd'.format(node)
+def recording_cmd_proxy(namespace,command,filename,frame_rate):
+    srv = '{0}/recording_cmd'.format(namespace)
     proxy = rospy.ServiceProxy(srv,RecordingCmd)
     try:
         resp = proxy(command,filename,frame_rate)
@@ -17,11 +17,11 @@ def recording_cmd_proxy(node,command,filename,frame_rate):
         flag = False
     return flag
 
-def start_recording(node,filename,frame_rate):
-    return recording_cmd_proxy(node,'start',filename,frame_rate)
+def start_recording(namespace,filename,frame_rate):
+    return recording_cmd_proxy(namespace,'start',filename,frame_rate)
 
-def stop_recording(node,filename,frame_rate):
-    return recording_cmd_proxy(node,'stop',filename,frame_rate)
+def stop_recording(namespace,filename,frame_rate):
+    return recording_cmd_proxy(namespace,'stop',filename,frame_rate)
 
 
 # -----------------------------------------------------------------------------
