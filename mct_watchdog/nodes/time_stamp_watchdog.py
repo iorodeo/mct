@@ -7,6 +7,14 @@ import threading
 import functools
 import numpy
 import mct_introspection
+import yaml
+
+import cv
+import Image as PILImage
+import ImageDraw as PILImageDraw
+import ImageFont as PILImageFont
+
+from cv_bridge.cv_bridge import CvBridge 
 from mct_utilities import file_tools
 
 # Services
@@ -14,6 +22,7 @@ from std_srvs.srv import Empty
 from std_srvs.srv import EmptyResponse
 
 # Messages
+from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from mct_msg_and_srv.msg import TimeStampWatchDog
 
@@ -44,6 +53,10 @@ class TimeStampWatchdog(object):
         self.seq_fail = 0 
         self.error_msg = ''
 
+        self.bridge = CvBridge()
+        self.info_image_size = (400,100)
+        self.font = PILImageFont.truetype("/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf", 16)
+
         self.ready = False
         rospy.init_node('time_stamp_watchdog')
 
@@ -62,6 +75,10 @@ class TimeStampWatchdog(object):
 
         # Create time stamp watchdog publication
         self.watchdog_pub = rospy.Publisher('time_stamp_watchdog', TimeStampWatchDog)
+
+        # Create watchdog info image
+        self.image_watchdog_pub = rospy.Publisher('image_time_stamp_watchdog', Image)
+
         self.ready = True
 
     def wait_for_camera_info_topics(self):
@@ -152,12 +169,13 @@ class TimeStampWatchdog(object):
         self.max_error = max([err for err in self.max_error_by_camera.values()])
         if self.max_error > self.max_allowed_error:
             cur_seq_ok = False
-            self.seq_fail = seq
             error_list.append('time stamp outside of expected range')
 
 
         # If this is the first seq with an error set the error message
         if self.ok and not cur_seq_ok:
+            self.ok = False
+            self.seq_fail = seq
             self.error_msg = ', '.join(error_list)
 
         # Publish watchdog message
@@ -170,6 +188,43 @@ class TimeStampWatchdog(object):
         watchdog_msg.seq_fail = self.seq_fail
         watchdog_msg.error_msg = self.error_msg
         self.watchdog_pub.publish(watchdog_msg)
+
+        # Publish watchdog image
+        pil_info_image = PILImage.new('RGB', self.info_image_size,(255,255,255))
+        draw = PILImageDraw.Draw(pil_info_image)
+        info_items = [ ('ok', 'ok', ''), ('seq','seq',''), ('max_error', 'max error', 's')]
+        text_x, text_y, step_y = 10, 10, 20
+        for i, item in enumerate(info_items):
+            name, label, units = item
+            value = getattr(watchdog_msg,name)
+            label_text = '{0}:'.format(label)
+            if type(value) == float:
+                value_text = '{0:<1.6f}'.format(value)
+            else:
+                value_text = '{0}'.format(value)
+            units_text = '{0}'.format(units)
+            draw.text( (text_x,text_y+step_y*i), label_text, font=self.font, fill=(0,0,0))
+            draw.text( (text_x+100,text_y+step_y*i), value_text, font=self.font, fill=(0,0,0))
+            draw.text( (text_x+180,text_y+step_y*i), units_text, font=self.font, fill=(0,0,0))
+
+        if self.error_msg:
+            error_text = 'Error: {0}'.format(self.error_msg)
+        else:
+            error_text = ''
+
+        draw.text(
+                (text_x, text_y+len(info_items)*step_y),
+                error_text,
+                font=self.font,
+                fill=(255,0,0),
+                )
+
+        cv_info_image = cv.CreateImageHeader(pil_info_image.size, cv.IPL_DEPTH_8U, 3)
+        cv.SetData(cv_info_image, pil_info_image.tostring())
+
+        # Convert to a rosimage and publish
+        info_rosimage = self.bridge.cv_to_imgmsg(cv_info_image,'rgb8')
+        self.image_watchdog_pub.publish(info_rosimage)
 
 
     def process_camera_stamps(self):
@@ -196,6 +251,7 @@ class TimeStampWatchdog(object):
         while not rospy.is_shutdown():
             with self.lock:
                 self.process_camera_stamps()
+
 
 # Utility functions
 # ----------------------------------------------------------------------------

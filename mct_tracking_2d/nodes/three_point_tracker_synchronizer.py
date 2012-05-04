@@ -9,9 +9,12 @@ import threading
 import math
 import cv
 import numpy
-from cv_bridge.cv_bridge import CvBridge 
-
+import Image as PILImage
+import ImageDraw as PILImageDraw
+import ImageFont as PILImageFont
 import mct_introspection
+
+from cv_bridge.cv_bridge import CvBridge 
 from mct_utilities import file_tools
 from mct_transform_2d import transform_2d
 
@@ -31,13 +34,19 @@ class ThreePointTracker_Synchronizer:
         self.region = region
         regions_dict = file_tools.read_tracking_2d_regions()
         self.camera_list = regions_dict[region]
+        self.camera_list.sort()
         self.create_camera_to_tracking_dict()
         self.latest_seq = None
         self.max_seq_age = max_seq_age
         self.tracking_pts_pool = {}
 
+        # Color and font for tracking points image
         self.magenta = (255,255,0)
         self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.6, 0.6, thickness=0)
+
+        # Font for PIL tracking info image
+        self.info_image_size = (180,100)
+        self.font = PILImageFont.truetype("/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf", 16)
 
         # Get transforms from cameras to tracking and stitched image planes
         self.tf2d = transform_2d.Transform2d()
@@ -61,6 +70,7 @@ class ThreePointTracker_Synchronizer:
         self.tracking_pts_pub = rospy.Publisher('tracking_pts', ThreePointTracker)
         self.image_tracking_pts = None
         self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
+        self.image_tracking_info_pub = rospy.Publisher('image_tracking_info', Image)
         self.ready = True
         
     def create_camera_to_tracking_dict(self):
@@ -96,6 +106,13 @@ class ThreePointTracker_Synchronizer:
         data is that which is nearest to the center of the image on camera upon
         which is was captured. 
         """
+
+        # Get time stamp (secs, nsecs) - always from the same camera to avoid jumps due to 
+        # possible system clock differences.
+        time_camera = self.camera_list[0]
+        time_camera_secs = tracking_pts_dict[time_camera].data.secs
+        time_camera_nsecs = tracking_pts_dict[time_camera].data.nsecs
+
         # Get list of messages in which the object was found
         found_list = [msg for msg in tracking_pts_dict.values() if msg.data.found]
         tracking_pts_msg = ThreePointTracker()
@@ -119,7 +136,6 @@ class ThreePointTracker_Synchronizer:
             angle = get_angle(pts_anchor_plane)
             midpt_anchor_plane = get_midpoint(pts_anchor_plane)
             midpt_stitching_plane = get_midpoint(pts_stitching_plane)
-
 
             # Get size of tracking points image in the anchor (tracking) plane 
             roi = best.data.roi
@@ -192,8 +208,8 @@ class ThreePointTracker_Synchronizer:
 
             # Create tracking points message
             tracking_pts_msg.seq = best.data.seq
-            tracking_pts_msg.secs = best.data.secs
-            tracking_pts_msg.nsecs = best.data.nsecs
+            tracking_pts_msg.secs = time_camera_secs
+            tracking_pts_msg.nsecs = time_camera_nsecs
             tracking_pts_msg.camera = camera
             tracking_pts_msg.found = True
             tracking_pts_msg.angle = angle
@@ -207,10 +223,47 @@ class ThreePointTracker_Synchronizer:
         else:
             sample = tracking_pts_dict.values()[0]
             tracking_pts_msg.seq = sample.data.seq
-            tracking_pts_msg.secs = sample.data.secs
-            tracking_pts_msg.nsecs = sample.data.nsecs
+            tracking_pts_msg.secs = time_camera_secs
+            tracking_pts_msg.nsecs = time_camera_nsecs
             tracking_pts_msg.camera = '' 
             tracking_pts_msg.found = False
+
+        # Create tracking info image
+        pil_info_image = PILImage.new('RGB', self.info_image_size,(255,255,255))
+        draw = PILImageDraw.Draw(pil_info_image)
+        text_list = []
+
+        label = 'Found:'
+        value = '{0}'.format(tracking_pts_msg.found)
+        unit = ''
+        text_list.append((label,value,unit))
+
+        label = 'Angle:'
+        value = '{0:+3.1f}'.format(180.0*tracking_pts_msg.angle/math.pi)
+        unit = 'deg'
+        text_list.append((label,value,unit))
+
+        label = 'Pos X:'
+        value = '{0:+1.3f}'.format(tracking_pts_msg.midpt_anchor_plane.x)
+        unit =  'm'
+        text_list.append((label,value,unit))
+
+        label = 'Pos Y:'
+        value = '{0:+1.3f}'.format(tracking_pts_msg.midpt_anchor_plane.y)
+        unit = 'm'
+        text_list.append((label,value,unit))
+        
+        for i, text in enumerate(text_list):
+            label, value, unit = text
+            draw.text((10,10+20*i),label,font=self.font,fill=(0,0,0))
+            draw.text((70,10+20*i),value,font=self.font,fill=(0,0,0))
+            draw.text((125,10+20*i),unit,font=self.font,fill=(0,0,0))
+        cv_info_image = cv.CreateImageHeader(pil_info_image.size, cv.IPL_DEPTH_8U, 3)
+        cv.SetData(cv_info_image, pil_info_image.tostring())
+
+        # Convert to a rosimage and publish
+        info_rosimage = self.bridge.cv_to_imgmsg(cv_info_image,'rgb8')
+        self.image_tracking_info_pub.publish(info_rosimage)
 
         # Publish messages
         self.tracking_pts_pub.publish(tracking_pts_msg)
@@ -244,7 +297,7 @@ class ThreePointTracker_Synchronizer:
 def tracking_pts_sort_cmp(msg_x, msg_y):
     """
     Comparison function for sorting the the tracking pts messages. Used for sorting
-    the based on the distance to the center of the image in which they were found.
+    the based on ROI arean and distance. 
     """
     roi_x = msg_x.data.roi_src
     roi_y = msg_y.data.roi_src

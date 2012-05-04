@@ -117,11 +117,3 @@ tracking_pts_logger_master.start_tracking_pts_loggers()
 print('done')
 
 
-
-
-
-
-
-
-
-

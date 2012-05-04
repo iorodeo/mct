@@ -656,7 +656,7 @@ if __name__ == '__main__':
         filename = 'static_tf_publisher_2d.launch'
         create_static_tf_publisher_2d_launch(filename)
 
-    if 0:
+    if 1:
         filename = 'three_point_tracker.launch'
         create_three_point_tracker_launch(filename)
 
@@ -676,7 +676,7 @@ if __name__ == '__main__':
         filename = 'avi_writer.launch'
         create_avi_writer_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'tracking_pts_logger.launch'
         create_tracking_pts_logger_launch(filename)
 
