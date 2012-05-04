@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_logging" type="tracking_pts_logger_master.py" name="tracking_pts_logger_master" machine="mct_master" required="true"/>
+</launch>

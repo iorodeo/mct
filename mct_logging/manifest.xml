@@ -4,11 +4,12 @@
      mct_logging
 
   </description>
-  <author>Albert Lee</author>
+  <author>Will Dickson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mct_logging</url>
   <depend package="rospy"/>
+  <depend package="mct_xml_tools" />
   <depend package="mct_msg_and_srv" />
 
 </package>
