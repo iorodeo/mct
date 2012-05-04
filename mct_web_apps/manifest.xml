@@ -21,6 +21,7 @@
   <depend package="mct_image_stitcher"/>
   <depend package="mct_tracking_2d"/>
   <depend package="mct_avi_writer"/>
+  <depend package="mct_logging" />
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>

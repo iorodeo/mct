@@ -16,6 +16,7 @@ from mct_image_stitcher import image_stitcher_master
 from mct_tracking_2d import three_point_tracker_master 
 from mct_tracking_2d import stitched_image_labeler_master
 from mct_avi_writer import avi_writer_master
+from mct_logging import tracking_pts_logger_master
 
 regions_dict = file_tools.read_tracking_2d_regions()
 camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
@@ -108,6 +109,13 @@ print(' * starting avi writers ... ', end='')
 sys.stdout.flush()
 avi_writer_master.start_avi_writers()
 print('done')
+
+# Start tracking pts loggers
+print(' * starting tracking pts loggers ... ', end='')
+sys.stdout.flush()
+tracking_pts_logger_master.start_tracking_pts_loggers()
+print('done')
+
 
 
 
