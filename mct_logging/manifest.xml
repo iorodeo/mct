@@ -1,0 +1,16 @@
+<package>
+  <description brief="mct_logging">
+
+     mct_logging
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_logging</url>
+  <depend package="rospy"/>
+  <depend package="mct_msg_and_srv" />
+
+</package>
+
+
