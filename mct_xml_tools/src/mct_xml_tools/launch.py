@@ -530,6 +530,26 @@ def create_avi_writer_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def create_tracking_pts_logger_launch(filename):
+    """
+    Creates launch file for tracking points loggers.
+    """
+    template_name = 'tracking_pts_logger_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+    regions_dict = mct_utilities.file_tools.read_tracking_2d_regions()
+
+    launch_list = [(r, '/{0}/tracking_pts'.format(r)) for r in regions_dict]
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            launch_list=launch_list,
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -652,9 +672,13 @@ if __name__ == '__main__':
         filename = 'frame_skipper.launch'
         create_frame_skipper_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'avi_writer.launch'
         create_avi_writer_launch(filename)
+
+    if 1:
+        filename = 'tracking_pts_logger.launch'
+        create_tracking_pts_logger_launch(filename)
 
 
        

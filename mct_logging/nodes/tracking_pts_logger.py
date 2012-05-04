@@ -13,6 +13,11 @@ from mct_msg_and_srv.srv import LoggingCmdResponse
 
 class TrackingPtsLogger(object):
 
+    """
+    Simple node for logging the tracking points data. Logs data to json format. Doesn't 
+    need to know the topic type. However, the topic type must be in mct_msg_and_srv.msg.
+    """
+
     def __init__(self,topic):
 
         self.ready = False
@@ -93,8 +98,10 @@ class TrackingPtsLogger(object):
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+
     import sys
     topic = sys.argv[1]
+
     node = TrackingPtsLogger(topic)
     node.run()
 
