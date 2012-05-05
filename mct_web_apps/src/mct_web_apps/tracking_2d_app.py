@@ -43,9 +43,13 @@ def show_control():
     if flask.g.sijax.is_sijax_request: 
         return
     else:
+        ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
         tab_list = get_tab_list()
+        watchdog_mjpeg_info = get_watchdog_mjpeg_info()
         render_dict = {
+                'ip_iface_ext': ip_iface_ext,
                 'tab_list': tab_list,
+                'watchdog_mjpeg_info': watchdog_mjpeg_info,
                 }
         return flask.render_template('tracking_2d_control.html',**render_dict) 
 
@@ -56,9 +60,11 @@ def show_region(region):
         return
     else:
         tab_list = get_tab_list()
+        mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
         render_dict = {
                 'region': region,
                 'tab_list': tab_list,
+                'mjpeg_info_dict': mjpeg_info_dict,
                 }
         return flask.render_template('tracking_2d_region.html', **render_dict) 
 
@@ -68,14 +74,19 @@ def show_extra_video(video):
         return
     else:
         tab_list = get_tab_list()
+        mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
         render_dict = {
                 'extra_video_name': video,
                 'tab_list': tab_list,
+                'mjpeg_info_dict': mjpeg_info_dict,
                 }
         return flask.render_template('tracking_2d_extra_video.html', **render_dict) 
 
 # ---------------------------------------------------------------------------------
 def get_tab_list(): 
+    """
+    Generates list of tabs and their urls.
+    """
     regions_dict = redis_tools.get_dict(db,'regions_dict')
     extra_video_dict = redis_tools.get_dict(db,'extra_video_dict')
     tab_list = [] 
@@ -87,6 +98,21 @@ def get_tab_list():
     tab_list.sort()
     return tab_list
 
+
+def get_watchdog_mjpeg_info():
+    """
+    Returns a dictionary containing the mjpeg stream information for the
+    watchdog information image stream.
+    """
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+    watchdog_mjpeg_info = {}
+    for v in mjpeg_info_dict.values():
+        if v['image_topic'] == '/image_watchdog_info':
+            watchdog_mjpeg_info['image_topic'] = v['image_topic']
+            watchdog_mjpeg_info['mjpeg_port'] = v['mjpeg_port']
+    return watchdog_mjpeg_info
+
+    pass
 
 def setup_redis_db():
     # Create db and add empty camera assignment

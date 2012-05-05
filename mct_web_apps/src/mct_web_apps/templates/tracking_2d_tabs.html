@@ -1,11 +1,11 @@
 {% macro display_tabs(cur_tab, tab_list) %}
-<ol id="toc">
+<ul id="primary">
     {% for tab_name, tab_url in tab_list %}
     {% if tab_name == cur_tab %}
-        <li class="current"> <a href={{tab_url}}>{{tab_name.title()}}</a> </li>
+        <li> <a class="active" href={{tab_url}}>{{tab_name.title()}}</a> </li>
     {% else %}
         <li> <a href={{tab_url}}>{{tab_name.title()}}</a> </li>
     {% endif %}
     {% endfor %}
-</ol>
+</ul>
 {% endmacro %}

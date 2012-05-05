@@ -1,5 +1,4 @@
-{% extends "base.html" %} 
-{% import "tracking_2d_tabs.html" as tabs %}
+{% extends "tracking_2d_base.html" %} 
 
 {% block head %}
 {{ super() }}
@@ -9,10 +8,18 @@
 
 {% block content %}
 {{ super() }}
-<h1 style="color:blue" > MCT: Tracking 2D - {{extra_video_name.title()}} </h1>
-{{ tabs.display_tabs(extra_video_name, tab_list) }}
 
-<div class="content">
+<div id="Wrapper">
+    <div id="Navigation">
+    {{ tabs.display_tabs(extra_video_name, tab_list) }}
+    </div>
+    <div id="Content">
+        <br> Extra video content, name = {{extra_video_name.title()}} <br> 
+        {% for k, v in mjpeg_info_dict.iteritems() %}
+        <p> {{k}} {{v}}</p>
+        {% endfor %}
+
+    </div>
 </div>
 
 {% endblock %}

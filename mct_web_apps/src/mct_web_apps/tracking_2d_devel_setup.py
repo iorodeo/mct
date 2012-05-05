@@ -127,6 +127,8 @@ for region in regions_dict:
     mjpeg_topics.append('/{0}/image_tracking_pts'.format(region))
     mjpeg_topics.append('/{0}/image_tracking_info'.format(region))
 mjpeg_topics.append('/image_watchdog_info')
+
+
 mjpeg_servers.set_topics(mjpeg_topics)
 mjpeg_servers.start_servers()
 print('done')
