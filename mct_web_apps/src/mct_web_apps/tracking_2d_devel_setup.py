@@ -10,6 +10,7 @@ from mct_utilities import file_tools
 from mct_utilities import region_tools
 from mct_camera_tools import camera_master
 from mct_camera_tools import image_proc_master
+from mct_camera_tools import mjpeg_servers
 from mct_camera_trigger import camera_trigger
 from mct_frame_skipper import frame_skipper_master
 from mct_image_stitcher import image_stitcher_master
@@ -116,4 +117,17 @@ sys.stdout.flush()
 tracking_pts_logger_master.start_tracking_pts_loggers()
 print('done')
 
+
+# Start mjpeg servers 
+print(' * starting mjpeg servers ... ',end='')
+sys.stdout.flush()
+mjpeg_topics = []
+for region in regions_dict:
+    mjpeg_topics.append('/{0}/image_stitched_labeled'.format(region))
+    mjpeg_topics.append('/{0}/image_tracking_pts'.format(region))
+    mjpeg_topics.append('/{0}/image_tracking_info'.format(region))
+mjpeg_topics.append('/image_watchdog_info')
+mjpeg_servers.set_topics(mjpeg_topics)
+mjpeg_servers.start_servers()
+print('done')
 

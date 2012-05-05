@@ -1,0 +1,18 @@
+{% extends "base.html" %} 
+{% import "tracking_2d_tabs.html" as tabs %}
+
+{% block head %}
+{{ super() }}
+<title> MCT:Tracking {{region.title()}} </title>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<h1 style="color:blue" > MCT: Tracking 2D - {{region.title()}} </h1>
+{{ tabs.display_tabs(region, tab_list) }}
+
+<div class="content">
+</div>
+
+{% endblock %}

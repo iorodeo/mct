@@ -32,7 +32,7 @@ class MJPEG_Manager(object):
         self.server_launch_file = os.path.join(self.tmp_dir,'mjpeg_server.launch')
         self.server_popen = None
         self.mjpeg_start_port = rospy.get_param('mjpeg_start_port',8080)
-        self.topic_endings = ['image_raw']
+        self.topic_strings = ['image_raw']
 
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('camera_mjpeg_manager')
@@ -62,7 +62,7 @@ class MJPEG_Manager(object):
         Handles requests to set the image topics 
         """
         with self.lock:
-            self.topic_endings = req.values
+            self.topic_strings = req.values
         return ArrayOfStringsResponse(True,'')
 
     def handle_mjpeg_servers_info_srv(self,req):
@@ -112,8 +112,12 @@ class MJPEG_Manager(object):
         Creates the mjpeg server launch file and launches the mjpeg server nodes.
         """
         topics = []
-        for ending in self.topic_endings:
-            topics.extend(find_topics_w_ending(ending))
+        for value in self.topic_strings:
+            if '/' in value:
+                topics.append(value)
+            else:
+                topics_w_ending = find_topics_w_ending(value)
+                topics.extend(topics_w_ending)
         self.mjpeg_info_dict = self.create_mjpeg_info_dict(topics)
         create_mjpeg_server_launch(self.server_launch_file,self.mjpeg_info_dict)
         self.server_popen = subprocess.Popen(['roslaunch',self.server_launch_file])
