@@ -16,6 +16,7 @@ import config
 import common_args
 import mct_introspection
 
+from common_tasks import camera_name_cmp
 from mct_utilities import file_tools
 from mct_utilities import redis_tools
 from mct_utilities import iface_tools
@@ -62,7 +63,12 @@ def show_control():
         watchdog_mjpeg_info = get_watchdog_mjpeg_info()
         regions_dict = redis_tools.get_dict(db,'regions_dict')
         extra_video_dict = redis_tools.get_dict(db,'extra_video_dict')
+        homography_cal_info = get_homography_calibration_info()
+        camera_cal_info = get_camera_calibration_info()
         logging_params_dict = redis_tools.get_dict(db,'logging_params_dict')
+        camera_assignment = get_camera_assignment()
+        all_cameras_sorted = camera_assignment.keys()
+        all_cameras_sorted.sort(cmp=camera_name_cmp)
 
 
         render_dict = get_base_render_dict()
@@ -73,6 +79,10 @@ def show_control():
                 'regions_dict': regions_dict,
                 'extra_video_dict': extra_video_dict,
                 'logging_params_dict': logging_params_dict,
+                'homography_cal_info': homography_cal_info,
+                'camera_cal_info': camera_cal_info,
+                'camera_assignment': camera_assignment,
+                'all_cameras_sorted': all_cameras_sorted,
                 }
         render_dict.update(page_render_dict)
         return flask.render_template('tracking_2d_control.html',**render_dict) 
@@ -207,13 +217,48 @@ def timer_update_handler(obj_response):
     # ------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------
+def get_camera_assignment():
+    """
+    Returns the current camera assignment.
+    """
+    return file_tools.read_camera_assignment()
+
+def get_homography_calibration_info():
+    """
+    Gets the last modified date for any existing homography calibration files.
+    """
+    regions_dict = redis_tools.get_dict(db,'regions_dict')
+    calibration_info = mct_introspection.get_homography_calibration_info()
+    for region, camera_list in regions_dict.iteritems():
+        for camera in camera_list:
+            if not camera in calibration_info:
+                calibration_info[camera] = {'modified': ''}
+    return calibration_info
+
+def get_camera_calibration_info():
+    """
+    Gets the last modified date for any existing homography calibration files.
+    """
+    regions_dict = redis_tools.get_dict(db,'regions_dict')
+    calibration_info = mct_introspection.get_camera_calibration_info()
+    for region, camera_list in regions_dict.iteritems():
+        for camera in camera_list:
+            if not camera in calibration_info:
+                calibration_info[camera] = {'modified': ''}
+    return calibration_info
 
 def get_logging_nodes(service_list): 
+    """
+    Returns a list of all nodes which offer a logging_cmd service.
+    """
     logging_srv_list = [srv for srv in service_list if 'logging_cmd' in srv.split('/')]
     logging_node_list = ['/'.join(srv.split('/')[:3]) for srv in logging_srv_list]
     return logging_node_list
 
 def get_recording_nodes(service_list): 
+    """
+    Returns a list of all nodes which off a recording_cmd service.
+    """
     recording_srv_list = [srv for srv in service_list if 'recording_cmd' in srv.split('/')]
     recording_node_list = ['/'.join(srv.split('/')[:4]) for srv in recording_srv_list] 
     return recording_node_list

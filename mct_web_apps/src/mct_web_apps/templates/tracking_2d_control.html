@@ -82,16 +82,56 @@
 
 
         <h2> Homography Calibration </h2>
-        <br>
+        <ul>
+        {% for region, camera_list in regions_dict.iteritems() %}
+            <li> 
+                <strong> {{region.title()}}  </strong>
+                <table id="DisplayTable">
+                {% for camera in camera_list %}
+                    <tr>
+                        <td> {{camera}} </td>   <td> {{homography_cal_info[camera]['modified']}} </td>
+                    </tr>
+                {% endfor %}
+                </table>
+                <br>
+            </li>
+        {% endfor %}
+        </ul>
         <br>
 
         <h2> Camera Calibration </h2>
-        <br>
+        <ul>
+        {% for region, camera_list in regions_dict.iteritems() %}
+            <li> 
+                <strong> {{region.title()}}  </strong>
+                <table id="DisplayTable">
+                {% for camera in camera_list %}
+                    <tr>
+                        <td> {{camera}} </td>   <td> {{camera_cal_info[camera]['modified']}} </td>
+                    </tr>
+                {% endfor %}
+                </table>
+                <br>
+            </li>
+        {% endfor %}
+        </ul>
         <br>
 
+        <!-- 
         <h2> Camera Assignment </h2>
+        {% for camera in all_cameras_sorted %}
+        <table id="DisplayTable">
+            <tr>
+                <td> {{camera}}
+                <td> {{camera_assignment[camera]['guid']}} </td>
+                <td> {{camera_assignment[camera]['machine']}} </td>
+            </tr>
+        </table>
+        
+        {% endfor %}
         <br>
         <br>
+        -->
 
         <p id="develop_mode_change"> <p>
         <p id="develop_timer_update"> <p>
