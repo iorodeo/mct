@@ -1,0 +1,30 @@
+{% extends "tracking_2d_base.html" %} 
+
+{% block head %}
+{{ super() }}
+<title> MCT:Tracking ROS </title>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<div id="Wrapper">
+    <div id="Navigation">
+    {{ tabs.display_tabs('ros', tab_list) }}
+    </div>
+    <div id="Content">
+        <br>
+        {% for name, info_list in ros_info_list %}
+            <h1> {{name.title()}} </h1>
+            <ol>
+            {% for value in info_list %}
+            <li> {{value}} </li>
+            {% endfor %}
+            </ol>
+            <br>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

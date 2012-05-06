@@ -14,8 +14,61 @@
     {{ tabs.display_tabs(region, tab_list) }}
     </div>
     <div id="Content">
-        <br> Region content, region = {{region.title()}} <br>
-        <p> {{mjpeg_info_dict}} </p>
+        <br>
+
+        <!-- Tracking information image -->
+        <div>
+            <h2> Tracking Data </h2>
+            <div style="width: 300px; border:2px solid blue;">
+                <img id="image_tracking_info" src="http://{{ip_iface_ext}}:{{region_mjpeg_info['image_tracking_info']['mjpeg_port']}}/stream?topic={{region_mjpeg_info['image_tracking_info']['image_topic']}}_throttle" />
+            </div>
+        </div>
+        <br>
+        <br>
+
+        <h2> Tracking Images </h2>
+        <table id="ImageTable">
+            <col style="padding-right:20px;" />
+
+            <tr>
+                <td valign="top">
+                    <!-- Stitched images -->
+                    <div>
+                        <h3>
+                            Scale:
+                            <select>
+                                <option selected="selected"> 1 </option>
+                            </select>
+                        </h3>
+                        <div>
+                            <img id="image_stitched_labeled" src="http://{{ip_iface_ext}}:{{region_mjpeg_info['image_stitched_labeled']['mjpeg_port']}}/stream?topic={{region_mjpeg_info['image_stitched_labeled']['image_topic']}}_throttle" />
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Tracking points image -->
+                <td valign="top">
+                    <div>
+                        <h3>
+                            Scale: 
+                            <select>
+                                <option selected="selected"> 1 </option> 
+                            </select>
+                        </h3>
+                        <div>
+                            <img id="image_tracking_pts" src="http://{{ip_iface_ext}}:{{region_mjpeg_info['image_tracking_pts']['mjpeg_port']}}/stream?topic={{region_mjpeg_info['image_tracking_pts']['image_topic']}}_throttle" />
+                        </div>
+                    </div>
+                </td>
+
+                
+            </tr>
+        </table>
+        <br>
+        <br>
+
+
+
     </div>
 </div>
 

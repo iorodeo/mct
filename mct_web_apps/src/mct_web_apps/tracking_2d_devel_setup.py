@@ -20,6 +20,7 @@ from mct_avi_writer import avi_writer_master
 from mct_logging import tracking_pts_logger_master
 
 regions_dict = file_tools.read_tracking_2d_regions()
+extra_video_dict = file_tools.read_logging_extra_video()
 camera_pairs_dict = file_tools.read_tracking_2d_camera_pairs()
 region_tools.check_regions_and_camera_pairs(regions_dict, camera_pairs_dict)
 
@@ -121,13 +122,21 @@ print('done')
 # Start mjpeg servers 
 print(' * starting mjpeg servers ... ',end='')
 sys.stdout.flush()
+
+# Set topics for mjpeg servers
 mjpeg_topics = []
+# Add time stamp watchdog image
+mjpeg_topics.append('/image_time_stamp_watchdog')
+
+# Add the stitched and tracking pts images for all regions
 for region in regions_dict:
     mjpeg_topics.append('/{0}/image_stitched_labeled'.format(region))
     mjpeg_topics.append('/{0}/image_tracking_pts'.format(region))
     mjpeg_topics.append('/{0}/image_tracking_info'.format(region))
-mjpeg_topics.append('/image_watchdog_info')
 
+# Add any extra video images
+for v in extra_video_dict.values():
+    mjpeg_topics.append(v)
 
 mjpeg_servers.set_topics(mjpeg_topics)
 mjpeg_servers.start_servers()

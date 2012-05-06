@@ -3,6 +3,18 @@
 {% block head %}
 {{ super() }}
 <title> MCT:Tracking Control</title>
+<script>
+    function modeChangeRequest(mode) {
+        Sijax.request('mode_change_request', [mode,]);
+    }
+</script>
+
+<script type="text/javascript"> 
+    setTimeout(function() { 
+            Sijax.request('timer_update'); 
+            setTimeout(arguments.callee,1000); 
+            }, 1000); 
+</script>
 
 {% endblock %}
 
@@ -15,17 +27,79 @@
     </div>
     <div id="Content">
         <br>
-        <strong> Operating Mode: </strong>
+        <h2> Operating Mode </h2>
         <form name="mode form">
-            <input type="radio" name="mode" value="standby"> Standby 
-            <input type="radio" name="mode" value="preview" checked> Preview 
-            <input type="radio" name="mode" value="recording"> Recording 
+            {% for mode in operating_modes %}
+            <input id={{mode}} type="radio" name="mode" value="{{mode}}"  {% if mode==current_mode %}  checked {% endif %} onchange="modeChangeRequest('{{mode}}');"
+            >  {{mode.title()}}  
+            {% endfor %}
         </form>
         <br>
-        <div>
+        <br>
+
+        <h2> Time Stamp Watchdog</h2>
+        <div style="width: 450px; border:2px solid blue;">
             <img id="image_watchdog_info" src="http://{{ip_iface_ext}}:{{watchdog_mjpeg_info['mjpeg_port']}}/stream?topic={{watchdog_mjpeg_info['image_topic']}}" />
         </div>
+        <br>
+        <br>
+
+        <h2> Logging </h2>
+        {% for k,v in logging_params_dict.iteritems() %}
+            <ul>
+                <li> {{k.title()}} {{v}}</li>
+            </ul>
+            
+        {% endfor %}
+        <br>
+        <br>
+
+        <h2> Tracking Regions </h2>
+        {% for region, camera_list in regions_dict.iteritems() %}
+        <ul>
+            <li> 
+                <strong> {{region.title()}}: </strong>  
+                {% for camera in camera_list %}
+                {% if loop.index0 > 0 %}, {% endif  %}
+                {{camera}}
+                {% endfor %}
+            </li>
+        </ul>
+        {% endfor %}
+        <br>
+        <br>
+
+        <h2> Extra Video </h2>
+        {% for k,v in extra_video_dict.iteritems() %}
+        <ul>
+            <li> 
+            {{k}}, {{v}}
+            </li>
+        </ul>
+        {% endfor %}
+        <br>
+        <br>
+
+
+        <h2> Homography Calibration </h2>
+        <br>
+        <br>
+
+        <h2> Camera Calibration </h2>
+        <br>
+        <br>
+
+        <h2> Camera Assignment </h2>
+        <br>
+        <br>
+
+        <p id="develop_mode_change"> <p>
+        <p id="develop_timer_update"> <p>
+
+
+
     </div>
 </div>
 
 {% endblock %}
+

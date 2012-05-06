@@ -14,10 +14,20 @@
     {{ tabs.display_tabs(extra_video_name, tab_list) }}
     </div>
     <div id="Content">
-        <br> Extra video content, name = {{extra_video_name.title()}} <br> 
-        {% for k, v in mjpeg_info_dict.iteritems() %}
-        <p> {{k}} {{v}}</p>
-        {% endfor %}
+        <br>
+        <h2> {{extra_video_name.title()}}: {{extra_video_mjpeg_info['image_topic']}}
+        </h2>
+
+        <h3>
+            Scale:
+            <select>
+                <option selected="selected"> 1 </option>
+            </select>
+        </h3>
+        <div>
+            <img id="image_extra_video" src="http://{{ip_iface_ext}}:{{extra_video_mjpeg_info['mjpeg_port']}}/stream?topic={{extra_video_mjpeg_info['image_topic']}}_throttle" />
+        </div>
+
 
     </div>
 </div>

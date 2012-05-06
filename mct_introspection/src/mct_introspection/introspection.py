@@ -22,6 +22,11 @@ def get_nodes():
     node_list = node_str.split()
     return node_list
 
+def get_topics():
+    topic_list = rospy.get_published_topics()
+    topic_list = [val[0] for val in topic_list]
+    return topic_list
+
 def get_camera_nodes():
     """
     Returns a list of all currently running camera nodes.

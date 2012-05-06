@@ -72,7 +72,6 @@ class AVI_Writer(object):
 
             self.filename = req.filename
             self.frame_rate = req.frame_rate
-            
             command = req.command.lower()
 
             if command == 'start':

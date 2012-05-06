@@ -75,7 +75,6 @@ ul#primary {
 	padding: 0;
 	position: absolute;
 	bottom: -1px;
-	width: auto;
 }
 
 ul#primary li  {

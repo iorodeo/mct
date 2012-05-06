@@ -11,6 +11,7 @@ import flask_sijax
 import redis
 import atexit
 import time
+import datetime
 import config
 import common_args
 import mct_introspection
@@ -19,15 +20,21 @@ from mct_utilities import file_tools
 from mct_utilities import redis_tools
 from mct_utilities import iface_tools
 from mct_camera_tools import mjpeg_servers
+from mct_camera_trigger import camera_trigger
+from mct_watchdog import time_stamp_watchdog
+from mct_logging import tracking_pts_logger
+from mct_avi_writer import avi_writer
 
 DEVELOP = True 
 DEBUG = True 
+OPERATING_MODES = ('standby', 'preview', 'recording')
 
 ## Setup application w/ sijax
 app = flask.Flask(__name__)
 app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app.config["SIJAX_JSON_URI"] = '/static/js/sijax/json2.js'
 flask_sijax.Sijax(app)
+
 
 
 @app.route('/')
@@ -37,52 +44,192 @@ def index():
     """
     return flask.redirect(flask.url_for('show_control'))
 
+# Routes
+# -----------------------------------------------------------------------------
 
 @flask_sijax.route(app, '/control')
 def show_control(): 
+    """
+    Tracking program main control page. Enables users to start/stop recording and 
+    displays information about the running system.
+    """
     if flask.g.sijax.is_sijax_request: 
-        return
+        flask.g.sijax.register_callback('mode_change_request', mode_change_handler)
+        flask.g.sijax.register_callback('timer_update', timer_update_handler)
+        return flask.g.sijax.process_request()
     else:
-        ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
-        tab_list = get_tab_list()
+        current_mode = redis_tools.get_str(db,'current_mode')
         watchdog_mjpeg_info = get_watchdog_mjpeg_info()
-        render_dict = {
-                'ip_iface_ext': ip_iface_ext,
-                'tab_list': tab_list,
+        regions_dict = redis_tools.get_dict(db,'regions_dict')
+        extra_video_dict = redis_tools.get_dict(db,'extra_video_dict')
+        logging_params_dict = redis_tools.get_dict(db,'logging_params_dict')
+
+
+        render_dict = get_base_render_dict()
+        page_render_dict = {
+                'operating_modes': OPERATING_MODES,
+                'current_mode': current_mode,
                 'watchdog_mjpeg_info': watchdog_mjpeg_info,
+                'regions_dict': regions_dict,
+                'extra_video_dict': extra_video_dict,
+                'logging_params_dict': logging_params_dict,
                 }
+        render_dict.update(page_render_dict)
         return flask.render_template('tracking_2d_control.html',**render_dict) 
 
-    
-@flask_sijax.route(app,'/region/<region>')
+@app.route('/region/<region>')
 def show_region(region):
-    if flask.g.sijax.is_sijax_request: 
-        return
-    else:
-        tab_list = get_tab_list()
-        mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
-        render_dict = {
-                'region': region,
-                'tab_list': tab_list,
-                'mjpeg_info_dict': mjpeg_info_dict,
-                }
-        return flask.render_template('tracking_2d_region.html', **render_dict) 
+    """
+    Handles requests to view the images and information stream for the given tracking
+    region.
+    """
+    render_dict = get_base_render_dict()
+    region_mjpeg_info = get_region_mjpeg_info(region)
+    page_render_dict = {
+            'region': region,
+            'region_mjpeg_info': region_mjpeg_info,
+            }
+    render_dict.update(page_render_dict)
+    return flask.render_template('tracking_2d_region.html', **render_dict) 
 
-@flask_sijax.route(app,'/extra_video/<video>')
+@app.route('/extra_video/<video>')
 def show_extra_video(video):
-    if flask.g.sijax.is_sijax_request: 
+    """
+    Handles requests to view the requested extra video streams.
+    """
+    ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
+    tab_list = get_tab_list()
+    extra_video_mjpeg_info = get_extra_video_mjpeg_info(video)
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+    render_dict = get_base_render_dict()
+    page_render_dict = {
+            'extra_video_name': video,
+            'extra_video_mjpeg_info': extra_video_mjpeg_info,
+            }
+    render_dict.update(page_render_dict)
+    return flask.render_template('tracking_2d_extra_video.html', **render_dict) 
+
+@app.route('/ros_info')
+def show_ros_info():
+    render_dict = get_base_render_dict()
+    ros_nodes_list = mct_introspection.get_nodes()
+    ros_topics_list = mct_introspection.get_topics()
+    ros_services_list = mct_introspection.get_services()
+    ros_info_list = [
+            ('nodes',  ros_nodes_list), 
+            ('topics', ros_topics_list),
+            ('services', ros_services_list),
+            ]
+    page_render_dict = {
+            'ros_info_list': ros_info_list,
+            }
+    render_dict.update(page_render_dict)
+    return flask.render_template('tracking_2d_ros_info.html', **render_dict)
+
+# Sijax handlers
+# ---------------------------------------------------------------------------------
+def mode_change_handler(obj_response, new_mode):
+
+    old_mode = redis_tools.get_str(db,'current_mode')
+    new_mode = str(new_mode)
+
+    if old_mode == new_mode:
         return
-    else:
-        tab_list = get_tab_list()
-        mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
-        render_dict = {
-                'extra_video_name': video,
-                'tab_list': tab_list,
-                'mjpeg_info_dict': mjpeg_info_dict,
-                }
-        return flask.render_template('tracking_2d_extra_video.html', **render_dict) 
+
+    redis_tools.set_str(db,'current_mode', new_mode)
+    frame_rate = redis_tools.get_dict(db,'frame_rate_dict')['tracking_2d']
+    regions_dict = redis_tools.get_dict(db,'regions_dict')
+
+    # Stop camera triggers
+    camera_trigger.stop()
+    time.sleep(0.5) # wait for all frames to pass throught the system
+
+    if old_mode == 'recording' or new_mode == 'recording': 
+        # Find logging and avi recording commands
+        service_list = mct_introspection.get_services()
+        logging_nodes = get_logging_nodes(service_list)
+        recording_nodes = get_recording_nodes(service_list)
+        
+        if (old_mode == 'recording') and (new_mode != 'recording'):
+
+            # Stop logging and recording
+            for node in logging_nodes:
+                tracking_pts_logger.stop_logging(node)
+            for node in recording_nodes:
+                avi_writer.stop_recording(node,'dummy.avi',frame_rate)
+
+        if new_mode == 'recording':
+
+            # Create sub-directory for log files.
+            log_dir_base = redis_tools.get_dict(db,'logging_params_dict')['directory']
+            log_dir = os.path.join(log_dir_base, datetime.datetime.now().isoformat()) 
+            os.mkdir(log_dir)
+
+            # Start loggers
+            for node in logging_nodes:
+                filename = '_'.join(node.split('/')[1:3])
+                filename = os.path.join(log_dir, '{0}.json'.format(filename))
+                tracking_pts_logger.start_logging(node,filename)
+
+            # Start avi recordings
+            for node in recording_nodes:
+                filename = '_'.join(node.split('/')[1:3])
+                filename = os.path.join(log_dir, '{0}.avi'.format(filename))
+                avi_writer.start_recording(node,filename,frame_rate)
+
+    if new_mode in ('preview', 'recording'):
+        # Restart camera triggers
+        camera_trigger.start(frame_rate)
+
+        # Reset time stamp watchdog
+        time_stamp_watchdog.reset()
+
+    
+    # Development ----------------------------------------------------------------------------------------------
+    #obj_response.html('#develop_mode_change', 'develop mode change: {0} -> {1}, {2}'.format(old_mode, new_mode))
+    # ----------------------------------------------------------------------------------------------------------
+
+
+def timer_update_handler(obj_response):
+    """
+    Callback for the timer update function. Resets the modified times for the camera 
+    calibration files.
+    """
+    current_mode = redis_tools.get_str(db, 'current_mode')
+    for mode in OPERATING_MODES:
+        if mode == current_mode:
+            obj_response.attr('#{0}'.format(mode),'checked','checked')
+        else:
+            obj_response.attr('#{0}'.format(mode),'checked','')
+
+    # Development ------------------------------------------------------------------------------------
+    #obj_response.html('#develop_timer_update', 'develop timer update: {0}'.format(str(current_mode)))
+    # ------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------
+
+def get_logging_nodes(service_list): 
+    logging_srv_list = [srv for srv in service_list if 'logging_cmd' in srv.split('/')]
+    logging_node_list = ['/'.join(srv.split('/')[:3]) for srv in logging_srv_list]
+    return logging_node_list
+
+def get_recording_nodes(service_list): 
+    recording_srv_list = [srv for srv in service_list if 'recording_cmd' in srv.split('/')]
+    recording_node_list = ['/'.join(srv.split('/')[:4]) for srv in recording_srv_list] 
+    return recording_node_list
+
+def get_base_render_dict(): 
+    """
+    Creates the base render dictionary passed to all page templates.
+    """
+    ip_iface_ext = redis_tools.get_str(db,'ip_iface_ext')
+    tab_list = get_tab_list()
+    render_dict = {
+            'ip_iface_ext': ip_iface_ext,
+            'tab_list': tab_list,
+            }
+    return render_dict
+
 def get_tab_list(): 
     """
     Generates list of tabs and their urls.
@@ -96,7 +243,44 @@ def get_tab_list():
     for name in extra_video_dict:
         tab_list.append((name,flask.url_for('show_extra_video', video=name)))
     tab_list.sort()
+    tab_list.append(('ros', flask.url_for('show_ros_info')))
     return tab_list
+
+
+def get_region_mjpeg_info(region):
+    """
+    Returns a dictionary containing the mjpeg stream information for all
+    of the images for the specified tracking region.
+    """
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+    region_mjpeg_info = {}
+    for v in mjpeg_info_dict.values():
+        image_topic_split = v['image_topic'].split('/')
+        if region == image_topic_split[1]:
+            image_name = image_topic_split[2]
+            region_mjpeg_info[image_name] = {
+                    'image_topic' :  v['image_topic'], 
+                    'mjpeg_port'  :  v['mjpeg_port'],
+                    }
+    return region_mjpeg_info 
+        
+
+
+def get_extra_video_mjpeg_info(video):
+    """
+    Returns a dictionary containing the mjpeg stream information for the
+    extra video named video
+    """
+    mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
+    extra_video_dict = redis_tools.get_dict(db,'extra_video_dict')
+    extra_video_topic = extra_video_dict[video]
+    extra_video_mjpeg_info = {}
+    for v in mjpeg_info_dict.values():
+        if extra_video_topic == v['image_topic']:
+            extra_video_mjpeg_info['image_topic'] = v['image_topic']
+            extra_video_mjpeg_info['mjpeg_port'] = v['mjpeg_port']
+            break
+    return extra_video_mjpeg_info
 
 
 def get_watchdog_mjpeg_info():
@@ -107,12 +291,12 @@ def get_watchdog_mjpeg_info():
     mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
     watchdog_mjpeg_info = {}
     for v in mjpeg_info_dict.values():
-        if v['image_topic'] == '/image_watchdog_info':
+        if v['image_topic'] == '/image_time_stamp_watchdog':
             watchdog_mjpeg_info['image_topic'] = v['image_topic']
             watchdog_mjpeg_info['mjpeg_port'] = v['mjpeg_port']
+            break
     return watchdog_mjpeg_info
 
-    pass
 
 def setup_redis_db():
     # Create db and add empty camera assignment
@@ -134,10 +318,30 @@ def setup_redis_db():
     machine_def = mct_introspection.get_machine_def()
     ip_iface_ext = iface_tools.get_ip_addr(machine_def['mct_master']['iface-ext'])
     redis_tools.set_str(db,'ip_iface_ext',ip_iface_ext)
+
+    # Set operating mode
+    redis_tools.set_str(db,'current_mode', 'preview')
+
+    ## Get frame rates
+    frame_rate_dict = file_tools.read_frame_rates()
+    redis_tools.set_dict(db,'frame_rate_dict', frame_rate_dict)
+
+    frame_rate = frame_rate_dict['tracking_2d']
+
+    # Get logging directory  - add base path to directory, and create if it doesn't exist
+    logging_params_dict = file_tools.read_logging_params()
+    logging_params_dict['directory'] = os.path.join(
+            os.environ['HOME'], 
+            logging_params_dict['directory']
+            )
+    if not os.path.exists(logging_params_dict['directory']):
+        os.mkdir(logging_params_dict['directory'])
+    redis_tools.set_dict(db,'logging_params_dict', logging_params_dict)
+
     return db
 
 def cleanup():
-    pass
+    db.flushdb()
 
 # ---------------------------------------------------------------------------------
 if __name__ == '__main__':

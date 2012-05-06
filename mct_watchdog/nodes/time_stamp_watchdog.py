@@ -54,7 +54,7 @@ class TimeStampWatchdog(object):
         self.error_msg = ''
 
         self.bridge = CvBridge()
-        self.info_image_size = (400,100)
+        self.info_image_size = (400,90)
         self.font = PILImageFont.truetype("/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf", 16)
 
         self.ready = False

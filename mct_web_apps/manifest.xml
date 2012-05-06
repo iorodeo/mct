@@ -22,6 +22,9 @@
   <depend package="mct_tracking_2d"/>
   <depend package="mct_avi_writer"/>
   <depend package="mct_logging" />
+  <depend package="mct_watchdog" />
+  <depend package="mct_logging" />
+  <depend package="mct_avi_writer" />
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>
