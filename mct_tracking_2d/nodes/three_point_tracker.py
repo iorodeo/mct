@@ -162,7 +162,8 @@ class ThreePointTracker(object):
             return 
 
         with self.lock:
-            blobs_list = self.blobFinder.findBlobs(data,create_image=False)
+            #blobs_list = self.blobFinder.findBlobs(data,create_image=False)
+            blobs_list = []
 
         # Convert to opencv image
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")

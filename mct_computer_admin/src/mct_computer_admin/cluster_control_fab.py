@@ -27,9 +27,10 @@ cmd_msgs = {
         'shutdown': 'shutting down camera computers',
         'list_slaves': 'listing slaves',
         'rospack_profile': 'run rospack profile on all slave computers', 
-        'pull': 'pulling latest version of mct from repository to slave computers',
-        'pull_master': 'pulling laster version of mct form repository on master',
-        'pull_all': 'pull latest version of mct form repository for all computers in current machine',
+        'pull': 'pulling latest version of the mct from repository to slave computers',
+        'pull_master': 'pulling laster version of the mct form repository on master',
+        'pull_all': 'pull latest version of the mct repository for all computers in current machine',
+        'pull_from_master': 'pull latest version of the mct repository from the master to the slaves', 
         'clone': 'clone new version of mct from repository of slave computers',
         'clean': 'remove old version of mct',
         'rosmake': 'use rosmake to build mct on slave computers',
@@ -55,6 +56,7 @@ fab_cmds = [
         'pull', 
         'pull_master',
         'pull_all',
+        'pull_from_master',
         'clone',
         'clean',
         'rosmake',
@@ -120,6 +122,22 @@ def pull_all():
     Pull latest version for mct repository on all computers in machine
     """
     _pull()
+
+@hosts(*slave_list)
+def pull_from_master():
+    """
+    Pull the latest version of the mct repository from the master computer.
+    """
+    mct_name = os.environ['MCT_NAME']
+    mct_name_split = mct_name.split('/')
+    mct_local = '/'.join(mct_name_split[-2:])
+    machine_def = mct_introspection.get_machine_def()
+    user = machine_def['user']
+    address = machine_def['mct_master']['address']
+    cmd = 'hg pull -h ssh://{0}@{1}/{2}'.format(user,address,mct_local)
+    if exists(mct_name):
+        with cd(mct_name):
+            run(cmd)
 
 def _rosmake(preclean=False):
     """
