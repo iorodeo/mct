@@ -84,33 +84,36 @@ class StitchedImageLabeler(object):
         Create labeled version of stitched image using the tracking points data
         """
 
-        ## Convert stitched image from rosimage to opencv image. 
-        #cv_image = self.bridge.imgmsg_to_cv(ros_image, desired_encoding="passthrough")
-        #ipl_image = cv.GetImage(cv_image)
+        # Convert stitched image from rosimage to opencv image. 
+        cv_image = self.bridge.imgmsg_to_cv(ros_image, desired_encoding="passthrough")
+        ipl_image = cv.GetImage(cv_image)
 
-        ## Create color version of stitched image.
-        #if self.labeled_image is None:
-        #    labeled_image = cv.CreateImage(cv.GetSize(ipl_image), cv.IPL_DEPTH_8U,3)
-        #    cv.Zero(labeled_image)
-        #cv.CvtColor(ipl_image,labeled_image,cv.CV_GRAY2BGR)
+        # Create color version of stitched image.
+        if self.labeled_image is None:
+            labeled_image = cv.CreateImage(cv.GetSize(ipl_image), cv.IPL_DEPTH_8U,3)
+            cv.Zero(labeled_image)
+        cv.CvtColor(ipl_image,labeled_image,cv.CV_GRAY2BGR)
 
-        ## Write sequence number on image
-        #message = '{0}'.format(tracking_pts.seq)
-        #cv.PutText(labeled_image, message, (10,25), self.cv_text_font, self.magenta)
-        #if tracking_pts.found:
-        #    # Draw boundry box around tracked object
-        #    p_list = [(int(pt.x), int(pt.y)) for pt in tracking_pts.bndry_stitching_plane]
-        #    q_list = p_list[1:] + [p_list[0]]
-        #    for p, q in zip(p_list, q_list):
-        #        cv.Line(labeled_image, p, q, self.magenta)
-        #    # Draw circles around tracked object points
-        #    for pt, color  in zip(tracking_pts.pts_stitching_plane, self.tracking_pts_colors):
-        #        cv.Circle(labeled_image, (int(pt.x), int(pt.y)), 3, color)
+        # Write sequence number on image
+        message = '{0}'.format(tracking_pts.seq)
+        cv.PutText(labeled_image, message, (10,25), self.cv_text_font, self.magenta)
+        if tracking_pts.found:
+            # Draw boundry box around tracked object
+            p_list = [(int(pt.x), int(pt.y)) for pt in tracking_pts.bndry_stitching_plane]
+            q_list = p_list[1:] + [p_list[0]]
+            for p, q in zip(p_list, q_list):
+                cv.Line(labeled_image, p, q, self.magenta)
+            # Draw circles around tracked object points
+            for pt, color  in zip(tracking_pts.pts_stitching_plane, self.tracking_pts_colors):
+                cv.Circle(labeled_image, (int(pt.x), int(pt.y)), 3, color)
 
-        ## Convert labeled image to ros image and publish
-        #labeled_rosimage = self.bridge.cv_to_imgmsg(labeled_image, encoding="passthrough")
-        #self.labeled_image_pub.publish(labeled_rosimage)
-        self.labeled_image_pub.publish(ros_image)
+        # Convert labeled image to ros image and publish
+        labeled_rosimage = self.bridge.cv_to_imgmsg(labeled_image, encoding="passthrough")
+        self.labeled_image_pub.publish(labeled_rosimage)
+
+        # DEBUG ###################################################
+        #self.labeled_image_pub.publish(ros_image)
+        ###########################################################
 
 
     def run(self):

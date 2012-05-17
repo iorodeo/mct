@@ -134,7 +134,7 @@ def pull_from_master():
     machine_def = mct_introspection.get_machine_def()
     user = machine_def['user']
     address = machine_def['mct_master']['address']
-    cmd = 'hg pull -h ssh://{0}@{1}/{2}'.format(user,address,mct_local)
+    cmd = 'hg pull -u ssh://{0}@{1}/{2}'.format(user,address,mct_local)
     if exists(mct_name):
         with cd(mct_name):
             run(cmd)
