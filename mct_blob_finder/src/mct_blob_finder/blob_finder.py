@@ -4,7 +4,7 @@ roslib.load_manifest('mct_blob_finder')
 import rospy
 import cv
 import cv2
-import cvblob
+#import cvblob
 import math
 from cv_bridge.cv_bridge import CvBridge 
 
@@ -20,8 +20,8 @@ class BlobFinder(object):
         self.min_area = min_area 
         self.max_area = max_area 
         self.bridge = CvBridge()
-        self.blob_mask  = cvblob.CV_BLOB_RENDER_CENTROID 
-        self.blob_mask |= cvblob.CV_BLOB_RENDER_COLOR 
+        #self.blob_mask  = cvblob.CV_BLOB_RENDER_CENTROID 
+        #self.blob_mask |= cvblob.CV_BLOB_RENDER_COLOR 
         self.blobs_image = None
         self.label_image = None
         self.thresh_image = None
@@ -126,64 +126,64 @@ class BlobFinder(object):
             return blobs_list, self.blobs_image
 
 
-    def findBlobsCvBlob(self,data, create_image=True):
-        """
-        Old version using cvblob library - has a memory leak somewhere (in the C++ library or 
-        python bindings) which makes is unusable
-        
-
-        Finds blobs in rosimage data. Returns 
-
-        blobs - stucture containting data for all blobs found in the image which aren't
-                filtered out.
-        blobs_image - an image with the blobs and there centroids superimposed on the image.
-        """
-        # Convert rosimage to opencv image.
-        cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
-        raw_image = cv.GetImage(cv_image)
-
-        if self.thresh_image is None:
-            if create_image:
-                self.thresh_image = cv.CreateImage(cv.GetSize(raw_image),raw_image.depth, raw_image.channels)
-            else:
-                self.thresh_image = raw_image
-
-        # Threshold image 
-        cv.Threshold(raw_image, self.thresh_image, self.threshold, 255, cv.CV_THRESH_BINARY)
-
-        if self.label_image is None:
-            self.label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
-
-        # Find blobs
-        blobs = cvblob.Blobs()
-        result = cvblob.Label(self.thresh_image, self.label_image, blobs)
-
-        # Filter blobs by area
-        if self.filter_by_area:
-            cvblob.FilterByArea(blobs,self.min_area,self.max_area)
-
-        # Convert blobs data structure to dictionary
-        blobs_list = []
-        for k in blobs:
-            blob_dict = {}
-            centroid = cvblob.Centroid(blobs[k])
-            blob_dict['centroid_x'] = centroid[0]
-            blob_dict['centroid_y'] = centroid[1]
-            blob_dict['angle'] = cvblob.Angle(blobs[k])
-            blob_dict['area'] = blobs[k].area
-            blob_dict['min_x'] = blobs[k].minx
-            blob_dict['max_x'] = blobs[k].maxx
-            blob_dict['min_y'] = blobs[k].miny
-            blob_dict['max_y'] = blobs[k].maxy
-            blobs_list.append(blob_dict)
-
-        if not create_image:
-            return blobs_list
-        else:
-            # Render blobs on image
-            if self.blobs_image is None:
-                self.blobs_image = cv.CreateImage(cv.GetSize(raw_image), cv.IPL_DEPTH_8U, 3)
-            cv.CvtColor(raw_image, self.blobs_image,cv.CV_GRAY2BGR)
-            cvblob.RenderBlobs(self.label_image, blobs, raw_image, self.blobs_image, self.blob_mask, 1.0)
-            blobs_rosimage = self.bridge.cv_to_imgmsg(self.blobs_image,encoding="passthrough")
-            return blobs_list, blobs_rosimage
+#    def findBlobsCvBlob(self,data, create_image=True):
+#        """
+#        Old version using cvblob library - has a memory leak somewhere (in the C++ library or 
+#        python bindings) which makes is unusable
+#        
+#
+#        Finds blobs in rosimage data. Returns 
+#
+#        blobs - stucture containting data for all blobs found in the image which aren't
+#                filtered out.
+#        blobs_image - an image with the blobs and there centroids superimposed on the image.
+#        """
+#        # Convert rosimage to opencv image.
+#        cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
+#        raw_image = cv.GetImage(cv_image)
+#
+#        if self.thresh_image is None:
+#            if create_image:
+#                self.thresh_image = cv.CreateImage(cv.GetSize(raw_image),raw_image.depth, raw_image.channels)
+#            else:
+#                self.thresh_image = raw_image
+#
+#        # Threshold image 
+#        cv.Threshold(raw_image, self.thresh_image, self.threshold, 255, cv.CV_THRESH_BINARY)
+#
+#        if self.label_image is None:
+#            self.label_image = cv.CreateImage(cv.GetSize(raw_image), cvblob.IPL_DEPTH_LABEL, 1)
+#
+#        # Find blobs
+#        blobs = cvblob.Blobs()
+#        result = cvblob.Label(self.thresh_image, self.label_image, blobs)
+#
+#        # Filter blobs by area
+#        if self.filter_by_area:
+#            cvblob.FilterByArea(blobs,self.min_area,self.max_area)
+#
+#        # Convert blobs data structure to dictionary
+#        blobs_list = []
+#        for k in blobs:
+#            blob_dict = {}
+#            centroid = cvblob.Centroid(blobs[k])
+#            blob_dict['centroid_x'] = centroid[0]
+#            blob_dict['centroid_y'] = centroid[1]
+#            blob_dict['angle'] = cvblob.Angle(blobs[k])
+#            blob_dict['area'] = blobs[k].area
+#            blob_dict['min_x'] = blobs[k].minx
+#            blob_dict['max_x'] = blobs[k].maxx
+#            blob_dict['min_y'] = blobs[k].miny
+#            blob_dict['max_y'] = blobs[k].maxy
+#            blobs_list.append(blob_dict)
+#
+#        if not create_image:
+#            return blobs_list
+#        else:
+#            # Render blobs on image
+#            if self.blobs_image is None:
+#                self.blobs_image = cv.CreateImage(cv.GetSize(raw_image), cv.IPL_DEPTH_8U, 3)
+#            cv.CvtColor(raw_image, self.blobs_image,cv.CV_GRAY2BGR)
+#            cvblob.RenderBlobs(self.label_image, blobs, raw_image, self.blobs_image, self.blob_mask, 1.0)
+#            blobs_rosimage = self.bridge.cv_to_imgmsg(self.blobs_image,encoding="passthrough")
+#            return blobs_list, blobs_rosimage
