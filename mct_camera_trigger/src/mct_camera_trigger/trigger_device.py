@@ -32,7 +32,7 @@ if __name__ == '__main__':
     """
     import sys
 
-    port = '/dev/ttyUSB0'
+    port = '/dev/camera-trigger'
     baudrate = 115200
     dev = CamTrigDev(port=port,baudrate=baudrate)
     if sys.argv[1] == 'start':

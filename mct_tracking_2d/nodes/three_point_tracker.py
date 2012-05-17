@@ -357,7 +357,7 @@ class ThreePointTracker(object):
                     del self.seq_to_stamp_and_data[seq]
 
             # Debug ---------------
-            rospy.sleep(1.0/60.0)
+            #rospy.sleep(1.0/60.0)
             # --------------------
 
 

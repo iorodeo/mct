@@ -130,7 +130,8 @@ mjpeg_topics.append('/image_time_stamp_watchdog')
 
 # Add the stitched and tracking pts images for all regions
 for region in regions_dict:
-    mjpeg_topics.append('/{0}/image_stitched_labeled'.format(region))
+    #mjpeg_topics.append('/{0}/image_stitched_labeled'.format(region))
+    mjpeg_topics.append('/{0}/image_stitched'.format(region))
     mjpeg_topics.append('/{0}/image_tracking_pts'.format(region))
     mjpeg_topics.append('/{0}/image_tracking_info'.format(region))
 

@@ -45,6 +45,7 @@ class TimeStampWatchdog(object):
 
         self.max_error_by_camera = {}
         self.max_error = 0.0
+        self.camera_fail = ''
 
         self.most_recent_seq = None
         self.last_checked_seq = None
@@ -109,6 +110,7 @@ class TimeStampWatchdog(object):
             self.ok = True
             self.seq_fail = 0 
             self.error_msg = ''
+            self.camera_fail = ''
         return EmptyResponse()
 
     def camera_info_handler(self, camera, data):
@@ -168,6 +170,7 @@ class TimeStampWatchdog(object):
         # Compute the maximum error so far for all cameras
         self.max_error = max([err for err in self.max_error_by_camera.values()])
         if self.max_error > self.max_allowed_error:
+            self.camera_fail = max([(err,cam) for cam, err in self.max_error_by_camera.items()])[1]
             cur_seq_ok = False
             error_list.append('time stamp outside of expected range')
 
@@ -187,6 +190,7 @@ class TimeStampWatchdog(object):
         watchdog_msg.max_error = self.max_error
         watchdog_msg.seq_fail = self.seq_fail
         watchdog_msg.error_msg = self.error_msg
+        watchdog_msg.camera_fail = self.camera_fail
         self.watchdog_pub.publish(watchdog_msg)
 
         # Publish watchdog image

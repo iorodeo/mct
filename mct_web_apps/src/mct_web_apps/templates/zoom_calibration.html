@@ -29,7 +29,7 @@
 <form id="camera_view_form">
     <table id="mjpeg_table">
         {% for camera, info in mjpeg_info %}
-        {% if loop.index0%4 == 0 %}
+        {% if loop.index0%3 == 0 %}
         <tr>
         {% endif %}
             <td>
@@ -45,7 +45,7 @@
                 </div>
             </td>
 
-        {% if loop.index0%4 == 3 or loop.last%}
+        {% if loop.index0%3 == 2 or loop.last%}
         </tr>
         {% endif %}
         {% endfor %}
