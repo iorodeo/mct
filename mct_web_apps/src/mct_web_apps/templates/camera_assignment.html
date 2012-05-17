@@ -46,7 +46,7 @@
 <form id="camera_assignment_form">
     <table id="mjpeg_table">
         {% for camera_id, info in mjpeg_info_dict.iteritems() %}
-        {% if loop.index0%4 == 0 %}
+        {% if loop.index0%3 == 0 %}
         <tr>
         {% endif %}
             <td>
@@ -69,7 +69,7 @@
                     </div>
                 </div>
             </td>
-        {% if loop.index0%4 == 3 or loop.last%}
+        {% if loop.index0%2 == 2 or loop.last%}
         </tr>
         {% endif %}
         {% endfor %}

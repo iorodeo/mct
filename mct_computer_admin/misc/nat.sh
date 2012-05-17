@@ -5,9 +5,14 @@ MODPROBE=/sbin/modprobe
 EXTIF="eth0"
 INTIF1="eth1"
 INTIF2="eth2"
+INTIF3="eth3"
+INTIF4="eth4"
+
 echo "   External Interface:  $EXTIF"
 echo "   Internal Interface 1:  $INTIF1"
 echo "   Internal Interface 2:  $INTIF2"
+echo "   Internal Interface 3:  $INTIF3"
+echo "   Internal Interface 4:  $INTIF4"
 
 #======================================================================
 #== No editing beyond this line is required for initial MASQ testing == 
@@ -45,8 +50,13 @@ COMMIT
 :OUTPUT ACCEPT [0:0]
 -A FORWARD -i "$EXTIF" -o "$INTIF1" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
 -A FORWARD -i "$EXTIF" -o "$INTIF2" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
+-A FORWARD -i "$EXTIF" -o "$INTIF3" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
+-A FORWARD -i "$EXTIF" -o "$INTIF4" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
 -A FORWARD -i "$INTIF1" -o "$EXTIF" -j ACCEPT
 -A FORWARD -i "$INTIF2" -o "$EXTIF" -j ACCEPT
+-A FORWARD -i "$INTIF3" -o "$EXTIF" -j ACCEPT
+-A FORWARD -i "$INTIF4" -o "$EXTIF" -j ACCEPT
+
 -A FORWARD -j LOG
 COMMIT
 EOF

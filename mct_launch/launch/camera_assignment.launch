@@ -1,4 +1,5 @@
 <launch>
+    <include file="$(find mct_light_control)/launch/mightex_led_control.launch" />
     <include file="$(find mct_camera_trigger)/launch/camera_trigger.launch" />
     <include file="$(find mct_camera_tools)/launch/camera1394_inspector_master.launch" />
     <include file="$(find mct_camera_tools)/launch/mjpeg_manager.launch" />
