@@ -25,9 +25,10 @@ from mct_camera_trigger import camera_trigger
 from mct_watchdog import time_stamp_watchdog
 from mct_logging import tracking_pts_logger
 from mct_avi_writer import avi_writer
+from tracking_2d_node_startup import tracking_2d_node_startup
 
-DEVELOP = True 
-DEBUG = True 
+DEVELOP = False 
+DEBUG = False 
 OPERATING_MODES = ('standby', 'preview', 'recording')
 
 ## Setup application w/ sijax
@@ -391,6 +392,8 @@ def cleanup():
 # ---------------------------------------------------------------------------------
 if __name__ == '__main__':
 
+    if not DEVELOP: 
+        tracking_2d_node_startup()
     db = setup_redis_db()
     atexit.register(cleanup)
 

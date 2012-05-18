@@ -13,6 +13,7 @@ import Image as PILImage
 import ImageDraw as PILImageDraw
 import ImageFont as PILImageFont
 import mct_introspection
+import time
 
 from cv_bridge.cv_bridge import CvBridge 
 from mct_utilities import file_tools
@@ -116,6 +117,7 @@ class ThreePointTracker_Synchronizer:
         # Get list of messages in which the object was found
         found_list = [msg for msg in tracking_pts_dict.values() if msg.data.found]
         tracking_pts_msg = ThreePointTracker()
+
         if found_list:
 
             # Object found - select object with largest ROI or if the ROIs are of equal size 
@@ -125,12 +127,23 @@ class ThreePointTracker_Synchronizer:
             camera = best.data.camera
 
             # Get coordintates of points in tracking and stitching planes
-            pts_anchor_plane, pts_stitching_plane = [], []
-            for p in best.data.points:
-                x,y = self.tf2d.camera_pts_to_anchor_plane(camera, p.x, p.y)
-                pts_anchor_plane.append(Point2d(x,y))
-                x,y = self.tf2d.camera_pts_to_stitching_plane(camera, p.x, p.y)
-                pts_stitching_plane.append(Point2d(x,y))
+            # -----------------------------------------------------------
+            # Old method - too slow for 30Hz operation
+            # -----------------------------------------------------------
+            #pts_anchor_plane, pts_stitching_plane = [], []
+            #for p in best.data.points:
+            #    x,y = self.tf2d.camera_pts_to_anchor_plane(camera, p.x, p.y)
+            #    pts_anchor_plane.append(Point2d(x,y))
+            #    x,y = self.tf2d.camera_pts_to_stitching_plane(camera, p.x, p.y)
+            #    pts_stitching_plane.append(Point2d(x,y))
+            # --------------------------------------------------------------
+            # New method
+            best_points_array = numpy.array([(p.x,p.y) for p in best.data.points])
+            pts_anchor_plane = self.tf2d.camera_pts_to_anchor_plane(camera, best_points_array)
+            pts_stitching_plane = self.tf2d.camera_pts_to_stitching_plane(camera, best_points_array) 
+            pts_anchor_plane = [Point2d(p[0],p[1]) for p in list(pts_anchor_plane)]
+            pts_stitching_plane = [Point2d(p[0],p[1]) for p in list(pts_stitching_plane)]
+            # ----------------------------------------------------------------
 
             # Get orientation angle and mid point of object in anchor and stitching planes 
             angle = get_angle(pts_anchor_plane)
@@ -142,13 +155,26 @@ class ThreePointTracker_Synchronizer:
             x0, x1 = roi[0], roi[0] + roi[2]
             y0, y1 = roi[1], roi[1] + roi[3]
             bndry_camera = [(x0,y0), (x1,y0), (x1,y1), (x0,y1)]
-            bndry_anchor = []
-            bndry_stitching = []
-            for x,y in bndry_camera:
-                xx, yy = self.tf2d.camera_pts_to_anchor_plane(camera,x,y)
-                bndry_anchor.append((xx,yy))
-                xx, yy = self.tf2d.camera_pts_to_stitching_plane(camera,x,y)
-                bndry_stitching.append((xx,yy))
+
+            # ---------------------------------------------------------------
+            # Old method - too much time here for 30 Hz operation
+            # ---------------------------------------------------------------
+            #bndry_anchor = []
+            #bndry_stitching = []
+            #for x,y in bndry_camera:
+                #xx, yy = self.tf2d.camera_pts_to_anchor_plane(camera,x,y)
+                #bndry_anchor.append((xx,yy))
+                #xx, yy = self.tf2d.camera_pts_to_stitching_plane(camera,x,y)
+                #bndry_stitching.append((xx,yy))
+            # ----------------------------------------------------------------
+            # New method
+            bndry_camera_array = numpy.array(bndry_camera)
+            bndry_anchor = self.tf2d.camera_pts_to_anchor_plane(camera,bndry_camera_array)
+            bndry_stitching = self.tf2d.camera_pts_to_stitching_plane(camera,bndry_camera_array)
+            bndry_anchor = [tuple(x) for x in list(bndry_anchor)]
+            bndry_stitching = [tuple(x) for x in list(bndry_stitching)]
+            #-------------------------------------------------------------------
+
             dx1 = abs(bndry_anchor[1][0] - bndry_anchor[0][0])
             dx2 = abs(bndry_anchor[3][0] - bndry_anchor[2][0])
             dy1 = abs(bndry_anchor[2][1] - bndry_anchor[1][1])
@@ -280,7 +306,10 @@ class ThreePointTracker_Synchronizer:
 
             with self.lock:
 
+                #t0 = time.time()
+                #print('len pool:', len(self.tracking_pts_pool))
                 for seq, tracking_pts_dict in sorted(self.tracking_pts_pool.items()):
+                    #print(' ', seq)
 
                     # Check if we have all the tracking data for the given sequence number
                     if len(tracking_pts_dict) == len(self.camera_list):
@@ -289,8 +318,11 @@ class ThreePointTracker_Synchronizer:
 
                     # Throw away tracking data greater than the maximum allowed age  
                     if self.latest_seq - seq > self.max_seq_age:
-                        print('Thowing away: ', seq)
+                        #print('Thowing away: ', seq)
                         del self.tracking_pts_pool[seq]
+                #t1 = time.time()
+                #print('loop time:', t1-t0)
+
 
 # Utility functions
 # -----------------------------------------------------------------------------

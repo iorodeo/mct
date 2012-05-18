@@ -7,11 +7,9 @@
     <include file="$(find mct_frame_skipper)/launch/frame_skipper_master.launch"/>
     <include file="$(find mct_image_stitcher)/launch/image_stitcher_master.launch" />
     <include file="$(find mct_tracking_2d)/launch/three_point_tracker_master.launch" />
-
     <include file="$(find mct_tracking_2d)/launch/stitched_image_labeler_master.launch" />
     <include file="$(find mct_watchdog)/launch/time_stamp_watchdog.launch" />
     <include file="$(find mct_avi_writer)/launch/avi_writer_master.launch" />
     <include file="$(find mct_logging)/launch/tracking_pts_logger_master.launch" />
     <include file="$(find mct_camera_tools)/launch/mjpeg_manager.launch" /> 
-    <include file="$(find mct_web_apps)/launch/tracking_2d_app.launch" />
 </launch>

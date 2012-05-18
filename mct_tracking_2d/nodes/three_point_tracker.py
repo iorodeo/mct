@@ -51,11 +51,11 @@ class ThreePointTracker(object):
                 )
         self.blobFinder.threshold = rospy.get_param( 
                 '/{0}/threshold'.format(params_ns), 
-                100,
+                200,
                 )
         self.blobFinder.filter_by_area = rospy.get_param(
                 '/{0}/filter_by_area'.format(params_ns), 
-                False
+                False 
                 )
         self.blobFinder.min_area = rospy.get_param(
                 '/{0}/min_area'.format(params_ns),
@@ -70,6 +70,7 @@ class ThreePointTracker(object):
                 (0.0, 0.04774, 0.07019),
                 )
         self.tracking_pts_colors =[(0,0,255), (0,255,0), (0,255,255)]
+
 
         # Determine target point spacing 
         d0 = self.tracking_pts_spacing[1] - self.tracking_pts_spacing[0]
@@ -153,6 +154,7 @@ class ThreePointTracker(object):
         with self.lock:
             self.latest_stamp = stamp_tuple
             self.stamp_to_seq[stamp_tuple] = data.header.seq
+            #print('camera', data.header.seq)
 
     def image_callback(self,data):
         """
@@ -164,6 +166,7 @@ class ThreePointTracker(object):
         with self.lock:
             blobs_list = self.blobFinder.findBlobs(data,create_image=False)
             #blobs_list = []
+            #print('image, blobs = ', len(blobs_list))
 
         # Convert to opencv image
         cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
@@ -353,14 +356,10 @@ class ThreePointTracker(object):
                     tracking_pts_msg.data.points = tracking_pts 
                     tracking_pts_msg.image = data['image_tracking_pts']
                     self.tracking_pts_pub.publish(tracking_pts_msg)
+                    #print('publish', seq)
                     
                     # Remove data for this sequence number.
                     del self.seq_to_stamp_and_data[seq]
-
-            # Debug ---------------
-            #rospy.sleep(1.0/60.0)
-            # --------------------
-
 
 
 # -------------------------------------------------------------------------------

@@ -45,6 +45,8 @@ cmd_msgs = {
         'show_camera_info_header': 'launch camera_info/header viewers',
         'show_camera_info_header_seq': 'launch camera_info/header/seq viewers',
         'test': 'test command for development',
+        'camera_assignment': 'starts the  camera assigment application',
+        'zoom_calibration': 'starts the zomm calibration application',
         }
 
 fab_cmds = [ 
@@ -63,6 +65,27 @@ fab_cmds = [
         'rosmake_preclean',
         'clean_camera_calibrations',
         ]
+
+def camera_assignment():
+    """
+    Starts the camera assignment application.
+    """
+    roslaunch('camera_assignment.launch')
+
+def zoom_calibration():
+    """
+    Starts the zoom calibration tool.
+    """
+    roslaunch('zoom_calibration.launch')
+
+def roslaunch(launch_file):
+    """
+    Runs a roslaunch file.
+    """
+    try:
+        subprocess.call(['roslaunch', 'mct_launch', launch_file])
+    except KeyboardInterrupt:
+        return
 
 def wakeup():
     """
