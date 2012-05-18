@@ -45,8 +45,12 @@ cmd_msgs = {
         'show_camera_info_header': 'launch camera_info/header viewers',
         'show_camera_info_header_seq': 'launch camera_info/header/seq viewers',
         'test': 'test command for development',
-        'camera_assignment': 'starts the  camera assigment application',
-        'zoom_calibration': 'starts the zomm calibration application',
+        'camera_assignment': 'starting camera assigment application',
+        'zoom_calibration': 'starting zoom calibration application',
+        'camera_calibration': 'starting the camera calibration application',
+        'homography_calibration': 'starting the homography calibration application',
+        'transform_2d_calibration': 'starting the 2d transform calibration application',
+        'tracking_2d': 'starting the 2d tracking application',
         }
 
 fab_cmds = [ 
@@ -77,6 +81,30 @@ def zoom_calibration():
     Starts the zoom calibration tool.
     """
     roslaunch('zoom_calibration.launch')
+
+def camera_calibration():
+    """
+    Starts the camera calibration application
+    """
+    roslaunch('camera_calibration.launch')
+
+def homography_calibration():
+    """
+    Starts the homography calibration application
+    """
+    roslaunch('homography_calibration.launch')
+
+def transform_2d_calibration():
+    """
+    Starts the 2d transformation calibration application
+    """
+    roslaunch('transform_2d_calibration.launch')
+
+def tracking_2d():
+    """
+    Starts the tracking 2d application
+    """
+    roslaunch('tracking_2d.launch')
 
 def roslaunch(launch_file):
     """
