@@ -50,8 +50,8 @@ class BlobFinder(object):
 
         # Find contours
         storage = cv.CreateMemStorage(0)
-        contours = cv.FindContours(self.thresh_image,  storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
-        #contours = cv.FindContours(self.thresh_image,  storage, cv.CV_RETR_EXTERNAL, cv.CV_CHAIN_APPROX_SIMPLE)
+        #contours = cv.FindContours(self.thresh_image,  storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
+        contours = cv.FindContours(self.thresh_image,  storage, cv.CV_RETR_EXTERNAL, cv.CV_CHAIN_APPROX_SIMPLE)
 
         # Find blob data
         blobs_list = []
