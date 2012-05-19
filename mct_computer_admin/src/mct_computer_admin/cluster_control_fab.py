@@ -51,6 +51,8 @@ cmd_msgs = {
         'homography_calibration': 'starting the homography calibration application',
         'transform_2d_calibration': 'starting the 2d transform calibration application',
         'tracking_2d': 'starting the 2d tracking application',
+        'help': 'Command line interface to MCT (Multi-Camera Tracker)',
+        'frame_drop_test':  '2d tracking application w/ frame dropped frame logger',
         }
 
 fab_cmds = [ 
@@ -69,6 +71,34 @@ fab_cmds = [
         'rosmake_preclean',
         'clean_camera_calibrations',
         ]
+
+def help():
+    print('Usage: mct [command]')
+    print()
+    print('Commands:')
+    print()
+    print('  Basic Administration')
+    print('  --------------------')
+    print('    wakeup               - wake up slave computers')
+    print('    shutdown             - shutdown slave computers ')
+    print('    update_machine_def   - updates the machine definition file')
+    print()
+    print('  Calibration (in order of application)')
+    print('  -------------------------------------')
+    print('    camera_assignment          - run the camera assigment application')
+    print('    zoom_calibration           - run the camera zoom calibration application')
+    print('    camera_calibration         - run the camera calibration applicaiton')
+    print('    homography_calibration     - run the homography calibration application')
+    print('    transform_2d_calibration   - run the 2d transform calibration application')
+    print()
+    print('  Tracking')
+    print('  --------')
+    print('    tracking_2d   - 2D tracking applicaton')
+    print()
+    print('  Testing')
+    print('  -------')
+    print('    frame_drop_test - 2D tracking application w/ dropped frame logger')
+    print()
 
 def camera_assignment():
     """
@@ -105,6 +135,12 @@ def tracking_2d():
     Starts the tracking 2d application
     """
     roslaunch('tracking_2d.launch')
+
+def frame_drop_test():
+    """
+    Starts the frame drop test application
+    """
+    roslaunch('frame_drop_test.launch')
 
 def roslaunch(launch_file):
     """

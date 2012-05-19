@@ -170,7 +170,8 @@ class TimeStampWatchdog(object):
         # Compute the maximum error so far for all cameras
         self.max_error = max([err for err in self.max_error_by_camera.values()])
         if self.max_error > self.max_allowed_error:
-            self.camera_fail = max([(err,cam) for cam, err in self.max_error_by_camera.items()])[1]
+            camera_fail_list = [cam for cam, err in self.max_error_by_camera.items() if err > self.max_allowed_error]
+            self.camera_fail = str(camera_fail_list)
             cur_seq_ok = False
             error_list.append('time stamp outside of expected range')
 

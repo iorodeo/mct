@@ -127,54 +127,28 @@ class ThreePointTracker_Synchronizer:
             camera = best.data.camera
 
             # Get coordintates of points in tracking and stitching planes
-            # -----------------------------------------------------------
-            # Old method - too slow for 30Hz operation
-            # -----------------------------------------------------------
-            #pts_anchor_plane, pts_stitching_plane = [], []
-            #for p in best.data.points:
-            #    x,y = self.tf2d.camera_pts_to_anchor_plane(camera, p.x, p.y)
-            #    pts_anchor_plane.append(Point2d(x,y))
-            #    x,y = self.tf2d.camera_pts_to_stitching_plane(camera, p.x, p.y)
-            #    pts_stitching_plane.append(Point2d(x,y))
-            # --------------------------------------------------------------
-            # New method
             best_points_array = numpy.array([(p.x,p.y) for p in best.data.points])
             pts_anchor_plane = self.tf2d.camera_pts_to_anchor_plane(camera, best_points_array)
             pts_stitching_plane = self.tf2d.camera_pts_to_stitching_plane(camera, best_points_array) 
             pts_anchor_plane = [Point2d(p[0],p[1]) for p in list(pts_anchor_plane)]
             pts_stitching_plane = [Point2d(p[0],p[1]) for p in list(pts_stitching_plane)]
-            # ----------------------------------------------------------------
 
             # Get orientation angle and mid point of object in anchor and stitching planes 
             angle = get_angle(pts_anchor_plane)
             midpt_anchor_plane = get_midpoint(pts_anchor_plane)
             midpt_stitching_plane = get_midpoint(pts_stitching_plane)
+            #self.camera_fail = max([(err,cam) for cam, err in self.max_error_by_camera.items()])[1]
 
             # Get size of tracking points image in the anchor (tracking) plane 
             roi = best.data.roi
             x0, x1 = roi[0], roi[0] + roi[2]
             y0, y1 = roi[1], roi[1] + roi[3]
             bndry_camera = [(x0,y0), (x1,y0), (x1,y1), (x0,y1)]
-
-            # ---------------------------------------------------------------
-            # Old method - too much time here for 30 Hz operation
-            # ---------------------------------------------------------------
-            #bndry_anchor = []
-            #bndry_stitching = []
-            #for x,y in bndry_camera:
-                #xx, yy = self.tf2d.camera_pts_to_anchor_plane(camera,x,y)
-                #bndry_anchor.append((xx,yy))
-                #xx, yy = self.tf2d.camera_pts_to_stitching_plane(camera,x,y)
-                #bndry_stitching.append((xx,yy))
-            # ----------------------------------------------------------------
-            # New method
             bndry_camera_array = numpy.array(bndry_camera)
             bndry_anchor = self.tf2d.camera_pts_to_anchor_plane(camera,bndry_camera_array)
             bndry_stitching = self.tf2d.camera_pts_to_stitching_plane(camera,bndry_camera_array)
             bndry_anchor = [tuple(x) for x in list(bndry_anchor)]
             bndry_stitching = [tuple(x) for x in list(bndry_stitching)]
-            #-------------------------------------------------------------------
-
             dx1 = abs(bndry_anchor[1][0] - bndry_anchor[0][0])
             dx2 = abs(bndry_anchor[3][0] - bndry_anchor[2][0])
             dy1 = abs(bndry_anchor[2][1] - bndry_anchor[1][1])
@@ -273,6 +247,7 @@ class ThreePointTracker_Synchronizer:
         value = '{0:+1.3f}'.format(tracking_pts_msg.midpt_anchor_plane.x)
         unit =  'm'
         text_list.append((label,value,unit))
+            #self.camera_fail = max([(err,cam) for cam, err in self.max_error_by_camera.items()])[1]
 
         label = 'Pos Y:'
         value = '{0:+1.3f}'.format(tracking_pts_msg.midpt_anchor_plane.y)

@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find mct_launch)/launch/tracking_2d.launch" />
+    <include file="$(find mct_watchdog)/launch/frame_drop_logger.launch" />
+</launch>
