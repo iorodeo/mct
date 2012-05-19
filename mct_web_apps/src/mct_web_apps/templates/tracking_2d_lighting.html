@@ -1,0 +1,46 @@
+{% extends "tracking_2d_base.html" %} 
+
+{% block head %}
+{{ super() }}
+<title> MCT:Tracking Lighting </title>
+
+<script type="text/javascript" src="static/numbersonly.js?v=234"> </script>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<div id="Wrapper">
+    <div id="Navigation">
+    {{ tabs.display_tabs('ros', tab_list) }}
+    </div>
+    <div id="Content">
+        <br>
+        <form method="post">
+        {% for name, channel_values in lighting_values  %}
+            <h2> {{name}} </h2>
+            {% for channel, values_dict in channel_values %}
+            <strong> {{channel.title()}}: </strong> &nbsp;&nbsp;&nbsp;
+            <input type="text" name="{{name}}_{{channel}}_ma" value="{{values_dict['iset']}}" onKeyPress="return numbersonly(this,event);"/> 
+            <strong> mA </strong>
+            &nbsp;&nbsp;&nbsp;
+            <strong> Enable </strong>
+            <input type="checkbox" name="{{name}}_{{channel}}_enabled" {% if values_dict['enable'] %} checked {% endif %} /> 
+            &nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;
+            <button name="{{name}}?{{channel}}?get"> Get </button>
+            &nbsp;&nbsp;
+            <button name="{{name}}?{{channel}}?set"> Set </button>
+            <br>
+            <br>
+            {% endfor %}
+            <br>
+        {% endfor %}
+        <br>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

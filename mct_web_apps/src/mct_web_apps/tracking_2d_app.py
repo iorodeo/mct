@@ -25,10 +25,13 @@ from mct_camera_trigger import camera_trigger
 from mct_watchdog import time_stamp_watchdog
 from mct_logging import tracking_pts_logger
 from mct_avi_writer import avi_writer
+from mct_light_control import led_control
 from tracking_2d_node_startup import tracking_2d_node_startup
+
 
 DEVELOP = False 
 DEBUG = False 
+
 OPERATING_MODES = ('standby', 'preview', 'recording')
 
 ## Setup application w/ sijax
@@ -36,7 +39,6 @@ app = flask.Flask(__name__)
 app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app.config["SIJAX_JSON_URI"] = '/static/js/sijax/json2.js'
 flask_sijax.Sijax(app)
-
 
 
 @app.route('/')
@@ -65,12 +67,13 @@ def show_control():
         regions_dict = redis_tools.get_dict(db,'regions_dict')
         extra_video_dict = redis_tools.get_dict(db,'extra_video_dict')
         homography_cal_info = get_homography_calibration_info()
+        transform_2d_cal_info = get_transform_2d_calibration_info()
         camera_cal_info = get_camera_calibration_info()
         logging_params_dict = redis_tools.get_dict(db,'logging_params_dict')
         camera_assignment = get_camera_assignment()
         all_cameras_sorted = camera_assignment.keys()
         all_cameras_sorted.sort(cmp=camera_name_cmp)
-
+        camera_pairs_dict = get_camera_pairs_dict()
 
         render_dict = get_base_render_dict()
         page_render_dict = {
@@ -81,9 +84,11 @@ def show_control():
                 'extra_video_dict': extra_video_dict,
                 'logging_params_dict': logging_params_dict,
                 'homography_cal_info': homography_cal_info,
+                'transform_2d_cal_info': transform_2d_cal_info,
                 'camera_cal_info': camera_cal_info,
                 'camera_assignment': camera_assignment,
                 'all_cameras_sorted': all_cameras_sorted,
+                'camera_pairs_dict': camera_pairs_dict,
                 }
         render_dict.update(page_render_dict)
         return flask.render_template('tracking_2d_control.html',**render_dict) 
@@ -136,6 +141,63 @@ def show_ros_info():
             }
     render_dict.update(page_render_dict)
     return flask.render_template('tracking_2d_ros_info.html', **render_dict)
+
+@app.route('/lighting',methods=['GET','POST'])
+def lighting():
+    render_dict = get_base_render_dict()
+    lighting_values = get_empty_lighting_values()
+    have_enable = False
+    have_current = False
+    channel = ''
+    enable = False
+    iset = 0
+
+    if flask.request.method == 'POST':
+        for form_key in flask.request.form:
+            form_key_split = str(form_key).split('?')
+            form_key_end = form_key_split[-1]
+            if form_key_end in ('get', 'set'):
+                name = str(form_key_split[0])
+                channel = str(form_key_split[1])
+                channel_num = int(channel.split('_')[-1])
+                if form_key_end == 'get':
+                    # Get current values from controller
+                    enable, imax, iset = led_control.get_led_settings(name,channel_num)
+                    imax, iset = str(imax), str(iset) 
+                    have_enable = True
+                    have_current = True
+                    break
+                if form_key_end == 'set':
+                    iset = str(flask.request.form['{0}_{1}_ma'.format(name,channel)])
+                    if iset:
+                        have_current = True
+                        if int(iset) > 1000:
+                            iset = 1000
+                        led_control.set_led_current(name,channel_num,int(iset))
+                    if '{0}_{1}_enabled'.format(name,channel) in [str(x) for x in flask.request.form]:
+                        enable = True
+                    else:
+                        enable = False
+                    have_enable = True
+                    led_control.led_enable(name,channel_num,enable)
+                    break
+    if have_enable:
+        for n, c_vals in lighting_values:
+            for c, val_dict in c_vals:
+                if c == channel and n == name:
+                    val_dict['enable'] = enable
+
+    if have_current:
+        for n, c_vals in lighting_values:
+            for c, val_dict in c_vals:
+                if c == channel and n == name:
+                    val_dict['iset'] = iset 
+
+    page_render_dict = {
+            'lighting_values' : lighting_values,
+            }
+    render_dict.update(page_render_dict)
+    return flask.render_template('tracking_2d_lighting.html', **render_dict)
 
 # Sijax handlers
 # ---------------------------------------------------------------------------------
@@ -224,6 +286,26 @@ def get_camera_assignment():
     """
     return file_tools.read_camera_assignment()
 
+def get_transform_2d_calibration_info():
+    """
+    Gets the last modified date for any existing transforms 2d calibration files.
+    """
+    calibration_info = mct_introspection.get_transform_2d_calibration_info()
+    return calibration_info
+
+def get_camera_pairs_dict():
+    camera_pairs = file_tools.read_tracking_2d_camera_pairs()
+    camera_pairs_dict = {}
+    for region, pairs_list in camera_pairs.iteritems():
+        pair_name_list = []
+        for pair in pairs_list:
+            pair_name = '{0}_{1}'.format(pair[0],pair[1])
+            pair_name_list.append(pair_name)
+        if pair_name_list:
+            camera_pairs_dict[region] = pair_name_list
+    return camera_pairs_dict
+
+
 def get_homography_calibration_info():
     """
     Gets the last modified date for any existing homography calibration files.
@@ -289,6 +371,7 @@ def get_tab_list():
     for name in extra_video_dict:
         tab_list.append((name,flask.url_for('show_extra_video', video=name)))
     tab_list.sort()
+    tab_list.append(('lighting', flask.url_for('lighting')))
     tab_list.append(('ros', flask.url_for('show_ros_info')))
     return tab_list
 
@@ -343,6 +426,22 @@ def get_watchdog_mjpeg_info():
             break
     return watchdog_mjpeg_info
 
+def get_empty_lighting_values():
+    """
+    Gets the lighting values from the controller
+    """
+    lighting_values = []
+    lighting_params_dict = redis_tools.get_dict(db,'lighting_params_dict')
+    lighting_names_sorted = sorted(lighting_params_dict.keys())
+    for name in lighting_names_sorted: 
+        channel_values = []
+        for channel in lighting_params_dict[name]:
+            channel_num = int(channel.split('_')[1])
+            values_dict = {'enable': False, 'imax': '', 'iset': ''}
+            channel_values.append((channel,values_dict))
+        lighting_values.append((name,channel_values))
+    return lighting_values
+
 
 def setup_redis_db():
     # Create db and add empty camera assignment
@@ -384,7 +483,20 @@ def setup_redis_db():
         os.mkdir(logging_params_dict['directory'])
     redis_tools.set_dict(db,'logging_params_dict', logging_params_dict)
 
+    # Get lighting params
+    mightex_params_dict = file_tools.read_mightex_params()
+    lighting_params_dict = mightex_to_lighting_params(mightex_params_dict)
+
+    redis_tools.set_dict(db,'lighting_params_dict', lighting_params_dict)
+
     return db
+
+def mightex_to_lighting_params(mightex_params):
+    lighting_params_dict = {}
+    for name, channel_dict in mightex_params.iteritems():
+        lighting_params_dict[name] = [x for x in channel_dict if x.split('_')[0] == 'channel']
+        lighting_params_dict[name].sort()
+    return lighting_params_dict
 
 def cleanup():
     db.flushdb()

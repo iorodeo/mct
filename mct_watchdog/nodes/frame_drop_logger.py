@@ -20,7 +20,7 @@ class FrameDropLogger(object):
                 )
         self.filename = os.path.join(
                 os.environ['HOME'],
-                'time_stamp_error_log.txt'
+                'dropped_frame_log.txt'
                 )
         self.fid = open(self.filename,'w')
         self.watchdog_reset = rospy.ServiceProxy(

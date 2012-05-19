@@ -80,6 +80,24 @@
         <br>
         <br>
 
+        <h2> Transform 2D Calibration </h2>
+        <ul>
+        {% for region, pairs_list in camera_pairs_dict.iteritems() %}
+            <li> 
+                <strong> {{region.title()}}  </strong>
+                <table id="DisplayTable">
+                {% for pair in pairs_list %}
+                    <tr>
+                        <td> {{pair}} </td>   <td> {{transform_2d_cal_info[pair]['modified']}} </td>
+                    </tr>
+                {% endfor %}
+                </table>
+                <br>
+            </li>
+        {% endfor %}
+        </ul>
+        <br>
+
 
         <h2> Homography Calibration </h2>
         <ul>
@@ -135,8 +153,6 @@
 
         <p id="develop_mode_change"> <p>
         <p id="develop_timer_update"> <p>
-
-
 
     </div>
 </div>
