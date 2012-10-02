@@ -53,7 +53,7 @@ def tracking_2d_node_startup(debug=False):
     # Delay until all camera nodes are ready 
     debug_print(' * camera nodes sync delay ... ', end='',debug=debug)
     sys.stdout.flush()
-    time.sleep(10)
+    time.sleep(12)
     debug_print('done',debug=debug)
     
     debug_print(' * starting camera triggers ... ', end='',debug=debug)

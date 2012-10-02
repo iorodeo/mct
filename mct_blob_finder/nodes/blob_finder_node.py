@@ -85,7 +85,7 @@ class BlobFinderNode(object):
         with self.lock:
             blobs_list, blobs_image = self.blobFinder.findBlobs(data)
 
-        print(len(blobs_list))
+        #print(len(blobs_list))
 
         # Publish image of blobs
         blobs_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")

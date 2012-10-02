@@ -32,7 +32,7 @@ class TimeStampWatchdog(object):
     Watchdog for hardware triggered cameras. Checks for correct sequence order
     and maximum allowed time stamp error.
     """
-    def __init__(self, frame_rate, max_allowed_error=1.0e-3, max_seq_age=200):
+    def __init__(self, frame_rate, max_allowed_error=10.0e-3, max_seq_age=200):
 
         self.frame_rate = frame_rate
 
