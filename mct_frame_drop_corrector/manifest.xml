@@ -1,20 +1,19 @@
 <package>
-  <description brief="mct_frame_skipper">
+  <description brief="mct_frame_drop_corrector">
 
-     mct_frame_skipper
+     mct_frame_drop_corrector
 
   </description>
   <author>Will Dickson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/mct_frame_skipper</url>
+  <url>http://ros.org/wiki/mct_frame_drop_corrector</url>
   <depend package="rospy"/>
   <depend package="mct_msg_and_srv" />
   <depend package="opencv2"/>
   <depend package="cv_bridge"/>
   <depend package="sensor_msgs"/>
   <depend package="mct_utilities"/>
-  <depend package="mct_xml_tools"/>
 
 </package>
 

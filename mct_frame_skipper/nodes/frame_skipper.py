@@ -8,7 +8,6 @@ import threading
 
 import cv
 from cv_bridge.cv_bridge import CvBridge 
-from mct_blob_finder import BlobFinder
 from mct_utilities import file_tools
 
 # Messages
