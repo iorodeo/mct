@@ -145,7 +145,7 @@ class FrameDropCorrector(object):
 
                 # Re-publish image 
                 for seq, stamp_and_image in sorted(self.seq_to_stamp_and_image.items()):
-                    print('seq:', seq)
+                    #print('seq:', seq)
 
                     stamp_tuple, image = stamp_and_image 
                     
@@ -153,8 +153,8 @@ class FrameDropCorrector(object):
                         dt = stamp_dt_secs(stamp_tuple, self.last_pub_stamp)
                         framegap = int(round(dt*self.framerate))
 
-                        if framegap > 1:
-                            print('-'*60)
+                        #if framegap > 1:
+                        #    print('-'*60)
 
                         for i in range(framegap-1):
                             # Note, framegap > 1 implies that we have drop frames. 
@@ -169,11 +169,11 @@ class FrameDropCorrector(object):
                                 self.image_repub.publish(dummy_image)
                             self.seq_offset += 1
 
-                            print('inserting frame: {0}/{1}'.format(i+1, framegap-1))
-                            print(dummy_seq, dummy_stamp_tuple)
+                            #print('inserting frame: {0}/{1}'.format(i+1, framegap-1))
+                            #print(dummy_seq, dummy_stamp_tuple)
 
-                        if framegap > 1:
-                            print('-'*60)
+                        #if framegap > 1:
+                        #    print('-'*60)
 
                     # Publish new frame with corrected sequence number - to account for dropped frames
                     corrected_seq = seq + self.seq_offset
@@ -185,7 +185,7 @@ class FrameDropCorrector(object):
                     self.last_pub_stamp = stamp_tuple
                     del self.seq_to_stamp_and_image[seq]
 
-                    print(corrected_seq, stamp_tuple)
+                    #print(corrected_seq, stamp_tuple)
 
 
 def get_camera_info_from_image_topic(topic):

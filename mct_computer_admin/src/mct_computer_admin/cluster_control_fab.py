@@ -28,7 +28,7 @@ cmd_msgs = {
         'list_slaves': 'listing slaves',
         'rospack_profile': 'run rospack profile on all slave computers', 
         'pull': 'pulling latest version of the mct from repository to slave computers',
-        'pull_master': 'pulling laster version of the mct form repository on master',
+        'pull_master': 'pulling laster version of the mct from repository on master',
         'pull_all': 'pull latest version of the mct repository for all computers in current machine',
         'pull_from_master': 'pull latest version of the mct repository from the master to the slaves', 
         'clone': 'clone new version of mct from repository of slave computers',
