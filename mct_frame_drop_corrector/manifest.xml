@@ -15,6 +15,7 @@
   <depend package="sensor_msgs"/>
   <depend package="mct_utilities"/>
   <depend package="mct_xml_tools"/>
+  <depend package="std_srvs"/>
 
 </package>
 

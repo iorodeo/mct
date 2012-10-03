@@ -11,9 +11,13 @@ from cv_bridge.cv_bridge import CvBridge
 from mct_utilities import file_tools
 
 # Messages
+from std_srvs.srv import Empty
+from std_srvs.srv import EmptyResponse
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from mct_msg_and_srv.msg import SeqAndImage
+from mct_msg_and_srv.srv import FrameDropInfo
+from mct_msg_and_srv.srv import FrameDropInfoResponse
 
 SEC_TO_NSEC = int(1e9)
 
@@ -36,7 +40,7 @@ class Frame_Drop_Corrector(object):
         self.latest_stamp = None
         self.dummy_image = None
         self.seq_offset = 0
-        self.drop_frame_list = []
+        self.frame_drop_list = []
 
         # Data dictionaries for synchronizing tracking data with image seq number
         self.stamp_to_image = {}
@@ -68,8 +72,42 @@ class Frame_Drop_Corrector(object):
             image_topic.append('image_corr')
             image_topic = '/'.join(image_topic)
             self.image_repub = rospy.Publisher(image_topic, Image)
+
+        # Set up frame drop info service - returns list of seq numbers
+        # corresponding to the dropped frames for image stream.
+        frame_drop_srv_name = topic_split[:-1]
+        frame_drop_srv_name.append('frame_drop_info')
+        frame_drop_srv_name = '/'.join(frame_drop_srv_name)
+        self.frame_drop_srv = rospy.Service(
+                frame_drop_srv_name, 
+                FrameDropInfo, 
+                self.handle_frame_drop_srv)
+
+        # Setup reset service - needs to be called anytime the camera trigger is 
+        # stopped. It resets the last_pub_stamp to none.
+        reset_srv_name = topic_split[:-1]
+        reset_srv_name.append('frame_drop_reset')
+        reset_srv_name = '/'.join(reset_srv_name)
+        self.reset_srv = rospy.Service(reset_srv_name,Empty,self.handle_reset_srv)
         self.ready = True
 
+    def handle_reset_srv(self,req):
+        """
+        Resets the frame not detection node. This prevents the addition of a huge
+        number of 'false' dropped frames when the system is restarted.
+        """
+        with self.lock:
+            self.last_pub_stamp = None
+            self.frame_drop_list = []
+        return EmptyResponse()
+
+    def handle_frame_drop_srv(self,req):
+        """
+        Returns list of sequences numbers for all dropped frames.
+        """
+        with self.lock:
+            frame_drop_list = list(self.frame_drop_list)
+        return FrameDropInfoResponse(frame_drop_list)
 
     def camera_info_callback(self,data):
         """
@@ -164,7 +202,7 @@ class Frame_Drop_Corrector(object):
                     if self.publish_image_corr:
                         self.image_repub.publish(dummy_image)
                     self.seq_offset += 1
-                    self.drop_frame_list.append(dummy_seq)
+                    self.frame_drop_list.append(dummy_seq)
 
             # Publish new frame with corrected sequence number - to account for dropped frames
             corrected_seq = seq + self.seq_offset
