@@ -70,7 +70,7 @@ class Frame_Skipper_Master(object):
             try:
                 os.remove(self.launch_file)
             except OSError, e:
-                rospy.logwarn('Error removing image stitcher launch file: {0}'.format(str(e)))
+                rospy.logwarn('Error removing frame skipper launch file: {0}'.format(str(e)))
 
     def run(self):
         rospy.spin()

@@ -17,7 +17,7 @@ from mct_msg_and_srv.msg import SeqAndImage
 
 SEC_TO_NSEC = int(1e9)
 
-class FrameDropCorrector(object):
+class Frame_Drop_Corrector(object):
 
     """
     Frame drop corrector node. Subscribes to the given image topic and detects
@@ -222,7 +222,7 @@ if __name__ == '__main__':
 
     topic = sys.argv[1]
     framerate = float(sys.argv[2])
-    node = FrameDropCorrector(topic,framerate)
+    node = Frame_Drop_Corrector(topic,framerate)
     node.run()
 
 
