@@ -31,11 +31,12 @@ class Frame_Drop_Corrector(object):
         self.lock = threading.Lock() 
         self.camera_info_topic = get_camera_info_from_image_topic(self.topic)
         self.max_stamp_age = max_stamp_age
-        self.latest_stamp = None
-        self.last_pub_stamp = None
         self.bridge = CvBridge()
+        self.last_pub_stamp = None
+        self.latest_stamp = None
         self.dummy_image = None
         self.seq_offset = 0
+        self.drop_frame_list = []
 
         # Data dictionaries for synchronizing tracking data with image seq number
         self.stamp_to_image = {}
@@ -69,6 +70,7 @@ class Frame_Drop_Corrector(object):
             self.image_repub = rospy.Publisher(image_topic, Image)
         self.ready = True
 
+
     def camera_info_callback(self,data):
         """
         Callback for camera info topic subscription - used to associate stamp
@@ -80,6 +82,7 @@ class Frame_Drop_Corrector(object):
         with self.lock:
             self.latest_stamp = stamp_tuple
             self.stamp_to_seq[stamp_tuple] = data.header.seq
+
 
     def image_callback(self,data):
         """
@@ -93,13 +96,86 @@ class Frame_Drop_Corrector(object):
             self.stamp_to_image[stamp_tuple] = data
 
             if self.dummy_image is None:
-                print('creating dummy_image')
                 # Create dummy image for use when a dropped frame occurs.
                 cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
                 raw_image = cv.GetImage(cv_image)
                 dummy_cv_image = cv.CreateImage(cv.GetSize(raw_image),raw_image.depth, raw_image.channels)
                 cv.Zero(dummy_cv_image)
                 self.dummy_image = self.bridge.cv_to_imgmsg(dummy_cv_image,encoding="passthrough")
+
+
+    def associate_image_w_seq(self): 
+        """
+         Associate iamges  with image seq numbers
+        """
+        with self.lock:
+            for stamp, image in self.stamp_to_image.items():
+                try:
+                    seq = self.stamp_to_seq[stamp]
+                    seq_found = True
+                except KeyError:
+                    seq_found = False
+
+                if seq_found:
+                    self.seq_to_stamp_and_image[seq] = stamp, image 
+                    try:
+                        del self.stamp_to_image[stamp]
+                    except KeyError:
+                        pass
+                    try:
+                        del self.stamp_to_seq[stamp]
+                    except KeyError:
+                        pass
+                   
+                else:
+                    # Throw away data greater than the maximum allowed age
+                    if self.latest_stamp is not None:
+                        latest_stamp_secs = stamp_tuple_to_secs(self.latest_stamp)
+                        stamp_secs = stamp_tuple_to_secs(stamp)
+                        stamp_age = latest_stamp_secs - stamp_secs
+                        if stamp_age > self.max_stamp_age:
+                            try:
+                                del self.stamp_to_image[stamp]
+                            except KeyError:
+                                pass
+
+
+    def republish_seq_and_image(self): 
+        """
+        Republished the sequence numbers and images with black frames inserted for
+        any dropped frames which are discovered by looking at the time stamps.
+        """
+        for seq, stamp_and_image in sorted(self.seq_to_stamp_and_image.items()):
+            stamp_tuple, image = stamp_and_image 
+            
+            if self.last_pub_stamp is not None:
+                dt = stamp_dt_secs(stamp_tuple, self.last_pub_stamp)
+                framegap = int(round(dt*self.framerate))
+
+                for i in range(framegap-1):
+                    # Note, framegap > 1 implies that we have drop frames. 
+                    # Publish dummies frames until we are caught up.
+                    dummy_seq = seq + self.seq_offset
+                    dummy_stamp_tuple = incr_stamp_tuple(self.last_pub_stamp, (i+1)/self.framerate)
+                    dummy_image = self.dummy_image
+                    dummy_image.header.seq = dummy_seq 
+                    dummy_image.header.stamp = rospy.Time(*dummy_stamp_tuple)
+                    self.seq_and_image_repub.publish(dummy_seq, dummy_image)
+                    if self.publish_image_corr:
+                        self.image_repub.publish(dummy_image)
+                    self.seq_offset += 1
+                    self.drop_frame_list.append(dummy_seq)
+
+            # Publish new frame with corrected sequence number - to account for dropped frames
+            corrected_seq = seq + self.seq_offset
+            image.header.seq = corrected_seq 
+            image.header.stamp = rospy.Time(*stamp_tuple)
+            self.seq_and_image_repub.publish(corrected_seq, image)
+            if self.publish_image_corr:
+                self.image_repub.publish(image)
+            self.last_pub_stamp = stamp_tuple
+            del self.seq_to_stamp_and_image[seq]
+
 
     def run(self):
         """
@@ -109,83 +185,8 @@ class Frame_Drop_Corrector(object):
         dropped frame is detected a blank "dummy" frame is inserted in its place.
         """
         while not rospy.is_shutdown():
-
-            with self.lock:
-
-                # Associate data with image seq numbers
-                for stamp, image in self.stamp_to_image.items():
-                    try:
-                        seq = self.stamp_to_seq[stamp]
-                        seq_found = True
-                    except KeyError:
-                        seq_found = False
-
-                    if seq_found:
-                        self.seq_to_stamp_and_image[seq] = stamp, image 
-                        try:
-                            del self.stamp_to_image[stamp]
-                        except KeyError:
-                            pass
-                        try:
-                            del self.stamp_to_seq[stamp]
-                        except KeyError:
-                            pass
-                       
-                    else:
-                        # Throw away data greater than the maximum allowed age
-                        if self.latest_stamp is not None:
-                            latest_stamp_secs = stamp_tuple_to_secs(self.latest_stamp)
-                            stamp_secs = stamp_tuple_to_secs(stamp)
-                            stamp_age = latest_stamp_secs - stamp_secs
-                            if stamp_age > self.max_stamp_age:
-                                try:
-                                    del self.stamp_to_image[stamp]
-                                except KeyError:
-                                    pass
-
-                # Re-publish image 
-                for seq, stamp_and_image in sorted(self.seq_to_stamp_and_image.items()):
-                    #print('seq:', seq)
-
-                    stamp_tuple, image = stamp_and_image 
-                    
-                    if self.last_pub_stamp is not None:
-                        dt = stamp_dt_secs(stamp_tuple, self.last_pub_stamp)
-                        framegap = int(round(dt*self.framerate))
-
-                        #if framegap > 1:
-                        #    print('-'*60)
-
-                        for i in range(framegap-1):
-                            # Note, framegap > 1 implies that we have drop frames. 
-                            # Publish dummies frames until we are caught up.
-                            dummy_seq = seq + self.seq_offset
-                            dummy_stamp_tuple = incr_stamp_tuple(self.last_pub_stamp, (i+1)/self.framerate)
-                            dummy_image = self.dummy_image
-                            dummy_image.header.seq = dummy_seq 
-                            dummy_image.header.stamp = rospy.Time(*dummy_stamp_tuple)
-                            self.seq_and_image_repub.publish(dummy_seq, dummy_image)
-                            if self.publish_image_corr:
-                                self.image_repub.publish(dummy_image)
-                            self.seq_offset += 1
-
-                            #print('inserting frame: {0}/{1}'.format(i+1, framegap-1))
-                            #print(dummy_seq, dummy_stamp_tuple)
-
-                        #if framegap > 1:
-                        #    print('-'*60)
-
-                    # Publish new frame with corrected sequence number - to account for dropped frames
-                    corrected_seq = seq + self.seq_offset
-                    image.header.seq = corrected_seq 
-                    image.header.stamp = rospy.Time(*stamp_tuple)
-                    self.seq_and_image_repub.publish(corrected_seq, image)
-                    if self.publish_image_corr:
-                        self.image_repub.publish(image)
-                    self.last_pub_stamp = stamp_tuple
-                    del self.seq_to_stamp_and_image[seq]
-
-                    #print(corrected_seq, stamp_tuple)
+            self.associate_image_w_seq()
+            self.republish_seq_and_image()
 
 
 def get_camera_info_from_image_topic(topic):
