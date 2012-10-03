@@ -81,7 +81,6 @@ def create_inspector_camera_launch(filename, camera_dict):
     template_name = 'inspector_camera_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
     frame_rate_dict = mct_introspection.get_frame_rates()
-    #frame_rate = frame_rate_dict['assignment']
     frame_rate = frame_rate_dict['camera_driver']
 
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
@@ -450,39 +449,10 @@ def create_frame_skipper_launch(filename):
     stitching_params = mct_utilities.file_tools.read_tracking_2d_stitching_params()
     skip_param = stitching_params['frame_skip']
 
-    # Get list of currently running camera names
+    # Get list of currently running camera names and create launch list
     camera_node_list = mct_introspection.get_camera_nodes()
     camera_list = [node.split('/')[2] for node in camera_node_list]
-
-    # Get lists of rectified and raw image topics
-    image_raw_list = mct_introspection.find_camera_image_topics(transport='image_raw')
-    image_rect_list = mct_introspection.find_camera_image_topics(transport='image_rect')
-    
-    # Create dictionaries mapping cameras to raw and rectified images
-    camera_to_image_raw = {}
-    camera_to_image_rect = {}
-    camera_to_camera_topic = {}
-    for camera in camera_list:
-        for image_raw in image_raw_list:
-            if camera in image_raw.split('/'):
-                camera_to_image_raw[camera] = image_raw
-        for image_rect in image_rect_list:
-            if camera in image_rect.split('/'):
-                camera_to_image_rect[camera] = image_rect
-
-    # Assign image topic to frame skipper for each camera.  Use rectified image
-    # if it exists otherwise use raw image.
-    launch_list = []
-    for camera in camera_list:
-        try:
-            topic = camera_to_image_rect[camera]
-        except KeyError:
-            topic = camera_to_image_raw[camera]
-        topic_split = topic.split('/')
-        namespace = '/'.join(topic_split[:4])
-        machine = topic_split[1]
-        launch_list.append((namespace, topic, machine))
-
+    launch_list = get_rect_or_raw_launch_list(camera_list)
 
     # Create xml launch file
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
@@ -494,6 +464,69 @@ def create_frame_skipper_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
+def create_frame_drop_corrector_launch(filename,framerate):
+    """
+    Creates launch file for the frame drop corrector nodes.
+    """
+    template_name = 'frame_drop_corrector_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+
+    # Get list of currently running camera names
+    camera_node_list = mct_introspection.get_camera_nodes()
+    camera_list = [node.split('/')[2] for node in camera_node_list]
+    launch_list = get_rect_or_raw_launch_list(camera_list)
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            launch_list=launch_list,
+            framerate=framerate,
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
+def get_rect_or_raw_launch_list(camera_list):
+    """
+    Returns a launch list for all cameras consisting of either the rectified or
+    raw image streams. The rectified images stream in prefered if it is
+    available.
+
+    The launch list consists of a list of tuples (namespace, topic, machine).
+    """
+
+    # Get dictionaries mapping cameras to raw and rectified image topics
+    camera_to_image_raw = get_camera_to_image_topic(camera_list, 'image_raw')
+    camera_to_image_rect = get_camera_to_image_topic(camera_list, 'image_rect')
+
+    # Assign image topic  for each camera.  Use rectified image if it exists
+    # otherwise use raw image.
+    launch_list = []
+    for camera in camera_list:
+        try:
+            topic = camera_to_image_rect[camera]
+        except KeyError:
+            topic = camera_to_image_raw[camera]
+        topic_split = topic.split('/')
+        namespace = '/'.join(topic_split[:4])
+        machine = topic_split[1]
+        launch_list.append((namespace, topic, machine))
+    return launch_list
+
+def get_camera_to_image_topic(camera_list, topic_name):
+    """
+    Create dictionaries mapping cameras to images with the given topic name. 
+    """
+    image_topic_list = mct_introspection.find_camera_image_topics(transport=topic_name)
+    camera_to_image_topic = {}
+    for camera in camera_list:
+        for image_topic in image_topic_list:
+            if camera in image_topic.split('/'):
+                camera_to_image_topic[camera] = image_topic
+    return camera_to_image_topic
+
 
 def create_avi_writer_launch(filename):
     """
@@ -656,7 +689,7 @@ if __name__ == '__main__':
         filename = 'static_tf_publisher_2d.launch'
         create_static_tf_publisher_2d_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'three_point_tracker.launch'
         create_three_point_tracker_launch(filename)
 
@@ -671,6 +704,11 @@ if __name__ == '__main__':
     if 0:
         filename = 'frame_skipper.launch'
         create_frame_skipper_launch(filename)
+
+    if 1:
+        freq = 30.0
+        filename = 'frame_drop_corrector.launch'
+        create_frame_drop_corrector_launch(filename, freq)
 
     if 0:
         filename = 'avi_writer.launch'
