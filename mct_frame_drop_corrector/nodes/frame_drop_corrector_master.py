@@ -11,6 +11,7 @@ import tempfile
 import subprocess
 
 from mct_xml_tools import launch
+from mct_utilities import file_tools
 
 # Services
 from mct_msg_and_srv.srv import CommandString 
@@ -18,11 +19,12 @@ from mct_msg_and_srv.srv import CommandStringResponse
 
 class Frame_Drop_Corrector_Master(object):
 
-    def __init__(self, framerate):
+    def __init__(self, framerate_mode):
         self.tmp_dir = tempfile.gettempdir()
         self.launch_file = os.path.join(self.tmp_dir,'frame_drop_corrector.launch')
         self.corrector_popen = None
-        self.framerate = framerate
+        framerate_dict = file_tools.read_frame_rates()
+        self.framerate = float(framerate_dict[framerate_mode])
 
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('frame_drop_corrector_master')
@@ -83,6 +85,6 @@ class Frame_Drop_Corrector_Master(object):
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    framerate = float(sys.argv[1])
-    node = Frame_Drop_Corrector_Master(framerate)
+    framerate_mode = sys.argv[1]
+    node = Frame_Drop_Corrector_Master(framerate_mode)
     node.run()

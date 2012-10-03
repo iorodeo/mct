@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <arg name="mode"/>
+    <node pkg="mct_frame_drop_corrector" type="frame_drop_corrector_master.py" name="frame_drop_corrector_master" machine="mct_master" required="true" args="$(arg mode)"/>
+</launch>

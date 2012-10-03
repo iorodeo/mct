@@ -99,6 +99,11 @@ def help():
     print('  -------')
     print('    frame_drop_test - 2D tracking application w/ dropped frame logger')
     print()
+    print('  Help')
+    print('  ----')
+    print('    help                 - prints this menu')
+    print('    help_admin           - provides a list of advanced administrative commands')
+    print()
 
 def camera_assignment():
     """
