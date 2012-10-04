@@ -688,6 +688,13 @@ def get_avi_writer_nodes():
             avi_writer_list.append(node)
     return avi_writer_list
 
+def get_topic_type(topic_name):
+    """
+    Returns the topic type given the name of the topic
+    """
+    value = subprocess.check_output(['rostopic','type', topic_name])
+    return value.strip()
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -913,9 +920,14 @@ if __name__ == '__main__':
         ready = three_point_tracker_synchronizers_ready()
         print(ready)
 
-    if 1:
+    if 0:
         ready = stitched_image_labelers_ready()
         print(ready)
+
+    if 1:
+        topic_name = '/mct_master/camera_2/camera/seq_and_image_corr'
+        topic_type = get_topic_type(topic_name)
+        print(topic_type)
 
 
 
