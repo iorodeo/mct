@@ -479,7 +479,6 @@ def get_camera_calibrate_services():
     cal_list = [srv for srv in srv_list if ('calibrate' in srv) and  ('camera' in srv)]
     return cal_list
 
-
 def get_camera_calibration_info():
     """
     Returns a dictionary of information regarding the existing camera calibration

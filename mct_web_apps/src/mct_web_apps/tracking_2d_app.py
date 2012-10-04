@@ -218,6 +218,7 @@ def mode_change_handler(obj_response, new_mode):
     time.sleep(0.5) # wait for all frames to pass throught the system
 
     if old_mode == 'recording' or new_mode == 'recording': 
+
         # Find logging and avi recording commands
         service_list = mct_introspection.get_services()
         logging_nodes = get_logging_nodes(service_list)
@@ -251,9 +252,16 @@ def mode_change_handler(obj_response, new_mode):
                 avi_writer.start_recording(node,filename,frame_rate)
 
     if new_mode in ('preview', 'recording'):
+        # #########################################
+        # Reset frame drop correctors 
+        # #########################################
+
         # Restart camera triggers
         camera_trigger.start(frame_rate)
 
+        # ########################################
+        # Will want to change this .... 
+        # ########################################
         # Reset time stamp watchdog
         time_stamp_watchdog.reset()
 
