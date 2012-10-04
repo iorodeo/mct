@@ -8,6 +8,7 @@ import threading
 import math
 
 import cv
+import mct_introspection
 from cv_bridge.cv_bridge import CvBridge 
 from mct_blob_finder import BlobFinder
 from mct_utilities import file_tools
@@ -19,6 +20,7 @@ from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo 
 from mct_msg_and_srv.msg import ThreePointTrackerRaw
 from mct_msg_and_srv.msg import Point2d 
+from mct_msg_and_srv.msg import SeqAndImage
 
 # Services
 from mct_msg_and_srv.srv import BlobFinderSetParam
@@ -34,13 +36,20 @@ class ThreePointTracker(object):
     """
 
     def __init__(self, topic=None, max_stamp_age=1.5):
-        self.topic = topic
+
         self.lock = threading.Lock() 
+        self.ready = False
+        self.topic = topic
+        self.tracking_pts_roi = None
+        self.tracking_pts_roi_src = None
+        self.tracking_pts_roi_dst = None
+        self.seq_to_data= {}
+
+        self.topic_type = mct_introspection.get_topic_type(self.topic)
         self.bridge = CvBridge()
         self.camera = get_camera_from_topic(self.topic)
         self.camera_info_topic = get_camera_info_from_image_topic(self.topic)
-        self.max_stamp_age = max_stamp_age
-        self.latest_stamp = None
+        rospy.init_node('blob_finder')
 
         # Get parameters from the parameter server
         params_ns = 'three_point_tracker_params'
@@ -80,34 +89,44 @@ class ThreePointTracker(object):
         else:
             self.large_step_first = False
 
-        # Data dictionareis for synchronizing tracking data with image seq number
-        self.stamp_to_data = {}
-        self.stamp_to_seq = {}
-        self.seq_to_stamp_and_data= {}
+        # Set up subscribers based on topic type.
+        if self.topic_type == 'sensor_msgs/Image':
 
-        self.ready = False
-        self.tracking_pts_roi = None
-        self.tracking_pts_roi_src = None
-        self.tracking_pts_roi_dst = None
-        rospy.init_node('blob_finder')
+            # Data dictionareis for synchronizing tracking data with image seq number
+            self.max_stamp_age = max_stamp_age
+            self.latest_stamp = None
+            self.stamp_to_seq = {}
+            self.stamp_to_data = {}
 
-        # Subscribe to image and camera info topics
-        self.image_sub = rospy.Subscriber(
-                self.topic, 
-                Image, 
-                self.image_callback
-                )
-        self.info_sub = rospy.Subscriber(
-                self.camera_info_topic, 
-                CameraInfo, 
-                self.camera_info_callback
-                )
+            # Subscribe to image and camera info topics
+            self.image_sub = rospy.Subscriber(
+                    self.topic, 
+                    Image, 
+                    self.image_callback
+                    )
+            self.info_sub = rospy.Subscriber(
+                    self.camera_info_topic, 
+                    CameraInfo, 
+                    self.camera_info_callback
+                    )
+
+        elif self.topic_type == 'mct_msg_and_srv/SeqAndImage':
+
+            self.seq_and_image_sub = rospy.Subscriber(
+                    self.topic, 
+                    SeqAndImage,
+                    self.seq_and_image_callback
+                    )
+
+        else:
+            err_msg = 'unable to handle topic type: {0}'.format(self.topic_type)
+            raise ValueError, err_msg
 
         # Create tracking point and tracking points image publications
         self.tracking_pts_pub = rospy.Publisher('tracking_pts', ThreePointTrackerRaw)
         self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
 
-        # Set up services - no really used at the moment 
+        # Set up services for getting and setting the tracking parameters. 
         node_name = rospy.get_name()
         self.set_param_srv = rospy.Service( 
                 '{0}/set_param'.format(node_name), 
@@ -143,41 +162,60 @@ class ThreePointTracker(object):
             filter_by_area = self.blobFinder.filter_by_area
             min_area = self.blobFinder.min_area
             max_area = self.blobFinder.max_area
-        resp_args = (threshold, filter_by_area, min_area, max_area)
+        resp_args = (threshold, filter_by_area, min_area, smax_area)
         return  BlobFinderGetParamResponse(*resp_args)
 
-    def camera_info_callback(self,data):
+    def camera_info_callback(self,camera_info):
         """
-        Callback for camera info topic subscription - used to get the image seq number.
+        Callback for camera info topic subscription - used to get the image seq
+        number when subscribing to sensor_msgs/Images topics as the seq numbers
+        in the Image headers are not reliable.
+
+        Note, only used when subscription is of type sensor_msgs/Image.
         """
-        stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
+        stamp_tuple = camera_info.header.stamp.secs, camera_info.header.stamp.nsecs
         with self.lock:
             self.latest_stamp = stamp_tuple
-            self.stamp_to_seq[stamp_tuple] = data.header.seq
-            #print('camera', data.header.seq)
+            self.stamp_to_seq[stamp_tuple] = camera_info.header.seq
 
-    def image_callback(self,data):
+    def image_callback(self,image):
         """
-        Callback for image topic subscription - finds the tracking points in the image. 
+        Callback for image topic subscription - gets images and finds the
+        tracking points. Finds tracking data in  
+
+        Note, only used when subscription is of type sensor_msgs/Image. 
         """
         if not self.ready:
             return 
-
         with self.lock:
-            blobs_list = self.blobFinder.findBlobs(data,create_image=False)
-            #blobs_list = []
-            #print('image, blobs = ', len(blobs_list))
+            blobs_list = self.blobFinder.findBlobs(image,create_image=False)
+        tracking_data = self.get_tracking_data(blobs_list, image)
+        with self.lock:
+            self.stamp_to_data[tracking_data['stamp']] = tracking_data
 
+    def seq_and_image_callback(self,msg_data):
+        """
+        Callback for subscriptions of type mct_msg_and_srv/SeqAndImage type.
+        Finds blobs in msg_data.image and extracts tracking data.
+        """
+        if not self.ready:
+            return
+        with self.lock:
+            blobs_list = self.blobFinder.findBlobs(msg_data.image,create_image=False)
+        tracking_data = self.get_tracking_data(blobs_list, msg_data.image)
+        with self.lock:
+            self.seq_to_data[msg_data.seq] = tracking_data
+
+    def get_tracking_data(self, blobs_list, rosimage):
+        """
+        Gets tracking data from list of blobs and raw image.
+        """
         # Convert to opencv image
-        cv_image = self.bridge.imgmsg_to_cv(data,desired_encoding="passthrough")
+        cv_image = self.bridge.imgmsg_to_cv(rosimage,desired_encoding="passthrough")
         ipl_image = cv.GetImage(cv_image)
 
         # Create tracking points  image
-        image_tracking_pts = cv.CreateImage(
-                self.tracking_pts_roi_size,
-                cv.IPL_DEPTH_8U, 
-                3
-                )
+        image_tracking_pts = cv.CreateImage(self.tracking_pts_roi_size,cv.IPL_DEPTH_8U,3)
         cv.Zero(image_tracking_pts)
 
         num_blobs = len(blobs_list)
@@ -213,9 +251,6 @@ class ThreePointTracker(object):
         rosimage_tracking_pts = self.bridge.cv_to_imgmsg(image_tracking_pts,encoding="passthrough")
         self.image_tracking_pts_pub.publish(rosimage_tracking_pts)
 
-        # Add data to pool
-        stamp_tuple = data.header.stamp.secs, data.header.stamp.nsecs
-
         # If tracking points roi doesn't exist yet just send zeros
         if self.tracking_pts_roi is None:
             tracking_pts_roi = (0,0,0,0)
@@ -226,16 +261,19 @@ class ThreePointTracker(object):
             tracking_pts_roi_src = self.tracking_pts_roi_src
             tracking_pts_roi_dst = self.tracking_pts_roi_dst
 
-        with self.lock:
-            self.stamp_to_data[stamp_tuple] = {
-                    'found': found,
-                    'tracking_pts': uv_list,
-                    'image_tracking_pts': rosimage_tracking_pts, 
-                    'dist_to_image_center': dist_to_image_center,
-                    'tracking_pts_roi': tracking_pts_roi,
-                    'tracking_pts_roi_src': tracking_pts_roi_src,
-                    'tracking_pts_roi_dst': tracking_pts_roi_dst,
-                    }
+        stamp_tuple = rosimage.header.stamp.secs, rosimage.header.stamp.nsecs
+
+        tracking_data = { 
+                'found': found,
+                'stamp': stamp_tuple,
+                'tracking_pts': uv_list,
+                'image_tracking_pts': rosimage_tracking_pts, 
+                'dist_to_image_center': dist_to_image_center,
+                'tracking_pts_roi': tracking_pts_roi,
+                'tracking_pts_roi_src': tracking_pts_roi_src,
+                'tracking_pts_roi_dst': tracking_pts_roi_dst, 
+                }
+        return tracking_data
 
     def get_dist_to_image_center(self, uv_list, img_size):
         """
@@ -302,64 +340,74 @@ class ThreePointTracker(object):
                 uv_list.reverse()
         return uv_list 
 
+    def associate_data_w_seq(self): 
+        """
+        Associate tracking data with acquisition sequence number.
+
+        Note, this is only used when the subscription topic type is
+        sensor_msgs/Image.
+        """
+        with self.lock:
+            for stamp, data in self.stamp_to_data.items():
+                try:
+                    seq = self.stamp_to_seq[stamp]
+                    seq_found = True
+                except KeyError:
+                    seq_found = False
+
+                if seq_found:
+                    self.seq_to_data[seq] = data 
+                    del self.stamp_to_data[stamp]
+                    del self.stamp_to_seq[stamp]
+                else:
+                    # Throw away data greater than the maximum allowed age
+                    if self.latest_stamp is not None:
+                        latest_stamp_secs = stamp_tuple_to_secs(self.latest_stamp)
+                        stamp_secs = stamp_tuple_to_secs(stamp)
+                        stamp_age = latest_stamp_secs - stamp_secs
+                        if stamp_age > self.max_stamp_age:
+                            del self.stamp_to_data[stamp]
+
+    def publish_tracking_pts(self): 
+        """
+        Creates tracking_pts message and publishes it. 
+        """
+        for seq, data in sorted(self.seq_to_data.items()):
+
+            # Create list of tracking points 
+            tracking_pts = []
+            for u,v in data['tracking_pts']:
+                tracking_pts.append(Point2d(u,v))
+
+            # Create the tracking points message and publish
+            tracking_pts_msg = ThreePointTrackerRaw()
+            tracking_pts_msg.data.seq = seq
+            tracking_pts_msg.data.secs = data['stamp'][0]
+            tracking_pts_msg.data.nsecs = data['stamp'][1]
+            tracking_pts_msg.data.camera = self.camera
+            tracking_pts_msg.data.found = data['found']
+            tracking_pts_msg.data.distance = data['dist_to_image_center']
+            tracking_pts_msg.data.roi = data['tracking_pts_roi']
+            tracking_pts_msg.data.roi_src = data['tracking_pts_roi_src']
+            tracking_pts_msg.data.roi_dst = data['tracking_pts_roi_dst']
+            tracking_pts_msg.data.points = tracking_pts 
+            tracking_pts_msg.image = data['image_tracking_pts']
+            self.tracking_pts_pub.publish(tracking_pts_msg)
+            #print('publish', seq)
+            
+            # Remove data for this sequence number.
+            del self.seq_to_data[seq]
+
     def run(self):
         """
         Main loop - associates tracking data and time stamps  w/ image sequence
         numbers and publishes the tracking data.
         """
         while not rospy.is_shutdown():
+            if self.topic_type == 'sensor_msgs/Image':
+                self.associate_data_w_seq()
+            self.publish_tracking_pts()
 
-            with self.lock:
-
-                # Associate data with image seq numbers
-                for stamp, data in self.stamp_to_data.items():
-                    try:
-                        seq = self.stamp_to_seq[stamp]
-                        seq_found = True
-                    except KeyError:
-                        seq_found = False
-
-                    if seq_found:
-                        self.seq_to_stamp_and_data[seq] = stamp, data 
-                        del self.stamp_to_data[stamp]
-                        del self.stamp_to_seq[stamp]
-                    else:
-                        # Throw away data greater than the maximum allowed age
-                        if self.latest_stamp is not None:
-                            latest_stamp_secs = stamp_tuple_to_secs(self.latest_stamp)
-                            stamp_secs = stamp_tuple_to_secs(stamp)
-                            stamp_age = latest_stamp_secs - stamp_secs
-                            if stamp_age > self.max_stamp_age:
-                                del self.stamp_to_data[stamp]
-
-                # Publish data
-                for seq, stamp_and_data in sorted(self.seq_to_stamp_and_data.items()):
-
-                    stamp_tuple, data = stamp_and_data 
-
-                    # Create list of tracking points 
-                    tracking_pts = []
-                    for u,v in data['tracking_pts']:
-                        tracking_pts.append(Point2d(u,v))
-
-                    # Create the tracking points message and publish
-                    tracking_pts_msg = ThreePointTrackerRaw()
-                    tracking_pts_msg.data.seq = seq
-                    tracking_pts_msg.data.secs = stamp[0]
-                    tracking_pts_msg.data.nsecs = stamp[1]
-                    tracking_pts_msg.data.camera = self.camera
-                    tracking_pts_msg.data.found = data['found']
-                    tracking_pts_msg.data.distance = data['dist_to_image_center']
-                    tracking_pts_msg.data.roi = data['tracking_pts_roi']
-                    tracking_pts_msg.data.roi_src = data['tracking_pts_roi_src']
-                    tracking_pts_msg.data.roi_dst = data['tracking_pts_roi_dst']
-                    tracking_pts_msg.data.points = tracking_pts 
-                    tracking_pts_msg.image = data['image_tracking_pts']
-                    self.tracking_pts_pub.publish(tracking_pts_msg)
-                    #print('publish', seq)
-                    
-                    # Remove data for this sequence number.
-                    del self.seq_to_stamp_and_data[seq]
 
 
 # -------------------------------------------------------------------------------
@@ -393,7 +441,7 @@ def truncate_roi(orig_roi, src_image_size):
         w = src_image_size[0] - src_x - 1
 
     # Set height of ROI
-    if (src_y + h) >= src_image_size[1]:
+    if (src_y + h) >= src_image_size[1]: 
         h = src_image_size[1] - src_y - 1
 
     # Create source and destiniatin image ROI's

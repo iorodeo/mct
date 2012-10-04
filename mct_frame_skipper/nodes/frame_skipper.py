@@ -25,12 +25,12 @@ class FrameSkipper(object):
     """
 
     def __init__(self, topic=None, skip_param=3, max_stamp_age=1.5):
+        self.lock = threading.Lock() 
         self.ready = False
         self.topic = topic
-        self.repub_topic = '{0}_skip'.format(self.topic)
-        self.topic_type = mct_introspection.get_topic_type(self.topic)
         self.skip_param = skip_param
-        self.lock = threading.Lock() 
+        self.topic_type = mct_introspection.get_topic_type(self.topic)
+        self.repub_topic = '{0}_skip'.format(self.topic)
         rospy.init_node('frame_skipper')
 
         if self.topic_type == 'sensor_msgs/Image':

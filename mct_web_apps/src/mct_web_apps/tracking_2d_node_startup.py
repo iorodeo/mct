@@ -38,6 +38,7 @@ def debug_print(*args,**kwarg):
         print(*args,**kwarg)
 
 def tracking_2d_node_startup(debug=False):
+
     # Stop camera triggers
     debug_print(' * stopping camera triggers ... ',end='',debug=debug)
     sys.stdout.flush()
