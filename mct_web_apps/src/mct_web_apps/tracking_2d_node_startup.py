@@ -79,13 +79,13 @@ def tracking_2d_node_startup(debug=False):
         time.sleep(0.2)
     debug_print('done',debug=debug)
 
-    # Start frame drop corrector nodes and wait until they are ready
-    debug_print(' * starting frame drop correctors ... ', end='', debug=debug)
-    sys.stdout.flush()
-    frame_drop_corrector_master.start()
-    while not mct_introspection.frame_drop_correctors_ready():
-        time.sleep(0.2)
-    debug_print('done',debug=debug)
+    ## Start frame drop corrector nodes and wait until they are ready
+    #debug_print(' * starting frame drop correctors ... ', end='', debug=debug)
+    #sys.stdout.flush()
+    #frame_drop_corrector_master.start()
+    #while not mct_introspection.frame_drop_correctors_ready():
+    #    time.sleep(0.2)
+    #debug_print('done',debug=debug)
     
     # Start frame skipper nodes and wait unti they are ready
     debug_print(' * starting frame skippers ... ', end='',debug=debug)

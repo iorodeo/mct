@@ -39,7 +39,7 @@ class Frame_Drop_Corrector(object):
         self.last_pub_stamp = None
         self.latest_stamp = None
         self.dummy_image = None
-        self.seq_offset = 0
+        self.seq_offset = None 
         self.frame_drop_list = []
 
         # Data dictionaries for synchronizing tracking data with image seq number
@@ -98,6 +98,7 @@ class Frame_Drop_Corrector(object):
         """
         with self.lock:
             self.last_pub_stamp = None
+            self.seq_offset = None
             self.frame_drop_list = []
         return EmptyResponse()
 
@@ -185,6 +186,11 @@ class Frame_Drop_Corrector(object):
         """
         for seq, stamp_and_image in sorted(self.seq_to_stamp_and_image.items()):
             stamp_tuple, image = stamp_and_image 
+
+            if self.seq_offset is None:
+                # This is the first run or reset has been called. In the case reset
+                # the seq offset so that the seq numbers begin with 1.
+                self.seq_offset = 1 - seq
             
             if self.last_pub_stamp is not None:
                 dt = stamp_dt_secs(stamp_tuple, self.last_pub_stamp)
