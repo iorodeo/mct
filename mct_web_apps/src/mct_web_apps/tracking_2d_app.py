@@ -27,7 +27,7 @@ from mct_logging import tracking_pts_logger
 from mct_avi_writer import avi_writer
 from mct_light_control import led_control
 from tracking_2d_node_startup import tracking_2d_node_startup
-
+from mct_frame_drop_corrector import frame_drop_corrector
 
 DEVELOP = False 
 DEBUG = False 
@@ -252,15 +252,12 @@ def mode_change_handler(obj_response, new_mode):
                 avi_writer.start_recording(node,filename,frame_rate)
 
     if new_mode in ('preview', 'recording'):
-        # #########################################
-        # Reset frame drop correctors 
-        # #########################################
-
-        # Restart camera triggers
+        # Reset frame drop correctors and restart camera triggers
+        frame_drop_corrector.reset_all()
         camera_trigger.start(frame_rate)
 
         # ########################################
-        # Will want to change this .... 
+        # Probably need to change this .... 
         # ########################################
         # Reset time stamp watchdog
         time_stamp_watchdog.reset()

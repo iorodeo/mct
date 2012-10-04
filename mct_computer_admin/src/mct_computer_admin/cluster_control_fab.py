@@ -44,6 +44,7 @@ cmd_msgs = {
         'show_camera_info':  'launching camera_info viewers',
         'show_camera_info_header': 'launch camera_info/header viewers',
         'show_camera_info_header_seq': 'launch camera_info/header/seq viewers',
+        'show_corrector_seq': 'launch seq_and_image_corr/seq viewers',
         'test': 'test command for development',
         'camera_assignment': 'starting camera assigment application',
         'zoom_calibration': 'starting zoom calibration application',
@@ -398,9 +399,19 @@ def show_camera_info():
     popen_list = []
     filename_list = []
     tmp_dir = tempfile.gettempdir()
-    pos_x, pos_y, step_x, step_y = 10, 50, 170, 0
+    pos_x_init = 10
+    pos_y_init = 50
+    step_x = 160 
+    step_y = 520 
+    pos_x = pos_x_init 
+    pos_y = pos_y_init
     for i, topic in enumerate(camera_info_topics):
         filename = os.path.join(tmp_dir, 'camera_info_{0}.bash'.format(i))
+        if i>0:
+            pos_x += step_x
+            if i%4 == 0:
+                pos_x = pos_x_init
+                pos_y += step_y
         with open(filename, 'w') as f:
             f.write('rostopic echo {0}\n'.format(topic))
         os.chmod(filename,0755)
@@ -408,8 +419,6 @@ def show_camera_info():
         popen = subprocess.Popen(['gnome-terminal', '--geometry', geometry, '-x', filename])
         popen_list.append(popen)
         filename_list.append(filename)
-        pos_x += step_x
-        pos_y += step_y
         time.sleep(0.1)
     # Wait a bit before deleting files
     time.sleep(5)
@@ -425,9 +434,19 @@ def show_camera_info_header():
     popen_list = []
     filename_list = []
     tmp_dir = tempfile.gettempdir()
-    pos_x, pos_y, step_x, step_y = 10, 50, 170, 0
+    pos_x_init = 10
+    pos_y_init = 50
+    step_x = 160 
+    step_y = 520 
+    pos_x = pos_x_init 
+    pos_y = pos_y_init
     for i, topic in enumerate(camera_info_topics):
         filename = os.path.join(tmp_dir, 'camera_info_{0}.bash'.format(i))
+        if i>0:
+            pos_x += step_x
+            if i%4 == 0:
+                pos_x = pos_x_init
+                pos_y += step_y
         with open(filename, 'w') as f:
             f.write('rostopic echo {0}/header\n'.format(topic))
         os.chmod(filename,0755)
@@ -435,8 +454,6 @@ def show_camera_info_header():
         popen = subprocess.Popen(['gnome-terminal', '--geometry', geometry, '-x', filename])
         popen_list.append(popen)
         filename_list.append(filename)
-        pos_x += step_x
-        pos_y += step_y
         time.sleep(0.1)
     # Wait a bit before deleting files
     time.sleep(5)
@@ -452,9 +469,20 @@ def show_camera_info_header_seq():
     popen_list = []
     filename_list = []
     tmp_dir = tempfile.gettempdir()
-    pos_x, pos_y, step_x, step_y = 10, 50, 170, 0
+    pos_x_init = 10
+    pos_y_init = 50
+    step_x = 75
+    step_y = 520 
+    pos_x = pos_x_init 
+    pos_y = pos_y_init
+
     for i, topic in enumerate(camera_info_topics):
         filename = os.path.join(tmp_dir, 'camera_info_{0}.bash'.format(i))
+        if i>0:
+            pos_x += step_x
+            if i%6 == 0:
+                pos_x = pos_x_init
+                pos_y += step_y
         with open(filename, 'w') as f:
             f.write('rostopic echo {0}/header/seq\n'.format(topic))
         os.chmod(filename,0755)
@@ -462,14 +490,46 @@ def show_camera_info_header_seq():
         popen = subprocess.Popen(['gnome-terminal', '--geometry', geometry, '-x', filename])
         popen_list.append(popen)
         filename_list.append(filename)
-        pos_x += step_x
-        pos_y += step_y
         time.sleep(0.1)
     # Wait a bit before deleting files
     time.sleep(5)
     for filename in filename_list:
         os.remove(filename)
-        
+
+def show_corrector_seq():
+    """
+    Launch rostopic echo for all seq_and_image_corr topics - showing just the
+    corrected sequences.     
+    """
+    seq_and_image_topics = mct_introspection.find_topics_w_ending('seq_and_image_corr')
+    popen_list = []
+    filename_list = []
+    tmp_dir = tempfile.gettempdir()
+    pos_x_init = 10
+    pos_y_init = 50
+    step_x = 75 
+    step_y = 520 
+    pos_x = pos_x_init 
+    pos_y = pos_y_init
+    for i, topic in enumerate(seq_and_image_topics):
+        filename = os.path.join(tmp_dir, 'corrector_seq_{0}.bash'.format(i))
+        if i>0:
+            pos_x += step_x
+            if i%6 == 0:
+                pos_x = pos_x_init
+                pos_y += step_y
+        with open(filename, 'w') as f:
+            f.write('rostopic echo {0}/seq\n'.format(topic))
+        os.chmod(filename,0755)
+        geometry = '{0}x{1}+{2}+{3}'.format(80,28,pos_x,pos_y)
+        popen = subprocess.Popen(['gnome-terminal', '--geometry', geometry, '-x', filename])
+        popen_list.append(popen)
+        filename_list.append(filename)
+        time.sleep(0.1)
+    # Wait a bit before deleting files
+    time.sleep(5)
+    for filename in filename_list:
+        os.remove(filename)
 
 def test(*args):
     print('test')
