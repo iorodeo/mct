@@ -245,7 +245,7 @@ def frame_skippers_ready():
         return True
     else:
         return False
-    
+
 def get_number_of_frame_skipper_topics():
     """
     Returns the number of currently published frame skipper topics.
@@ -255,6 +255,32 @@ def get_number_of_frame_skipper_topics():
     for topic in topic_list:
         topic_end = topic[0].split('/')[-1]
         if 'skip' in topic_end:
+            cnt+= 1
+    return cnt
+
+def frame_drop_correctors_ready():
+    """
+    Checks to see if the frame drop correctors 'seq_and_image_corr' topics are all 
+    being published.  There should be a corrector topic for each camera. 
+    """
+    camera_assignment = get_camera_assignment() 
+    number_of_cameras = len(camera_assignment)
+    number_of_correctors = get_number_of_corrector_topics()
+    if number_of_cameras == number_of_correctors:
+        return True
+    else:
+        return False
+
+def get_number_of_corrector_topics():
+    """
+    Returns the number of currently published frame drop corrector "seq_and_image_corr"
+    topics
+    """
+    topic_list = rospy.get_published_topics()
+    cnt = 0
+    for topic in topic_list:
+        topic_end = topic[0].split('/')[-1]
+        if 'seq_and_image_corr' in topic_end:
             cnt+= 1
     return cnt
 

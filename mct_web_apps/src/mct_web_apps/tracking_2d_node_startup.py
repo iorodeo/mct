@@ -13,6 +13,7 @@ from mct_camera_tools import image_proc_master
 from mct_camera_tools import mjpeg_servers
 from mct_camera_trigger import camera_trigger
 from mct_frame_skipper import frame_skipper_master
+from mct_frame_drop_corrector import frame_drop_corrector_master
 from mct_image_stitcher import image_stitcher_master
 from mct_tracking_2d import three_point_tracker_master 
 from mct_tracking_2d import stitched_image_labeler_master
@@ -77,6 +78,14 @@ def tracking_2d_node_startup(debug=False):
     while not mct_introspection.image_rect_ready():
         time.sleep(0.2)
     debug_print('done',debug=debug)
+
+    # Start frame drop corrector nodes and wait until they are ready
+    debug_print(' * starting frame drop correctors ... ', end='', debug=debug)
+    sys.stdout.flush()
+    frame_drop_corrector_master.start()
+    while not mct_introspection.frame_drop_correctors_ready():
+        time.sleep(0.2)
+    debug_print('done',debug=debug)
     
     # Start frame skipper nodes and wait unti they are ready
     debug_print(' * starting frame skippers ... ', end='',debug=debug)
@@ -123,7 +132,6 @@ def tracking_2d_node_startup(debug=False):
     sys.stdout.flush()
     tracking_pts_logger_master.start_tracking_pts_loggers()
     debug_print('done',debug=debug)
-    
     
     # Start mjpeg servers 
     debug_print(' * starting mjpeg servers ... ',end='',debug=debug)
