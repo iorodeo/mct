@@ -30,8 +30,12 @@ MAX_UINT32 = 2**32 - 1
 class ImageStitcher(object):
     """
     Subscribes to all rectified image topics in a 2d tracking region and uses
-    the calibration data to stitch the images together. Publishes
+    the calibration data to stitch the images together. In turn it publishes
     image_stitched and image_stitched/seq.
+
+    Note, in order to handle drop frames gracefully I've modified this node
+    so that it can subscribe to the mct_msg_and_srv/SeqAndImage topics published
+    by the frame_drop_corrector nodes. 
     """
 
     def __init__(
@@ -78,6 +82,7 @@ class ImageStitcher(object):
 
         # Subscribe to topics based on incoming topic type.
         if self.topic_type == 'sensor_msgs/Image':
+
             
             # Create pool dictionaries for incomming data.  
             self.stamp_to_seq_pool= {}
@@ -104,7 +109,7 @@ class ImageStitcher(object):
             self.seq_and_image_sub = {}
             for camera, topic in self.camera_to_image.iteritems():
                 seq_and_image_handler = functools.partial(self.seq_and_image_handler, camera)
-                self.image_sub[camera] = rospy.Subscriber(topic, SeqAndImage, seq_and_image_handler)
+                self.seq_and_image_sub[camera] = rospy.Subscriber(topic, SeqAndImage, seq_and_image_handler)
 
         else:
             err_msg = 'unable to handle topic type: {0}'.format(self.topic_type)
@@ -124,10 +129,6 @@ class ImageStitcher(object):
         """
         self.camera_to_image = {}
         image_topics = mct_introspection.find_camera_image_topics(transport=self.topic_end)
-        # ------------------------------------------------------------------------------------
-        #rect_topics = mct_introspection.find_camera_image_topics(transport='image_rect_skip')
-        #rect_topics = mct_introspection.find_camera_image_topics(transport='image_rect')
-        # ------------------------------------------------------------------------------------
         #for topic in rect_topics:
         for topic in image_topics:
             topic_split = topic.split('/')
@@ -149,13 +150,17 @@ class ImageStitcher(object):
 
     def create_tf_data(self):
         """
-        Pre-computes transform matrices and roi for creating the stitched images.
+        Pre-computes transform matrices and roi for creating the stitched
+        images.
         """
         self.tf_data = {}
         for camera in self.camera_list:
 
             # Get modified transform which maps to ROI in stitched image 
-            bbox = self.tf2d.get_stitching_plane_bounding_box(region, camera_list=[camera])
+            bbox = self.tf2d.get_stitching_plane_bounding_box(
+                    region, 
+                    camera_list=[camera]
+                    )
             tf_matrix = self.tf2d.get_camera_to_stitching_plane_tf(camera)
             roi_x = int(math.floor(bbox['min_x']))
             roi_y = int(math.floor(bbox['min_y']))
@@ -167,7 +172,10 @@ class ImageStitcher(object):
                 [0.0, 0.0, 1.0],
                 ])
             tf_matrix = numpy.dot(shift_matrix, tf_matrix)
-            self.tf_data[camera] = {'matrix': cv.fromarray(tf_matrix), 'roi': (roi_x, roi_y, roi_w, roi_h)}
+            self.tf_data[camera] = {
+                    'matrix': cv.fromarray(tf_matrix), 
+                    'roi': (roi_x, roi_y, roi_w, roi_h)
+                    }
 
     def get_stitched_image_size(self):
         """
@@ -181,47 +189,75 @@ class ImageStitcher(object):
 
     def info_handler(self,camera,data):
         """
-        Handler for incoming camera info messages. In this callback we place image 
-        sequence number into stamp_to_seq_pool dictionay by camera name and timestamp 
+        Handler for incoming camera info messages. In this callback we place
+        image sequence number into stamp_to_seq_pool dictionay by camera name
+        and timestamp 
+
+        Note, only used when imcoming topics are of type sensor_msgs/Image. In
+        this case both the Image and camera_info topics are need to associate
+        the acquisition sequence numbers with the images as the seq numbers in
+        the image headers aren't reliable.
         """
         if self.ready:
             with self.lock:
                 stamp = data.header.stamp.secs, data.header.stamp.nsecs
                 self.stamp_to_seq_pool[camera][stamp] = data.header.seq
+                self.update_seq_newest(data.header.seq)
+                self.update_stamp_newest(stamp)
 
-                # Update newest sequence
-                if self.seq_newest is None:
-                    self.seq_newest = data.header.seq
-                else:
-                    self.seq_newest = max([self.seq_newest, data.header.seq])
-
-                # Update newest time stamp
-                if self.stamp_newest is None:
-                    self.stamp_newest = stamp
-                else:
-                    self.stamp_newest = max([self.stamp_newest, stamp])
 
     def image_handler(self, camera, data):
         """
-        Handler for incoming camera images. In this callback we place the image data
-        into the image_waiting_pool by camera name and timestamp. Note, we don't want
-        to use the seq information in data.header.seq as this seems to initialized in
-        some random way - probably has to do with python not fully supporting ROS's 
-        image_transport. The seq's from the camera_info topics are correct.
+        Handler for incoming camera images. In this callback we place the image
+        data into the image_waiting_pool by camera name and timestamp. Note, we
+        don't want to use the seq information in data.header.seq as this seems
+        to initialized in some random way - probably has to do with python not
+        fully supporting ROS's image_transport. The seq's from the camera_info
+        topics are correct.
+
+        Note, only used when imcoming topics are of type sensor_msgs/Image. In
+        this case both the Image and camera_info topics are need to associate
+        the acquisition sequence numbers with the images as the seq numbers in
+        the image headers aren't reliable.
         """
         if self.ready:
             with self.lock:
-                # Place image into waiting pool by camera and time stamp
                 stamp = data.header.stamp.secs, data.header.stamp.nsecs
                 self.image_waiting_pool[camera][stamp] = data
 
     def seq_and_image_handler(self,camera,data):
-        pass
+        """
+        Handler for incoming SeqAndImage messages which contain both the image
+        data and the frame drop corrected acquisition sequence numbers.
+        
+        Note, onle used when the incomind topics are of type
+        mct_msg_and_srv/SeqAndImage.
+        """
+        if self.ready:
+            with self.lock:
+                try:
+                    self.seq_to_images[data.seq][camera] = data.image
+                except KeyError:
+                    self.seq_to_images[data.seq] = {camera: data.image}
+                self.update_seq_newest(data.seq)
+
+    def update_seq_newest(self,seq): 
+        if self.seq_newest is None:
+            self.seq_newest = seq
+        else:
+            self.seq_newest = max([self.seq_newest, seq])
+
+    def update_stamp_newest(self,stamp): 
+        if self.stamp_newest is None:
+            self.stamp_newest = stamp
+        else:
+            self.stamp_newest = max([self.stamp_newest, stamp])
 
     def process_waiting_images(self):
         """ 
-        Processes waiting images. Associates images in the waiting pool with their acquisition
-        sequence number and places them in the seq_to_images buffer.         
+        Processes waiting images. Associates images in the waiting pool with
+        their acquisition sequence number and places them in the seq_to_images
+        buffer.         
         """
         with self.lock:
             # Associate images in the waiting pool with their seq numbers 
@@ -370,7 +406,8 @@ class ImageStitcher(object):
         while not rospy.is_shutdown(): 
             if self.seq_newest is None:
                 continue
-            self.process_waiting_images() 
+            if self.topic_type == 'sensor_msgs/Image':
+                self.process_waiting_images() 
             self.publish_stitched_image()
 
 
@@ -385,6 +422,15 @@ def stamp_tuple_to_secs(stamp):
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
+    if 1:
+        # Old style - before frame drop correction
+        topic_type = 'sensor_msgs/Image'
+        topic_end = 'image_rect_skip'
+    else:
+        # New style - with frame drop correction
+        topic_type = 'mct_msg_and_srv/SeqAndImage'
+        topic_end = 'seq_and_image_corr'
+
     region = sys.argv[1]
-    node = ImageStitcher(region)
+    node = ImageStitcher(region,topic_type=topic_type,topic_end=topic_end)
     node.run()
