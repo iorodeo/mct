@@ -117,14 +117,14 @@ def tracking_2d_node_startup(debug=False):
     camera_trigger.start(frame_rates['tracking_2d'])
     debug_print('done',debug=debug)
     
-    ## Start frame skipper nodes and wait unti they are ready
-    #debug_print(' * starting frame skippers ... ', end='',debug=debug)
-    #sys.stdout.flush()
-    #frame_skipper_master.start_frame_skippers()
-    #while not mct_introspection.frame_skippers_ready():
-    #    time.sleep(ready_poll_dt)
-    #debug_print('done',debug=debug)
-    #
+    # Start frame skipper nodes and wait unti they are ready
+    debug_print(' * starting frame skippers ... ', end='',debug=debug)
+    sys.stdout.flush()
+    frame_skipper_master.start_frame_skippers()
+    while not mct_introspection.frame_skippers_ready():
+        time.sleep(ready_poll_dt)
+    debug_print('done',debug=debug)
+    
     ## Start image stitcher nodes and wait until stitched image topics ready
     #debug_print(' * starting image stitchers ... ', end='',debug=debug)
     #sys.stdout.flush()

@@ -2,6 +2,7 @@ from __future__ import print_function
 import roslib
 roslib.load_manifest('mct_introspection')
 import rospy
+import sys
 import os
 import os.path
 import yaml
@@ -14,11 +15,22 @@ from mct_utilities import file_tools
 # Services
 from mct_msg_and_srv.srv import GetJSONString 
 
+
+def check_output(*popenargs):
+    """
+    Local version of checkout which works on both python 2.6 and python 2.7.
+    """
+    if sys.version_info >= (2,7):
+        output = subprocess.check_output(*popenargs)
+    else:
+        output = subprocess.Popen(*popenargs,stdout=subprocess.PIPE).communicate()[0]
+    return output
+
 def get_nodes():
     """
     Returns a list of all currently running nodes.
     """
-    node_str = subprocess.check_output(['rosnode', 'list'])
+    node_str = check_output(['rosnode', 'list'])
     node_list = node_str.split()
     return node_list
 
@@ -53,7 +65,7 @@ def get_services():
     """
     Returns a list of all currently available services.
     """
-    service_str = subprocess.check_output(['rosservice','list'])
+    service_str = check_output(['rosservice','list'])
     service_list = service_str.split()
     return service_list
 
@@ -692,7 +704,7 @@ def get_topic_type(topic_name):
     """
     Returns the topic type given the name of the topic
     """
-    value = subprocess.check_output(['rostopic','type', topic_name])
+    value = check_output(['rostopic','type', topic_name])
     return value.strip()
 
 
@@ -700,7 +712,7 @@ def get_topic_type(topic_name):
 if __name__ == '__main__':
     
 
-    if 0:
+    if 1:
         node_list = get_nodes()
         print('node_list:')
         print(node_list)
@@ -924,7 +936,7 @@ if __name__ == '__main__':
         ready = stitched_image_labelers_ready()
         print(ready)
 
-    if 1:
+    if 0:
         topic_name = '/mct_master/camera_2/camera/seq_and_image_corr'
         topic_type = get_topic_type(topic_name)
         print(topic_type)
