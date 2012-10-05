@@ -1,1 +1,2 @@
 import image_stitcher_master
+import image_stitcher

@@ -140,58 +140,58 @@ def tracking_2d_node_startup(debug=False):
         time.sleep(ready_poll_dt)
     debug_print('done',debug=debug)
     
-    # Start three point tracker nodes and wait until they are ready.
-    debug_print(' * starting three point trackers ... ', end='',debug=debug)
-    sys.stdout.flush()
-    three_point_tracker_master.start_three_point_trackers()
-    while not mct_introspection.three_point_trackers_ready():
-        time.sleep(ready_poll_dt)
-    while not mct_introspection.three_point_tracker_synchronizers_ready():
-        time.sleep(ready_poll_dt)
-    debug_print('done',debug=debug)
-    
-    # Start stitched image labeler and wait until stitched images are published.
-    debug_print(' * starting stitched image lablers ... ',end='',debug=debug)
-    sys.stdout.flush()
-    stitched_image_labeler_master.start_stitched_image_labelers()
-    while not mct_introspection.stitched_image_labelers_ready():
-        time.sleep(ready_poll_dt)
-    debug_print('done',debug=debug)
-    
-    # Start avi writer nodes 
-    debug_print(' * starting avi writers ... ', end='',debug=debug)
-    sys.stdout.flush()
-    avi_writer_master.start_avi_writers()
-    debug_print('done',debug=debug)
-    
-    # Start tracking pts loggers
-    debug_print(' * starting tracking pts loggers ... ', end='',debug=debug)
-    sys.stdout.flush()
-    tracking_pts_logger_master.start_tracking_pts_loggers()
-    debug_print('done',debug=debug)
-    
-    # Start mjpeg servers 
-    debug_print(' * starting mjpeg servers ... ',end='',debug=debug)
-    sys.stdout.flush()
-    
-    # Set topics for mjpeg servers
-    mjpeg_topics = []
-    # Add time stamp watchdog image
-    mjpeg_topics.append('/image_time_stamp_watchdog')
-    
-    # Add the stitched and tracking pts images for all regions
-    for region in regions_dict:
-        mjpeg_topics.append('/{0}/image_stitched_labeled'.format(region))
-        mjpeg_topics.append('/{0}/image_tracking_pts'.format(region))
-        mjpeg_topics.append('/{0}/image_tracking_info'.format(region))
-    
-    # Add any extra video images
-    for v in extra_video_dict.values():
-        mjpeg_topics.append(v)
-    
-    mjpeg_servers.set_topics(mjpeg_topics)
-    mjpeg_servers.start_servers()
-    debug_print('done',debug=debug)
+    ## Start three point tracker nodes and wait until they are ready.
+    #debug_print(' * starting three point trackers ... ', end='',debug=debug)
+    #sys.stdout.flush()
+    #three_point_tracker_master.start_three_point_trackers()
+    #while not mct_introspection.three_point_trackers_ready():
+    #    time.sleep(ready_poll_dt)
+    #while not mct_introspection.three_point_tracker_synchronizers_ready():
+    #    time.sleep(ready_poll_dt)
+    #debug_print('done',debug=debug)
+    #
+    ## Start stitched image labeler and wait until stitched images are published.
+    #debug_print(' * starting stitched image lablers ... ',end='',debug=debug)
+    #sys.stdout.flush()
+    #stitched_image_labeler_master.start_stitched_image_labelers()
+    #while not mct_introspection.stitched_image_labelers_ready():
+    #    time.sleep(ready_poll_dt)
+    #debug_print('done',debug=debug)
+    #
+    ## Start avi writer nodes 
+    #debug_print(' * starting avi writers ... ', end='',debug=debug)
+    #sys.stdout.flush()
+    #avi_writer_master.start_avi_writers()
+    #debug_print('done',debug=debug)
+    #
+    ## Start tracking pts loggers
+    #debug_print(' * starting tracking pts loggers ... ', end='',debug=debug)
+    #sys.stdout.flush()
+    #tracking_pts_logger_master.start_tracking_pts_loggers()
+    #debug_print('done',debug=debug)
+    #
+    ## Start mjpeg servers 
+    #debug_print(' * starting mjpeg servers ... ',end='',debug=debug)
+    #sys.stdout.flush()
+    #
+    ## Set topics for mjpeg servers
+    #mjpeg_topics = []
+    ## Add time stamp watchdog image
+    #mjpeg_topics.append('/image_time_stamp_watchdog')
+    #
+    ## Add the stitched and tracking pts images for all regions
+    #for region in regions_dict:
+    #    mjpeg_topics.append('/{0}/image_stitched_labeled'.format(region))
+    #    mjpeg_topics.append('/{0}/image_tracking_pts'.format(region))
+    #    mjpeg_topics.append('/{0}/image_tracking_info'.format(region))
+    #
+    ## Add any extra video images
+    #for v in extra_video_dict.values():
+    #    mjpeg_topics.append(v)
+    #
+    #mjpeg_servers.set_topics(mjpeg_topics)
+    #mjpeg_servers.start_servers()
+    #debug_print('done',debug=debug)
 
 # ---------------------------------------------------------------------------------
 if __name__ == '__main__':

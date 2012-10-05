@@ -13,6 +13,7 @@
   <depend package="cv_bridge"/>
   <depend package="std_msgs"/>
   <depend package="sensor_msgs"/>
+  <depend package="std_srvs"/>
   <depend package="mct_utilities"/>
   <depend package="mct_introspection"/>
   <depend package="mct_transform_2d"/>

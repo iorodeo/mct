@@ -25,6 +25,10 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import UInt32
 from std_msgs.msg import Float32
 
+# Services
+from std_srvs.srv import Empty
+from std_srvs.srv import EmptyResponse
+
 MAX_UINT32 = 2**32 - 1
 
 class ImageStitcher(object):
@@ -59,7 +63,9 @@ class ImageStitcher(object):
         self.ready = False
         self.is_first_write = True
         self.stitched_image = None
-        self.seq_to_images = {}  # Seq to image list buffer
+        self.seq_to_images = {}  
+        self.stamp_to_seq_pool= {}
+        self.image_waiting_pool = {} 
 
         # Information on the latest sequence received and stitched
         self.seq_newest = None
@@ -82,11 +88,8 @@ class ImageStitcher(object):
 
         # Subscribe to topics based on incoming topic type.
         if self.topic_type == 'sensor_msgs/Image':
-
             
             # Create pool dictionaries for incomming data.  
-            self.stamp_to_seq_pool= {}
-            self.image_waiting_pool = {} 
             for camera in self.camera_list:
                 self.stamp_to_seq_pool[camera] = {}
                 self.image_waiting_pool[camera] = {}
@@ -121,7 +124,21 @@ class ImageStitcher(object):
         self.seq_pub = rospy.Publisher('image_stitched/seq', UInt32)
         self.stamp_pub = rospy.Publisher('image_stitched/stamp_info', StampInfo)
         self.processing_dt_pub = rospy.Publisher('image_stitched/processing_dt', ProcessingInfo)
+
+        # Setup reset service - needs to be called anytime the camera trigger is  
+        # stopped - before it is restarted. Empties buffers of images and sequences. 
+        self.reset_srv = rospy.Service('reset_image_stitcher', Empty, self.handle_reset_srv)
         self.ready = True
+
+    def handle_reset_srv(self, req):
+        """
+        Handles the nodes reset service - which empties the image and sequence buffers.
+        """
+        with self.lock:
+            self.seq_to_images = {}  
+            self.stamp_to_seq_pool= {}
+            self.image_waiting_pool = {} 
+        return EmptyResponse()
 
     def create_camera_to_image_dict(self):
         """
@@ -314,7 +331,6 @@ class ImageStitcher(object):
         Checks to see if the sequences to images buffer contains all required frames and if so 
         produces and publishes a stitched image.
         """
-
         # Check to see if we have all images for a given sequence number
         for seq, image_dict in sorted(self.seq_to_images.items()): 
 
@@ -399,7 +415,6 @@ class ImageStitcher(object):
                     del self.seq_to_images[seq]
                 except KeyError:
                     pass
-
 
     def run(self):
 
