@@ -28,6 +28,7 @@ def create_inspector_launch(filename,machine_names):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+
 def create_machine_launch(filename,machine_def):
     """
     Creates the mct_machine.launch file from the machine definition found in
@@ -57,6 +58,7 @@ def create_machine_launch(filename,machine_def):
     with open(filename, 'w') as f:
         f.write(xml_str)
 
+
 def create_inspector_camera_yaml(tmp_dir,camera_dict):
     """
     Creates the yaml files for each camera which are required for the 
@@ -70,6 +72,7 @@ def create_inspector_camera_yaml(tmp_dir,camera_dict):
             data = {'guid': guid, 'frame_id': 'camera_{0}'.format(guid)}
             yaml.dump(data,f,default_flow_style=False)
     return camera_dict
+
 
 def create_inspector_camera_launch(filename, camera_dict):
     """
@@ -94,6 +97,7 @@ def create_inspector_camera_launch(filename, camera_dict):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+
 def create_mjpeg_server_launch(filename, mjpeg_info_dict):
     """
     Creates a launch file for the mjpeg servers based on the mjpeg information
@@ -109,6 +113,7 @@ def create_mjpeg_server_launch(filename, mjpeg_info_dict):
 
     with open(filename,'w') as f:
         f.write(xml_str)
+
 
 def create_camera_launch(filename, camera_assignment, frame_rate='default', trigger=False):
     """
@@ -134,6 +139,7 @@ def create_camera_launch(filename, camera_assignment, frame_rate='default', trig
     with open(filename,'w') as f:
         f.write(xml_str)
 
+
 def create_camera_yaml(directory, camera_assignment):
     """
     Creates the yaml files for the given camera assignment.
@@ -149,6 +155,7 @@ def create_camera_yaml(directory, camera_assignment):
             data = {'guid': info['guid'], 'frame_id': camera}
             yaml.dump(data,f,default_flow_style=False)
     return camera_assignment
+
 
 def create_camera_calibrator_launch(filename, image_topics, chessboard_size, chessboard_square):
     """
@@ -174,6 +181,7 @@ def create_camera_calibrator_launch(filename, image_topics, chessboard_size, che
 
     with open(filename,'w') as f:
         f.write(xml_str)
+
 
 def create_image_proc_launch(filename):
     """
@@ -206,6 +214,7 @@ def create_image_proc_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+
 def create_homography_calibrator_launch(filename):
     """
     Creates launch file for homography calibrators
@@ -233,6 +242,7 @@ def create_homography_calibrator_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
 
 def create_zoom_tool_launch(filename):
     """
@@ -263,6 +273,7 @@ def create_zoom_tool_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
 
 def create_transform_2d_calibrator_launch(filename):
     """
@@ -360,14 +371,18 @@ def create_three_point_tracker_launch(filename):
     template_name = 'three_point_tracker_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
     regions_dict = mct_utilities.file_tools.read_tracking_2d_regions()
-    rect_topic_list = mct_introspection.find_camera_image_topics(transport='image_rect')
+    # ------------------------------------------------------------------------------------
+    # Old style - before frame drop correctors
+    #image_topic_list = mct_introspection.find_camera_image_topics(transport='image_rect')
+    # ------------------------------------------------------------------------------------
+    image_topic_list = mct_introspection.find_camera_image_topics(transport='seq_and_image_corr')
 
     # Create launch dictionary keyed by region.
     launch_dict = {}
     for region, camera_list in regions_dict.iteritems():
         region_launch_list = []
         for camera in camera_list:
-            for rect_topic in rect_topic_list:
+            for rect_topic in image_topic_list:
                 rect_topic_split = rect_topic.split('/')
                 if camera in rect_topic_split:
                     camera_topic = '/'.join(rect_topic_split[:-1])
@@ -384,6 +399,7 @@ def create_three_point_tracker_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
 
 def create_image_stitcher_launch(filename):
     """
@@ -452,7 +468,10 @@ def create_frame_skipper_launch(filename):
     # Get list of currently running camera names and create launch list
     camera_node_list = mct_introspection.get_camera_nodes()
     camera_list = [node.split('/')[2] for node in camera_node_list]
+    # -----------------------------------------------------
+    # Old style - before frame drop correctors
     #launch_list = get_rect_or_raw_launch_list(camera_list)
+    # -----------------------------------------------------
     launch_list = get_corr_launch_list(camera_list)
 
     # Create xml launch file
@@ -465,6 +484,7 @@ def create_frame_skipper_launch(filename):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
 
 def get_corr_launch_list(camera_list):
     """
@@ -483,6 +503,7 @@ def get_corr_launch_list(camera_list):
         launch_list.append((namespace, topic, machine))
     return launch_list
        
+
 def create_frame_drop_corrector_launch(filename,framerate):
     """
     Creates launch file for the frame drop corrector nodes.
@@ -505,6 +526,7 @@ def create_frame_drop_corrector_launch(filename,framerate):
             )
     with open(filename,'w') as f:
         f.write(xml_str)
+
 
 def get_rect_or_raw_launch_list(camera_list):
     """
@@ -532,6 +554,7 @@ def get_rect_or_raw_launch_list(camera_list):
         machine = topic_split[1]
         launch_list.append((namespace, topic, machine))
     return launch_list
+
 
 def get_camera_to_image_topic(camera_list, topic_name):
     """
@@ -707,7 +730,7 @@ if __name__ == '__main__':
         filename = 'static_tf_publisher_2d.launch'
         create_static_tf_publisher_2d_launch(filename)
 
-    if 0:
+    if 1:
         filename = 'three_point_tracker.launch'
         create_three_point_tracker_launch(filename)
 
@@ -719,7 +742,7 @@ if __name__ == '__main__':
         filename = 'stitched_image_labeler.launch'
         create_stitched_image_labeler_launch(filename)
 
-    if 1:
+    if 0:
         filename = 'frame_skipper.launch'
         create_frame_skipper_launch(filename)
 
