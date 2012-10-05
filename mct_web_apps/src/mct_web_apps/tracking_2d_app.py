@@ -27,7 +27,9 @@ from mct_logging import tracking_pts_logger
 from mct_avi_writer import avi_writer
 from mct_light_control import led_control
 from tracking_2d_node_startup import tracking_2d_node_startup
+from mct_tracking_2d import three_point_tracker_synchronizer
 from mct_frame_drop_corrector import frame_drop_corrector
+from mct_image_stitcher import image_stitcher
 
 DEVELOP = False 
 DEBUG = False 
@@ -252,8 +254,15 @@ def mode_change_handler(obj_response, new_mode):
                 avi_writer.start_recording(node,filename,frame_rate)
 
     if new_mode in ('preview', 'recording'):
+        regions_dict = redis_tools.get_dict(db,'regions_dict')
         # Reset frame drop correctors and restart camera triggers
         frame_drop_corrector.reset_all()
+
+        # Reset image_stitcher and three_point_tracker synchronizer for all tracking regions
+        for region in regions_dict:
+            image_stitcher.reset(region)
+            three_point_tracker_synchronizer.reset(region)
+
         camera_trigger.start(frame_rate)
 
         # ########################################
