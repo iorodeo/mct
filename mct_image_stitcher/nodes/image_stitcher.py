@@ -422,14 +422,14 @@ def stamp_tuple_to_secs(stamp):
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    if 1:
+    if 0:
         # Old style - before frame drop correction
         topic_type = 'sensor_msgs/Image'
         topic_end = 'image_rect_skip'
     else:
         # New style - with frame drop correction
         topic_type = 'mct_msg_and_srv/SeqAndImage'
-        topic_end = 'seq_and_image_corr'
+        topic_end = 'seq_and_image_corr_skip'
 
     region = sys.argv[1]
     node = ImageStitcher(region,topic_type=topic_type,topic_end=topic_end)

@@ -452,7 +452,8 @@ def create_frame_skipper_launch(filename):
     # Get list of currently running camera names and create launch list
     camera_node_list = mct_introspection.get_camera_nodes()
     camera_list = [node.split('/')[2] for node in camera_node_list]
-    launch_list = get_rect_or_raw_launch_list(camera_list)
+    #launch_list = get_rect_or_raw_launch_list(camera_list)
+    launch_list = get_corr_launch_list(camera_list)
 
     # Create xml launch file
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
@@ -465,6 +466,23 @@ def create_frame_skipper_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def get_corr_launch_list(camera_list):
+    """
+    Returns a launch list for all cameras consisting of the seq_and_image_corr
+    topics. 
+
+    The launch list consists of tuples (namespace, topic, machine)
+    """
+    camera_to_corr = get_camera_to_image_topic(camera_list, 'seq_and_image_corr')
+    launch_list = []
+    for camera in camera_list:
+        topic = camera_to_corr[camera]
+        topic_split = topic.split('/')
+        namespace = '/'.join(topic_split[:4])
+        machine = topic_split[1]
+        launch_list.append((namespace, topic, machine))
+    return launch_list
+       
 def create_frame_drop_corrector_launch(filename,framerate):
     """
     Creates launch file for the frame drop corrector nodes.
@@ -701,11 +719,11 @@ if __name__ == '__main__':
         filename = 'stitched_image_labeler.launch'
         create_stitched_image_labeler_launch(filename)
 
-    if 0:
+    if 1:
         filename = 'frame_skipper.launch'
         create_frame_skipper_launch(filename)
 
-    if 1:
+    if 0:
         freq = 30.0
         filename = 'frame_drop_corrector.launch'
         create_frame_drop_corrector_launch(filename, freq)
