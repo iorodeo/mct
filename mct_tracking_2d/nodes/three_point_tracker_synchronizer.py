@@ -23,6 +23,8 @@ from sensor_msgs.msg import Image
 from mct_msg_and_srv.msg import Point2d
 from mct_msg_and_srv.msg import ThreePointTracker
 from mct_msg_and_srv.msg import ThreePointTrackerRaw
+from std_srvs.srv import Empty
+from std_srvs.srv import EmptyResponse
 
 class ThreePointTracker_Synchronizer:
     """
@@ -72,6 +74,10 @@ class ThreePointTracker_Synchronizer:
         self.image_tracking_pts = None
         self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
         self.image_tracking_info_pub = rospy.Publisher('image_tracking_info', Image)
+
+        # Setup reset service - needs to be called anytime the camera trigger is  
+        # stopped - before it is restarted. Empties buffers of images and sequences. 
+        self.reset_srv = rospy.Service('reset_tracker_synchronizer', Empty, self.reset_handler)
         self.ready = True
         
     def create_camera_to_tracking_dict(self):
@@ -84,6 +90,14 @@ class ThreePointTracker_Synchronizer:
             camera_fullpath_topic = mct_introspection.get_camera_fullpath_topic(camera)
             tracking_pts_topic = '{0}/tracking_pts'.format(camera_fullpath_topic)
             self.camera_to_tracking[camera] = tracking_pts_topic
+
+    def reset_handler(self,req):
+        """
+        Reset service handler. Empties the tracking_pts_pool.
+        """
+        with self.lock:
+            self.tracking_pts_pool = {}
+        return EmptyResponse()
 
     def tracking_pts_handler(self,camera,msg):
         """

@@ -140,16 +140,16 @@ def tracking_2d_node_startup(debug=False):
         time.sleep(ready_poll_dt)
     debug_print('done',debug=debug)
     
-    ## Start three point tracker nodes and wait until they are ready.
-    #debug_print(' * starting three point trackers ... ', end='',debug=debug)
-    #sys.stdout.flush()
-    #three_point_tracker_master.start_three_point_trackers()
-    #while not mct_introspection.three_point_trackers_ready():
-    #    time.sleep(ready_poll_dt)
-    #while not mct_introspection.three_point_tracker_synchronizers_ready():
-    #    time.sleep(ready_poll_dt)
-    #debug_print('done',debug=debug)
-    #
+    # Start three point tracker nodes and wait until they are ready.
+    debug_print(' * starting three point trackers ... ', end='',debug=debug)
+    sys.stdout.flush()
+    three_point_tracker_master.start_three_point_trackers()
+    while not mct_introspection.three_point_trackers_ready():
+        time.sleep(ready_poll_dt)
+    while not mct_introspection.three_point_tracker_synchronizers_ready():
+        time.sleep(ready_poll_dt)
+    debug_print('done',debug=debug)
+    
     ## Start stitched image labeler and wait until stitched images are published.
     #debug_print(' * starting stitched image lablers ... ',end='',debug=debug)
     #sys.stdout.flush()
