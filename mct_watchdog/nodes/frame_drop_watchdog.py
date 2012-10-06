@@ -31,11 +31,11 @@ class FrameDropWatchdog(object):
     def __init__(self,max_seq_age=150):
 
         rospy.init_node('frame_drop_watchdog')
-        self.lock = threading.Lock()
-        self.ready = False
-        self.frames_dropped = {}
         self.max_seq_age = max_seq_age
+        self.lock = threading.Lock()
+        self.frames_dropped = {}
         self.latest_seq = None
+        self.ready = False
 
         camera_assignment = file_tools.read_camera_assignment()
         self.number_of_cameras = len(camera_assignment)
@@ -81,6 +81,7 @@ class FrameDropWatchdog(object):
         """
         with self.lock:
             self.frames_dropped = {}
+            self.latest_seq = None
         return EmptyResponse()
 
     def frames_dropped_handler(self, camera, data):

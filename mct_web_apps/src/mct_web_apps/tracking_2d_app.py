@@ -257,6 +257,7 @@ def mode_change_handler(obj_response, new_mode):
         regions_dict = redis_tools.get_dict(db,'regions_dict')
         # Reset frame drop correctors and restart camera triggers
         frame_drop_corrector.reset_all()
+        frame_drop_watchdog.reset()
 
         # Reset image_stitcher and three_point_tracker synchronizer for all tracking regions
         for region in regions_dict:
@@ -265,13 +266,6 @@ def mode_change_handler(obj_response, new_mode):
 
         camera_trigger.start(frame_rate)
 
-        # ########################################
-        # Probably need to change this .... 
-        # ########################################
-        # Reset time stamp watchdog
-        frame_drop_watchdog.reset()
-        
-    
     # Development ----------------------------------------------------------------------------------------------
     #obj_response.html('#develop_mode_change', 'develop mode change: {0} -> {1}, {2}'.format(old_mode, new_mode))
     # ----------------------------------------------------------------------------------------------------------

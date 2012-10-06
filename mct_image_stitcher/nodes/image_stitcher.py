@@ -138,6 +138,8 @@ class ImageStitcher(object):
             self.seq_to_images = {}  
             self.stamp_to_seq_pool= {}
             self.image_waiting_pool = {} 
+            self.seq_newest = None
+            self.stamp_newest = None
         return EmptyResponse()
 
     def create_camera_to_image_dict(self):

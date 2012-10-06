@@ -96,6 +96,7 @@ class ThreePointTracker_Synchronizer:
         Reset service handler. Empties the tracking_pts_pool.
         """
         with self.lock:
+            self.latest_seq = None
             self.tracking_pts_pool = {}
         return EmptyResponse()
 
