@@ -17,6 +17,16 @@ def info(namespace):
     resp = proxy()
     return list(resp.seq_list)
 
+def info_all():
+    service_name_list = mct_introspection.get_services()
+    service_name_list = [x for x in service_name_list if 'frame_drop_info' in x]
+    info_dict = {}
+    for name in service_name_list:
+        name_split = name.split('/')
+        camera = name_split[2]
+        info_dict[camera] = info(name)
+    return info_dict
+        
 def reset(namespace):
     if 'frame_drop_reset' in namespace:
         service_name = namespace
@@ -44,6 +54,10 @@ if __name__ == '__main__':
     if service == 'info':
         val = info(namespace)
         print(val)
+    elif service == 'info_all':
+        info_dict = info_all()
+        for k, v in info_dict.iteritems():
+            print(k,v)
     elif service == 'reset':
         reset(namespace)
     elif service == 'reset_all':

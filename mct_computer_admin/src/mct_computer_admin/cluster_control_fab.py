@@ -12,6 +12,7 @@ import subprocess
 import mct_xml_tools
 import mct_introspection
 import mct_utilities
+from mct_frame_drop_corrector import frame_drop_corrector
 
 from fabric.api import *
 from fabric.decorators import hosts
@@ -22,38 +23,40 @@ host_list = mct_introspection.get_hosts()
 master = mct_introspection.get_master()
 
 cmd_msgs = {
-        'wakeup': 'waking up camera computers',
-        'push_setup': 'pushing setup to slave computers',
-        'shutdown': 'shutting down camera computers',
-        'list_slaves': 'listing slaves',
+        'wakeup': 'wake up camera computers',
+        'push_setup': 'push setup to slave computers',
+        'shutdown': 'shut down camera computers',
+        'list_slaves': 'listing slaves computers',
         'rospack_profile': 'run rospack profile on all slave computers', 
-        'pull': 'pulling latest version of the mct from repository to slave computers',
-        'pull_master': 'pulling laster version of the mct from repository on master',
+        'pull': 'pull latest version of the mct from repository to slave computers',
+        'pull_master': 'pull lastest version of the mct from repository on master',
         'pull_all': 'pull latest version of the mct repository for all computers in current machine',
         'pull_from_master': 'pull latest version of the mct repository from the master to the slaves', 
         'clone': 'clone new version of mct from repository of slave computers',
         'clean': 'remove old version of mct',
         'rosmake': 'use rosmake to build mct on slave computers',
         'rosmake_preclean': 'use rosmake to build mct on slave computers',
-        'update_machine_def': 'updating the ROS xml machine launch file',
-        'list_machine_def': 'listing current machine definition',
-        'list_cameras': 'listing cameras',
-        'list_camera_assignment': 'listing camera assignment', 
-        'rsync_camera_calibrations': 'rsyncing camera calibraitons',
-        'clean_camera_calibrations': 'cleaning camera calibrations',
-        'show_camera_info':  'launching camera_info viewers',
+        'update_machine_def': 'update the ROS xml machine launch file',
+        'list_machine_def': 'list current machine definition',
+        'list_cameras': 'list cameras',
+        'list_camera_assignment': 'list camera assignment', 
+        'rsync_camera_calibrations': 'rsync camera calibraitons',
+        'clean_camera_calibrations': 'clean camera calibrations',
+        'show_camera_info':  'launch camera_info viewers',
         'show_camera_info_header': 'launch camera_info/header viewers',
         'show_camera_info_header_seq': 'launch camera_info/header/seq viewers',
         'show_corrector_seq': 'launch seq_and_image_corr/seq viewers',
         'test': 'test command for development',
-        'camera_assignment': 'starting camera assigment application',
-        'zoom_calibration': 'starting zoom calibration application',
-        'camera_calibration': 'starting the camera calibration application',
-        'homography_calibration': 'starting the homography calibration application',
-        'transform_2d_calibration': 'starting the 2d transform calibration application',
-        'tracking_2d': 'starting the 2d tracking application',
-        'help': 'Command line interface to MCT (Multi-Camera Tracker)',
+        'camera_assignment': 'start camera assigment application',
+        'zoom_calibration': 'start zoom calibration application',
+        'camera_calibration': 'start the camera calibration application',
+        'homography_calibration': 'start the homography calibration application',
+        'transform_2d_calibration': 'start the 2d transform calibration application',
+        'tracking_2d': 'start the 2d tracking application',
         'frame_drop_test':  '2d tracking application w/ frame dropped frame logger',
+        'frames_dropped': 'print a report of the frames dropped by the system',
+        'help': 'Command line interface to MCT (Multi-Camera Tracker)',
+        'list_all': 'list all available commands',
         }
 
 fab_cmds = [ 
@@ -99,12 +102,24 @@ def help():
     print('  Testing')
     print('  -------')
     print('    frame_drop_test - 2D tracking application w/ dropped frame logger')
+    print('    frames_dropped  - prints a report listing the frames dropped by each camera')
     print()
     print('  Help')
     print('  ----')
-    print('    help                 - prints this menu')
-    print('    help_admin           - provides a list of advanced administrative commands')
+    print('    help      - prints this menu')
+    print('    list_all  - prints a list and description of all commands')
     print()
+
+def list_all():
+    """
+    Prints list of all available commands.
+    """
+    max_len = max([len(k) for k in cmd_msgs])
+    for k,v in sorted(cmd_msgs.items()):
+        n = max_len - len(k)
+        print('  ', k,' '*n, v)
+    print()
+
 
 def camera_assignment():
     """
@@ -530,6 +545,33 @@ def show_corrector_seq():
     time.sleep(5)
     for filename in filename_list:
         os.remove(filename)
+
+def frames_dropped():
+    """
+    Prints a simple report of the frames dropped by the system. 
+    """
+    info_dict = frame_drop_corrector.info_all()
+    max_name_len = max([len(name) for name in info_dict])
+    print('  ', 'camera', ' '*(max_name_len - len('camera')), '#','  seq list')
+    print('  ', '-'*60)
+    for name, seq_list in sorted(info_dict.items(),cmp=info_item_cmp):
+        pad = ' '*(max_name_len - len(name))
+        print('  ', name, pad, len(seq_list), '  ', seq_list)
+    print()
+
+def info_item_cmp(x,y):
+    """
+    Comparison function for items (k,v) in the dictionary returned
+    byt the frame_drop_corrector.info_all() function. 
+    """
+    x_num = int(x[0].split('_')[1])
+    y_num = int(y[0].split('_')[1])
+    if x_num > y_num:
+        return 1
+    elif x_num < y_num:
+        return -1
+    else:
+        return 0
 
 def test(*args):
     print('test')
