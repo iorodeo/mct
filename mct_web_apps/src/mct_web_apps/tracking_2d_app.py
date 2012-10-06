@@ -434,7 +434,7 @@ def get_watchdog_mjpeg_info():
     mjpeg_info_dict = redis_tools.get_dict(db,'mjpeg_info_dict')
     watchdog_mjpeg_info = {}
     for v in mjpeg_info_dict.values():
-        if v['image_topic'] == '/image_time_stamp_watchdog':
+        if v['image_topic'] == '/image_frame_drop_watchdog':
             watchdog_mjpeg_info['image_topic'] = v['image_topic']
             watchdog_mjpeg_info['mjpeg_port'] = v['mjpeg_port']
             break

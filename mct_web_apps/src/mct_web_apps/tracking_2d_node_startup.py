@@ -177,7 +177,7 @@ def tracking_2d_node_startup(debug=False):
     # Set topics for mjpeg servers
     mjpeg_topics = []
     # Add time stamp watchdog image
-    mjpeg_topics.append('/image_time_stamp_watchdog')
+    mjpeg_topics.append('/image_frame_drop_watchdog')
     
     # Add the stitched and tracking pts images for all regions
     for region in regions_dict:
