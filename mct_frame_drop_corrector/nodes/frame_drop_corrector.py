@@ -10,12 +10,13 @@ import cv
 from cv_bridge.cv_bridge import CvBridge 
 from mct_utilities import file_tools
 
-# Messages
+# Messages and services
 from std_srvs.srv import Empty
 from std_srvs.srv import EmptyResponse
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from mct_msg_and_srv.msg import SeqAndImage
+from mct_msg_and_srv.msg import FramesDropped
 from mct_msg_and_srv.srv import FrameDropInfo
 from mct_msg_and_srv.srv import FrameDropInfoResponse
 
@@ -72,6 +73,12 @@ class Frame_Drop_Corrector(object):
             image_topic.append('image_corr')
             image_topic = '/'.join(image_topic)
             self.image_repub = rospy.Publisher(image_topic, Image)
+
+        # Set up dropped frame # publisher
+        frames_dropped_topic = topic_split[:-1]
+        frames_dropped_topic.append('frames_dropped')
+        frames_dropped_topic = '/'.join(frames_dropped_topic)
+        self.frames_dropped_pub = rospy.Publisher(frames_dropped_topic,FramesDropped) 
 
         # Set up frame drop info service - returns list of seq numbers
         # corresponding to the dropped frames for image stream.
@@ -205,6 +212,7 @@ class Frame_Drop_Corrector(object):
                     dummy_image.header.seq = dummy_seq 
                     dummy_image.header.stamp = rospy.Time(*dummy_stamp_tuple)
                     self.seq_and_image_repub.publish(dummy_seq, dummy_image)
+                    self.frames_dropped_pub.publish(dummy_seq, len(self.frame_drop_list))
                     if self.publish_image_corr:
                         self.image_repub.publish(dummy_image)
                     self.seq_offset += 1
@@ -215,6 +223,7 @@ class Frame_Drop_Corrector(object):
             image.header.seq = corrected_seq 
             image.header.stamp = rospy.Time(*stamp_tuple)
             self.seq_and_image_repub.publish(corrected_seq, image)
+            self.frames_dropped_pub.publish(corrected_seq, len(self.frame_drop_list))
             if self.publish_image_corr:
                 self.image_repub.publish(image)
             self.last_pub_stamp = stamp_tuple
