@@ -22,7 +22,7 @@ from mct_utilities import redis_tools
 from mct_utilities import iface_tools
 from mct_camera_tools import mjpeg_servers
 from mct_camera_trigger import camera_trigger
-from mct_watchdog import time_stamp_watchdog
+from mct_watchdog import frame_drop_watchdog
 from mct_logging import tracking_pts_logger
 from mct_avi_writer import avi_writer
 from mct_light_control import led_control
@@ -269,8 +269,8 @@ def mode_change_handler(obj_response, new_mode):
         # Probably need to change this .... 
         # ########################################
         # Reset time stamp watchdog
-        time_stamp_watchdog.reset()
-
+        frame_drop_watchdog.reset()
+        
     
     # Development ----------------------------------------------------------------------------------------------
     #obj_response.html('#develop_mode_change', 'develop mode change: {0} -> {1}, {2}'.format(old_mode, new_mode))

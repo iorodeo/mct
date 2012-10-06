@@ -1,0 +1,15 @@
+<package>
+  <description brief="mct_frame_drop_test">
+
+     mct_frame_drop_test
+
+  </description>
+  <author>Albert Lee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_frame_drop_test</url>
+  <depend package="rospy"/>
+
+</package>
+
+

@@ -624,6 +624,45 @@ def create_tracking_pts_logger_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
+def create_frame_drop_test_launch(filename,camera0,camera1,display=False):
+    """
+    Creates launch file for the blob_finder based frame drop test.
+    """
+    template_name = 'frame_drop_test_launch.xml'
+    machine_file = mct_utilities.file_tools.machine_launch_file
+
+    image_corr_topic_list = mct_introspection.find_topics_w_ending('image_corr')
+    camera_to_image_corr = {}
+    for topic in image_corr_topic_list:
+        for camera in (camera0, camera1):
+            if '{0}/'.format(camera) in topic:
+                camera_to_image_corr[camera] = topic
+
+    blob_finder_launch = []
+    for camera, topic in camera_to_image_corr.iteritems():
+        topic_split = topic.split('/')
+        machine = topic_split[1]
+        launch_item = (
+                '/frame_drop_test/{0}'.format(camera), 
+                topic, 
+                machine
+                )
+        blob_finder_launch.append(launch_item)
+
+    # Create xml launch file
+    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = jinja2_env.get_template(template_name)
+    xml_str = template.render(
+            machine_file=machine_file, 
+            blob_finder_launch=blob_finder_launch
+            )
+    with open(filename,'w') as f:
+        f.write(xml_str)
+
+
+
+    
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -758,6 +797,13 @@ if __name__ == '__main__':
     if 0:
         filename = 'tracking_pts_logger.launch'
         create_tracking_pts_logger_launch(filename)
+
+    if 1:
+        camera0 = 'camera_2'
+        camera1 = 'camera_5'
+        filename = 'frame_drop_test.launch'
+        create_frame_drop_test_launch(filename,camera0,camera1)
+
 
 
        
