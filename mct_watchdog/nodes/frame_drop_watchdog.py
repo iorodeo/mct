@@ -28,12 +28,14 @@ class FrameDropWatchdog(object):
     """
     Frame drop watchdog monitors the number of frames dropped by the system.     
     """
-    def __init__(self ):
+    def __init__(self,max_seq_age=150):
 
         rospy.init_node('frame_drop_watchdog')
         self.lock = threading.Lock()
         self.ready = False
         self.frames_dropped = {}
+        self.max_seq_age = max_seq_age
+        self.latest_seq = None
 
         camera_assignment = file_tools.read_camera_assignment()
         self.number_of_cameras = len(camera_assignment)
@@ -49,7 +51,6 @@ class FrameDropWatchdog(object):
             camera = get_camera_from_topic(topic)
             handler = functools.partial(self.frames_dropped_handler, camera)
             self.frames_dropped_sub[camera] = rospy.Subscriber(topic, FramesDropped, handler)
-
 
         # Setup total frames dropped service
         self.total_dropped_pub = rospy.Publisher('total_frames_dropped', FramesDropped)
@@ -90,6 +91,13 @@ class FrameDropWatchdog(object):
                 self.frames_dropped[data.seq][camera] = data.frames_dropped
             except KeyError:
                 self.frames_dropped[data.seq] = {camera:data.frames_dropped}
+            self.update_latest_seq(data.seq)
+
+    def update_latest_seq(self,seq):
+        if self.latest_seq is None:
+            self.latest_seq = seq
+        else:
+            self.latest_seq = max([seq, self.latest_seq])
 
     def publish_watchdog_image(self, seq, total_frames_dropped, cameras_w_drops): 
         """
@@ -134,6 +142,9 @@ class FrameDropWatchdog(object):
                         cameras_w_drops = [int(c.split('_')[1]) for c in cameras_w_drops]
                         del self.frames_dropped[seq] 
                         self.publish_watchdog_image(seq, total_frames_dropped, cameras_w_drops)
+                    else:
+                        if self.latest_seq - seq > self.max_seq_age:
+                            del self.frames_dropped[seq]
 
 
 
