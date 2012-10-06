@@ -558,6 +558,9 @@ def frames_dropped():
         pad = ' '*(max_name_len - len(name))
         print('  ', name, pad, len(seq_list), '  ', seq_list)
     print()
+    total = sum([len(x) for x in info_dict.values()])
+    print('  ', 'total frames dropped: ', total)
+    print()
 
 def info_item_cmp(x,y):
     """

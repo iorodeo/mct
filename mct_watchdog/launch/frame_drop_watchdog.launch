@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_watchdog" type="frame_drop_watchdog.py" name="frame_drop_watchdog" machine="mct_master" />
+</launch>
