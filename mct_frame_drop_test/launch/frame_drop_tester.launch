@@ -1,0 +1,13 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <arg name="camera0" default="2"/>
+    <arg name="camera1" default="5"/>
+    <arg name="filename" default="$(env HOME)/frame_drop_test.txt"/>
+    <node 
+        pkg="mct_frame_drop_test" 
+        type="frame_drop_tester.py" 
+        name="frame_drop_tester" 
+        machine="mct_master" 
+        args="$(arg camera0) $(arg camera1) $(arg filename)"
+    />
+</launch>

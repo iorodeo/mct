@@ -14,12 +14,14 @@ import mct_introspection
 
 from mct_xml_tools import launch
 from mct_msg_and_srv.msg import BlobData
+from mct_msg_and_srv.msg import FrameDropTest
 
 class Frame_Drop_Tester(object):
 
     def __init__(self, camera_number_0, camera_number_1, output_file):
         self.ready = False
         self.tester_popen = None
+        self.terminal_popen = None
         self.lock =  threading.Lock()
         self.camera_0 = 'camera_{0}'.format(camera_number_0)
         self.camera_1 = 'camera_{0}'.format(camera_number_1)
@@ -28,8 +30,10 @@ class Frame_Drop_Tester(object):
         self.camera_list = [self.camera_0, self.camera_1]
         self.tmp_dir = tempfile.gettempdir()
         self.launch_file = os.path.join(self.tmp_dir,'frame_drop_test.launch')
+        self.terminal_file = os.path.join(self.tmp_dir, 'frame_test_terminal.bash')
         rospy.on_shutdown(self.clean_up)
         rospy.init_node('frame_drop_tester')
+        self.info_pub = rospy.Publisher('frame_drop_info', FrameDropTest)
         self.launch_tester()
         self.seq_to_blob_data = {}
         blob_data_topics = self.get_blob_data_topics()
@@ -39,6 +43,7 @@ class Frame_Drop_Tester(object):
             camera = topic.split('/')[2]
             handler = functools.partial(self.blob_data_handler,camera)
             blob_data_sub[camera] = rospy.Subscriber(topic,BlobData,handler)
+
 
         self.ready = True
 
@@ -61,6 +66,12 @@ class Frame_Drop_Tester(object):
     def launch_tester(self):
         launch.create_frame_drop_test_launch(self.launch_file,self.camera_0,self.camera_1)
         self.tester_popen = subprocess.Popen(['roslaunch',self.launch_file])
+        with open(self.terminal_file,'w') as f:
+            f.write('rostopic echo frame_drop_info\n')
+        os.chmod(self.terminal_file,0755)
+        popenargs = ['gnome-terminal', '-x', self.terminal_file]
+        self.terminal_popen = subprocess.Popen(popenargs)
+
 
     def kill_tester(self):
         if self.tester_popen is not None:
@@ -70,6 +81,12 @@ class Frame_Drop_Tester(object):
                 os.remove(self.launch_file)
             except OSError, e:
                 rospy.logwarn('Error removing frame skipper launch file: {0}'.format(str(e)))
+        if self.terminal_popen is not None:
+            self.terminal_popen.send_signal(subprocess.signal.SIGINT)
+            try:
+                os.remove(self.terminal_file)
+            except OSError, e:
+                pass
 
     def run(self):
         while not rospy.is_shutdown():
@@ -78,15 +95,18 @@ class Frame_Drop_Tester(object):
                     if len(blob_data) == 2:
                         num0 = blob_data[self.camera_0].number_of_blobs
                         num1 = blob_data[self.camera_1].number_of_blobs
-                        print('seq:', seq)
-                        print('ok: ', num0==num1)
-                        print('number_of_blobs:')
-                        print('  {0} {1}'.format(self.camera_0,num0))
-                        print('  {0} {1}'.format(self.camera_1,num1))
-                        print('---- ')
-                        print()
+                        ok = num0 == num1
+                        self.info_pub.publish(seq,ok,num0,num1)
                         self.fid.write('{0} {1} {2}\n'.format(seq,num0,num1))
                         del self.seq_to_blob_data[seq]
+                        if 0:
+                            print('seq:', seq)
+                            print('ok: ', num0==num1)
+                            print('number_of_blobs:')
+                            print('  {0} {1}'.format(self.camera_0,num0))
+                            print('  {0} {1}'.format(self.camera_1,num1))
+                            print('---- ')
+                            print()
 
     def clean_up(self):
         self.kill_tester()
