@@ -82,7 +82,7 @@ class Frame_Drop_Tester(object):
             except OSError, e:
                 rospy.logwarn('Error removing frame skipper launch file: {0}'.format(str(e)))
         if self.terminal_popen is not None:
-            self.terminal_popen.send_signal(subprocess.signal.SIGINT)
+            self.terminal_popen.send_signal(subprocess.signal.SIGKILL)
             try:
                 os.remove(self.terminal_file)
             except OSError, e:

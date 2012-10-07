@@ -53,8 +53,9 @@ cmd_msgs = {
         'homography_calibration': 'start the homography calibration application',
         'transform_2d_calibration': 'start the 2d transform calibration application',
         'tracking_2d': 'start the 2d tracking application',
-        'frame_drop_test':  '2d tracking application w/ frame dropped frame logger',
+        'frame_drop_test':  'run IR LED frame drop tester',
         'frames_dropped': 'print a report of the frames dropped by the system',
+        'frames_dropped_no_seq': 'print a report of the frames dropped (no seq lists',
         'help': 'Command line interface to MCT (Multi-Camera Tracker)',
         'list_all': 'list all available commands',
         }
@@ -101,8 +102,9 @@ def help():
     print()
     print('  Testing')
     print('  -------')
-    print('    frame_drop_test - 2D tracking application w/ dropped frame logger')
-    print('    frames_dropped  - prints a report listing the frames dropped by each camera')
+    print('    frame_drop_test        - runs the IR LED frame drop tester')
+    print('    frames_dropped         - prints a report of the frames dropped')
+    print('    frames_dropped_no_seq  - prints a report of the frames dropped (no seq lists)')
     print()
     print('  Help')
     print('  ----')
@@ -161,7 +163,24 @@ def frame_drop_test():
     """
     Starts the frame drop test application
     """
-    roslaunch('frame_drop_test.launch')
+    try:
+        c0 = int(sys.argv[2])
+        c1 = int(sys.argv[3])
+    except:
+        print('Error: unable to read camera numbers')
+        return
+
+    cmd = [
+            'roslaunch', 
+            'mct_frame_drop_test', 
+            'frame_drop_tester.launch', 
+            'camera0:={0}'.format(c0),  
+            'camera1:={0}'.format(c1),
+            ]
+    try:
+        subprocess.call(cmd)
+    except KeyboardInterrupt:
+        return
 
 def roslaunch(launch_file):
     """
@@ -557,6 +576,22 @@ def frames_dropped():
     for name, seq_list in sorted(info_dict.items(),cmp=info_item_cmp):
         pad = ' '*(max_name_len - len(name))
         print('  ', name, pad, len(seq_list), '  ', seq_list)
+    print()
+    total = sum([len(x) for x in info_dict.values()])
+    print('  ', 'total frames dropped: ', total)
+    print()
+
+def frames_dropped_no_seq():
+    """
+    Prints a simple report of the frames dropped by the system. 
+    """
+    info_dict = frame_drop_corrector.info_all()
+    max_name_len = max([len(name) for name in info_dict])
+    print('  ', 'camera', ' '*(max_name_len - len('camera')), '#')
+    print('  ', '-'*25)
+    for name, seq_list in sorted(info_dict.items(),cmp=info_item_cmp):
+        pad = ' '*(max_name_len - len(name))
+        print('  ', name, pad, len(seq_list))
     print()
     total = sum([len(x) for x in info_dict.values()])
     print('  ', 'total frames dropped: ', total)
