@@ -14,6 +14,7 @@
   <depend package="cv_bridge"/>
   <depend package="sensor_msgs"/>
   <depend package="mct_msg_and_srv"/>
+  <depend package="mct_introspection"/>
 
   <!-- Temporary  *************** -->
   <depend package="std_msgs" />

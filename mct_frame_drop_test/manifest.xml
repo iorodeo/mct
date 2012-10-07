@@ -9,6 +9,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mct_frame_drop_test</url>
   <depend package="rospy"/>
+  <depend package="mct_xml_tools"/>
+  <depend package="mct_msg_and_srv"/>
+  <depend package="mct_introspection"/>
 
 </package>
 

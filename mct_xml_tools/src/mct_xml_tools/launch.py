@@ -624,14 +624,14 @@ def create_tracking_pts_logger_launch(filename):
     with open(filename,'w') as f:
         f.write(xml_str)
 
-def create_frame_drop_test_launch(filename,camera0,camera1,display=False):
+def create_frame_drop_test_launch(filename,camera0,camera1,display=True):
     """
     Creates launch file for the blob_finder based frame drop test.
     """
     template_name = 'frame_drop_test_launch.xml'
     machine_file = mct_utilities.file_tools.machine_launch_file
 
-    image_corr_topic_list = mct_introspection.find_topics_w_ending('image_corr')
+    image_corr_topic_list = mct_introspection.find_topics_w_ending('seq_and_image_corr')
     camera_to_image_corr = {}
     for topic in image_corr_topic_list:
         for camera in (camera0, camera1):
@@ -654,14 +654,12 @@ def create_frame_drop_test_launch(filename,camera0,camera1,display=False):
     template = jinja2_env.get_template(template_name)
     xml_str = template.render(
             machine_file=machine_file, 
-            blob_finder_launch=blob_finder_launch
+            blob_finder_launch=blob_finder_launch,
+            display=display,
             )
     with open(filename,'w') as f:
         f.write(xml_str)
 
-
-
-    
 
 
 # -----------------------------------------------------------------------------

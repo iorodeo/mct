@@ -8,9 +8,11 @@ import sys
 
 from cv_bridge.cv_bridge import CvBridge 
 from mct_blob_finder import BlobFinder
+import mct_introspection
 
 # Messages
 from sensor_msgs.msg import Image
+from mct_msg_and_srv.msg import SeqAndImage
 from mct_msg_and_srv.msg import BlobData
 from mct_msg_and_srv.msg import Blob
 
@@ -31,10 +33,14 @@ class BlobFinderNode(object):
         self.blobFinder.filter_by_area = True 
         self.blobFinder.min_area = 0
         self.blobFinder.max_area = 200
+        self.topic_type = mct_introspection.get_topic_type(topic)
 
         rospy.init_node('blob_finder')
         self.ready = False
-        self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
+        if self.topic_type == 'sensor_msgs/Image':
+            self.image_sub = rospy.Subscriber(self.topic,Image,self.image_callback)
+        else:
+            self.image_sub = rospy.Subscriber(self.topic,SeqAndImage,self.seq_and_image_callback)
         self.image_pub = rospy.Publisher('image_blobs', Image)
         self.blob_data_pub = rospy.Publisher('blob_data', BlobData)
         node_name = rospy.get_name()
@@ -74,26 +80,17 @@ class BlobFinderNode(object):
         resp_args = (threshold, filter_by_area, min_area, max_area)
         return  BlobFinderGetParamResponse(*resp_args)
 
-
-    def image_callback(self,data):
+    def publish_blob_data(self,blobs_list, blobs_image, image_header, image_seq):
         """
-        Callback for image topic subscription - finds blobs in image.
+        Publish image of blobs and blob data.
         """
-        if not self.ready:
-            return 
-
-        with self.lock:
-            blobs_list, blobs_image = self.blobFinder.findBlobs(data)
-
-        #print(len(blobs_list))
-
-        # Publish image of blobs
         blobs_rosimage = self.bridge.cv_to_imgmsg(blobs_image,encoding="passthrough")
         self.image_pub.publish(blobs_rosimage)
 
         # Create the blob data message and publish
         blob_data_msg = BlobData()
-        blob_data_msg.header = data.header
+        blob_data_msg.header = image_header
+        blob_data_msg.image_seq = image_seq
         blob_data_msg.number_of_blobs = len(blobs_list)
         for b in blobs_list:
             blob_msg = Blob()
@@ -101,6 +98,28 @@ class BlobFinderNode(object):
                 setattr(blob_msg,k,v)
             blob_data_msg.blob.append(blob_msg)
         self.blob_data_pub.publish(blob_data_msg)
+
+    def image_callback(self,data):
+        """
+        Callback for image topic subscription.
+        """
+        if not self.ready:
+            return 
+        with self.lock:
+            blobs_list, blobs_image = self.blobFinder.findBlobs(data)
+        self.publish_blob_data(blobs_list, blobs_image, data.header, data.header.seq)
+
+
+    def seq_and_image_callback(self,data):
+        """
+        Callback for SeqAndImage topic subscription.
+        """
+        if not self.ready:
+            return 
+        with self.lock:
+            blobs_list, blobs_image = self.blobFinder.findBlobs(data.image)
+        self.publish_blob_data(blobs_list, blobs_image, data.image.header, data.seq)
+
 
     def run(self):
         rospy.spin()
