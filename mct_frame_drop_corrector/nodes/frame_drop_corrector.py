@@ -5,6 +5,7 @@ roslib.load_manifest('mct_frame_drop_corrector')
 import rospy
 import sys
 import threading
+import math
 
 import cv
 from cv_bridge.cv_bridge import CvBridge 
@@ -28,10 +29,18 @@ class Frame_Drop_Corrector(object):
     Frame drop corrector node. Subscribes to the given image topic and detects
     dropped frames. Dummy frames are inserted for any frames which are dropped.
     """
-    def __init__(self, topic, framerate, max_stamp_age=1.5, publish_image_corr=True):
+    def __init__(
+            self, 
+            topic, 
+            framerate, 
+            tol=0.005,
+            max_stamp_age=1.5, 
+            publish_image_corr=True
+            ):
         self.ready = False
         self.topic = topic
         self.framerate = framerate
+        self.tol = tol
         self.publish_image_corr = publish_image_corr
         self.lock = threading.Lock() 
         self.camera_info_topic = get_camera_info_from_image_topic(self.topic)
@@ -201,7 +210,8 @@ class Frame_Drop_Corrector(object):
             
             if self.last_pub_stamp is not None:
                 dt = stamp_dt_secs(stamp_tuple, self.last_pub_stamp)
-                framegap = int(round(dt*self.framerate))
+                #framegap = int(round(dt*self.framerate))
+                framegap = approx_frame_number(dt,1.0/self.framerate,self.tol)
 
                 for i in range(framegap-1):
                     # Note, framegap > 1 implies that we have drop frames. 
@@ -241,6 +251,13 @@ class Frame_Drop_Corrector(object):
             self.associate_image_w_seq()
             self.republish_seq_and_image()
 
+def approx_frame_number(dt,period,tol):
+    n = int(math.floor(dt/period))
+    r = dt/period - n
+    if r < 1.0 - tol/period:
+        return n
+    else:
+        return n+1
 
 def get_camera_info_from_image_topic(topic):
     """
