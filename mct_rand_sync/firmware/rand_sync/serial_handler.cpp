@@ -57,7 +57,7 @@ void SerialHandler::getSyncSignal()
     uint8_t signal;
     if (numberOfItems() < 2)
     {
-        Serial << "[" << _DEC(constants::rspFail) << ", too few arguments]" << endl;
+        Serial << "[" << _DEC(constants::rspFail) << ",too few arguments]" << endl;
     }
     else 
     {
@@ -78,17 +78,18 @@ void SerialHandler::getSyncSignal()
         }
         else
         {
-            Serial << "[" << _DEC(constants::rspFail) << ", out of range]" << endl;
+            Serial << "[" << _DEC(constants::rspFail) << ",out of range]" << endl; 
         }
     }
 }
 
 void SerialHandler::getTrigCnt()
 {
-    Serial << "[" << _DEC(systemState.getTrigCnt()) << "]" << endl;
+    Serial << "[" << _DEC(constants::rspSuccess) << ","; 
+    Serial << _DEC(systemState.getTrigCnt()) << "]" << endl;
 }
 
 void SerialHandler::unknownCmd()
 {
-    Serial << "[" << _DEC(constants::rspFail) << ", unknown command]" << endl;
+    Serial << "[" << _DEC(constants::rspFail) << ",unknown command]" << endl;
 }

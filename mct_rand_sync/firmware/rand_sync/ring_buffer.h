@@ -1,5 +1,11 @@
 #ifndef RING_BUFFER_H
 #define RING_BUFFER_H
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
+#include <Streaming.h>
 
 template <class T, unsigned int maxSize>
 class RingBuffer
@@ -125,12 +131,12 @@ T RingBuffer<T,maxSize>::getItemOldest()
     static T dummyItem;
     T item = dummyItem;
     if (isFull_)
-    {
-         getItemByPos(nextPos_,item);
+    { 
+        getItemByPos(nextPos_,item);
     }
     else
-    {
-         getItemByPos(0,item);
+    { 
+        getItemByPos(0,item);
     }
     return item;
 }
