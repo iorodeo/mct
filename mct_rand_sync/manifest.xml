@@ -1,0 +1,14 @@
+<package>
+  <description brief="mct_rand_sync">
+
+     mct_rand_sync
+
+  </description>
+  <author>Will Dickson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mct_rand_sync</url>
+
+</package>
+
+
