@@ -38,6 +38,11 @@ class SystemState
         unsigned long trigCnt_; 
         unsigned long timerCnt_;
         uint8_t syncSignal_;
+
+        uint8_t signalOutPort_;
+        uint8_t changePinMask_;
+        uint8_t syncPinMask_[constants::numSyncSignal];
+
         RingBuffer<SyncData,constants::ringBufMaxSize> syncDataBuf_;
 };
 

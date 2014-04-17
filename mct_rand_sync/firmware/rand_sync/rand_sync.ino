@@ -22,7 +22,6 @@ void setup()
     attachInterrupt(constants::trigIntNum, onExternalTrigger, RISING);
 }
 
-
 void loop()
 {
     comm.processInput();

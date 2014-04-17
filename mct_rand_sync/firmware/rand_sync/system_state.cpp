@@ -27,6 +27,15 @@ void SystemState::initialize()
         pinMode(constants::gndPin[i],LOW);
     }
     updateSyncSignal();
+
+    // Get singal output port and pin masks for change and sync signals
+    // Note, change and sync signals are assumed to be on the same port. 
+    signalOutPort_ = digitalPinToPort(constants::signalChangePin);
+    changePinMask_ = digitalPinToBitMask(constants::signalChangePin);
+    for (int i=0; i<constants::numSyncSignal; i++)
+    {
+        syncPinMask_[i] = digitalPinToBitMask(constants::syncSignalPin[i]);
+    }
 }
 
 void SystemState::resetTrigCnt()
@@ -84,17 +93,36 @@ unsigned long SystemState::getTimerCnt()
 
 void SystemState::updateSyncSignal()
 {
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    volatile uint8_t *outReg = portOutputRegister(signalOutPort_);
+    uint8_t outValue = 0x0;
+
+    // Change pin mask based on current value
+    if (*outReg & changePinMask_)
     {
-        uint8_t changeVal = digitalRead(constants::signalChangePin);
-        digitalWrite(constants::signalChangePin, !changeVal);
-        syncSignal_ = 0xff & uint8_t(random());
-        for (int i=0; i<constants::numSyncSignal; i++)
+        outValue &= ~ changePinMask_;
+    }
+    else
+    {
+        outValue |= changePinMask_;
+    }
+
+    // Get random synchronization signals 
+    syncSignal_ = 0xff & uint8_t(random());
+    for (uint8_t i=0; i<constants::numSyncSignal; i++)
+    {
+        uint8_t syncBit = 0x1 & (syncSignal_ >> i);
+        if (syncBit)
         {
-            uint8_t syncBit = 0x1 & (syncSignal_ >> i);
-            digitalWrite(constants::syncSignalPin[i], syncBit);
+            outValue |= syncPinMask_[i];
+        }
+        else
+        {
+            outValue &= ~syncPinMask_[i];
         }
     }
+
+    // Actually set output values (simultaneous)
+    *outReg = outValue;
 }
 
 
