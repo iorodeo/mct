@@ -1,0 +1,5 @@
+uint32 seq
+----
+bool status
+string message
+uint32[3] signal 

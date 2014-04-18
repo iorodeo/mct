@@ -2,7 +2,6 @@ from __future__ import print_function
 import serial
 import time
 
-
 class RandSyncDev(serial.Serial):
 
     CMD_RESET_TRIG_CNT = 0
@@ -75,16 +74,17 @@ class RandSyncDev(serial.Serial):
 
 if __name__ == '__main__':
 
-    port = '/dev/ttyUSB2'
+    port = '/dev/ttyUSB0'
     baudrate = 115200
 
     dev = RandSyncDev(port,baudrate)
     dev.resetTrigCnt()
     
     #while 1:
-    for i in range(2000);
+    for i in range(2000):
         trigCnt = dev.getTrigCnt()
         reqTrigCnt = trigCnt - 10
+        print('i: {0}'.format(i))
         print('trigCnt: {0}'.format(trigCnt))
         print('reqTrigCnt: {0}'.format(reqTrigCnt))
         try:

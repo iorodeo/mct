@@ -8,6 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mct_rand_sync</url>
+  <depend package="rospy"/>
+  <depend package="mct_msg_and_srv" />
 
 </package>
 

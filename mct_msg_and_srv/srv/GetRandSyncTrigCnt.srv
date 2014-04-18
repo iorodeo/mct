@@ -1,0 +1,4 @@
+---
+bool status
+string message
+uint32 trigCnt
