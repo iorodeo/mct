@@ -65,12 +65,14 @@ if __name__ == '__main__':
 
     elif cmd == 'sync':
         print('getting sync')
-        status, cnt = get_rand_sync_trig_cnt()
-        if status == False:
-            print('failed to get cnt')
-        else:
-            status, signal = get_rand_sync_signal(cnt)
-            print('cnt = {0}, signal = {1}'.format(cnt,signal))
+        for i in range(100):
+            status, cnt = get_rand_sync_trig_cnt()
+            if status == False:
+                print('failed to get cnt')
+            else:
+                status, signal = get_rand_sync_signal(cnt)
+                print('cnt = {0}, signal = {1}'.format(cnt,signal))
+            time.sleep(0.1)
 
     elif cmd == 'sync-repeat':
         print('running sync-repeat (Ctl-C to exit)')
