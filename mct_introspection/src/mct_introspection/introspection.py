@@ -712,7 +712,7 @@ def get_topic_type(topic_name):
 if __name__ == '__main__':
     
 
-    if 1:
+    if 0:
         node_list = get_nodes()
         print('node_list:')
         print(node_list)
@@ -852,7 +852,7 @@ if __name__ == '__main__':
         node_list = get_image_proc_nodes()
         print(node_list)
 
-    if 0:
+    if 1:
         flag = image_proc_nodes_ready()
         print(flag)
 

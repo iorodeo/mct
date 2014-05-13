@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(env MCT_CONFIG)/machine/mct.machine" />
+    <node pkg="mct_rand_sync" type="rand_sync_node.py" name="rand_sync_dev" machine="mct_master" required="true">
+        <rosparam file="$(env MCT_CONFIG)/rand_sync/rand_sync.yaml" />
+    </node>
+</launch>

@@ -42,6 +42,8 @@ def read_yaml_file(filename):
     """
     with open(filename,'r') as f:
         yaml_dict = yaml.load(f)
+        if yaml_dict is None:
+            yaml_dict = {}
     return yaml_dict
 
 def write_yaml_file(filename,yaml_dict):

@@ -186,7 +186,7 @@ def tracking_2d_node_startup(debug=False):
         mjpeg_topics.append('/{0}/image_tracking_info'.format(region))
     
     # Add any extra video images
-    for v in extra_video_dict.values():
+    for v in extra_video_dict.values(): 
         mjpeg_topics.append(v)
     
     mjpeg_servers.set_topics(mjpeg_topics)

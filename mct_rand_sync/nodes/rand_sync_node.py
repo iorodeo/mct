@@ -21,10 +21,13 @@ class RandSyncNode(object):
 
         self.dev = None
 
-        # NOTE: add port and buadrate to configuration system
-        self.dev = RandSyncDev(port='/dev/ttyUSB0',baudrate=115200)
+        self.port = rospy.get_param('/rand_sync/port','/dev/rand-sync')
+        self.baudrate = rospy.get_param('/rand_sync/baudrate', 115200)
 
-        rospy.init_node("rand_sync")
+        # NOTE: add port and buadrate to configuration system
+        self.dev = RandSyncDev(port=self.port,baudrate=self.baudrate)
+
+        rospy.init_node("rand_sync_device")
         rospy.on_shutdown(self.shutdown)
 
         # Setup services
