@@ -31,7 +31,7 @@ from mct_tracking_2d import three_point_tracker_synchronizer
 from mct_frame_drop_corrector import frame_drop_corrector
 from mct_image_stitcher import image_stitcher
 
-DEVELOP = True 
+DEVELOP = False 
 DEBUG = True 
 
 OPERATING_MODES = ('standby', 'preview', 'recording')

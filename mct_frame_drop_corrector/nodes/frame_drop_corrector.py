@@ -284,8 +284,8 @@ def incr_stamp_tuple(stamp, dt):
     dt_nsec = int(dt*SEC_TO_NSEC)
     stamp_sec, stamp_nsec = stamp
     temp_nsec = stamp_nsec + dt_nsec
-    stamp_nsec = temp_nsec%int(SEC_TO_NSEC)
-    stamp_sec += temp_nsec/int(SEC_TO_NSEC)
+    stamp_nsec = int(temp_nsec%int(SEC_TO_NSEC))
+    stamp_sec += int(temp_nsec/int(SEC_TO_NSEC))
     return stamp_sec, stamp_nsec
 
 # -----------------------------------------------------------------------------
