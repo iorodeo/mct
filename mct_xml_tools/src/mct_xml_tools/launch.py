@@ -51,6 +51,12 @@ def create_machine_launch(filename,machine_def):
         slave_info['default'] = 'false'
         machine_info_list.append(slave_info)
 
+    for info in machine_info_list:
+        if '.local' in info['address']:
+            info['.local'] = True
+        else:
+            info['.local'] = False
+
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = jinja2_env.get_template(template_name)
     xml_str = template.render(user=user,machine_info_list=machine_info_list)
