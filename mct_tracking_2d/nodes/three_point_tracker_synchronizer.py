@@ -43,6 +43,9 @@ class ThreePointTracker_Synchronizer:
         self.max_seq_age = max_seq_age
         self.tracking_pts_pool = {}
 
+        self.tracking_pts_roi_size = rospy.get_param('/three_point_tracker_params/roi_size', (150,150))
+
+
         # Color and font for tracking points image
         self.magenta = (255,255,0)
         self.cv_text_font = cv.InitFont(cv.CV_FONT_HERSHEY_TRIPLEX, 0.6, 0.6, thickness=0)
@@ -285,6 +288,10 @@ class ThreePointTracker_Synchronizer:
         self.tracking_pts_pub.publish(tracking_pts_msg)
         if self.image_tracking_pts is not None:
             self.image_tracking_pts_pub.publish(self.image_tracking_pts)
+        else:
+            zero_image = cv.CreateImage(self.tracking_pts_roi_size,cv.IPL_DEPTH_8U,3)
+            cv.Zero(zero_image)
+            self.image_tracking_pts_pub.publish(zero_image)
 
     def run(self):
         """
