@@ -289,9 +289,10 @@ class ThreePointTracker_Synchronizer:
         if self.image_tracking_pts is not None:
             self.image_tracking_pts_pub.publish(self.image_tracking_pts)
         else:
-            zero_image = cv.CreateImage(self.tracking_pts_roi_size,cv.IPL_DEPTH_8U,3)
-            cv.Zero(zero_image)
-            self.image_tracking_pts_pub.publish(zero_image)
+            zero_image_cv = cv.CreateImage(self.tracking_pts_roi_size,cv.IPL_DEPTH_8U,3)
+            cv.Zero(zero_image_cv)
+            zero_image_ros = self.bridge.cv_to_imgmsg(zero_image_cv,encoding="passthrough")
+            self.image_tracking_pts_pub.publish(zero_image_ros)
 
     def run(self):
         """

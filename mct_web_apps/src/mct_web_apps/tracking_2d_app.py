@@ -32,7 +32,7 @@ from mct_frame_drop_corrector import frame_drop_corrector
 from mct_image_stitcher import image_stitcher
 
 DEVELOP = False 
-DEBUG = True 
+DEBUG = False 
 
 OPERATING_MODES = ('standby', 'preview', 'recording')
 
