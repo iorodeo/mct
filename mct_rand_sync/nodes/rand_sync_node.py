@@ -23,9 +23,10 @@ class RandSyncNode(object):
 
         self.port = rospy.get_param('/rand_sync/port','/dev/rand-sync')
         self.baudrate = rospy.get_param('/rand_sync/baudrate', 115200)
+        self.lock = threading.Lock()
 
-        # NOTE: add port and buadrate to configuration system
-        self.dev = RandSyncDev(port=self.port,baudrate=self.baudrate)
+        with self.lock:
+            self.dev = RandSyncDev(port=self.port,baudrate=self.baudrate)
 
         rospy.init_node("rand_sync_device")
         rospy.on_shutdown(self.shutdown)
@@ -47,12 +48,15 @@ class RandSyncNode(object):
                 self.reset_rand_sync
                 )
 
+
     def get_rand_sync_signal(self,req):
         status = True
         message = ''
         sync_signal = (0,0,0)
+
         try:
-            sync_signal = self.dev.getSyncSignal(req.seq)
+            with self.lock:
+                sync_signal = self.dev.getSyncSignal(req.seq)
         except (ValueError, IOError), e:
             status = False
             message = str(e)
@@ -63,7 +67,8 @@ class RandSyncNode(object):
         message = ''
         trigCnt = 0
         try:
-            trigCnt = self.dev.getTrigCnt()
+            with self.lock:
+                trigCnt = self.dev.getTrigCnt()
         except (ValueError, IOError), e:
             status = False
             message = str(e)
@@ -73,7 +78,13 @@ class RandSyncNode(object):
         print 'reset'
         status = True
         message = ''
-        self.dev.resetTrigCnt()
+        try:
+            with self.lock:
+                self.dev.resetTrigCnt()
+        except IOError, e:
+            status = False
+            message = str(e)
+
         return ResetRandSyncResponse(status, message)
 
     def run(self):

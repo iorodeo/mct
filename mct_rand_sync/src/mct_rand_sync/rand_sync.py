@@ -8,9 +8,9 @@ from mct_msg_and_srv.srv import GetRandSyncTrigCnt
 from mct_msg_and_srv.srv import ResetRandSync
 
 def get_rand_sync_signal(seq):
-    rospy.wait_for_service('get_rand_sync_signal')
+    rospy.wait_for_service('/get_rand_sync_signal')
     try:
-        proxy = rospy.ServiceProxy('get_rand_sync_signal',GetRandSyncSignal)
+        proxy = rospy.ServiceProxy('/get_rand_sync_signal',GetRandSyncSignal)
         rsp = proxy(seq)
         status = rsp.status
         signal = rsp.signal
@@ -21,9 +21,9 @@ def get_rand_sync_signal(seq):
     return status, signal
 
 def get_rand_sync_trig_cnt():
-    rospy.wait_for_service('get_rand_sync_trig_cnt')
+    rospy.wait_for_service('/get_rand_sync_trig_cnt')
     try:
-        proxy = rospy.ServiceProxy('get_rand_sync_trig_cnt', GetRandSyncTrigCnt)
+        proxy = rospy.ServiceProxy('/get_rand_sync_trig_cnt', GetRandSyncTrigCnt)
         rsp = proxy()
         status = rsp.status
         trig_cnt = rsp.trigCnt
@@ -34,10 +34,10 @@ def get_rand_sync_trig_cnt():
     return status, trig_cnt
 
 def reset_rand_sync():
-    rospy.wait_for_service('reset_rand_sync')
+    rospy.wait_for_service('/reset_rand_sync')
     rsp = None
     try:
-        proxy = rospy.ServiceProxy('reset_rand_sync', ResetRandSync)
+        proxy = rospy.ServiceProxy('/reset_rand_sync', ResetRandSync)
         rsp = proxy()
         status = rsp.status
     except rospy.ServiceException, e:

@@ -103,7 +103,7 @@ def clear_form_handler(obj_response, form_values):
     Handles requests to clear form
     """
     camera_assignment = json_tools.decode_dict(form_values)
-    camera_assignment = {k : '--' for k in camera_assignment}
+    camera_assignment = dict((k,'--') for k in camera_assignment)
     redis_tools.set_dict(db,'camera_assignment', camera_assignment)
     
     # Update form

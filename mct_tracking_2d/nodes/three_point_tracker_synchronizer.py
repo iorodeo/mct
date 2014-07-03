@@ -12,8 +12,8 @@ import numpy
 import Image as PILImage
 import ImageDraw as PILImageDraw
 import ImageFont as PILImageFont
-import mct_introspection
 import time
+import mct_introspection
 
 from cv_bridge.cv_bridge import CvBridge 
 from mct_utilities import file_tools
@@ -25,6 +25,7 @@ from mct_msg_and_srv.msg import ThreePointTracker
 from mct_msg_and_srv.msg import ThreePointTrackerRaw
 from std_srvs.srv import Empty
 from std_srvs.srv import EmptyResponse
+from mct_msg_and_srv.srv import GetRandSyncSignal 
 
 class ThreePointTracker_Synchronizer:
     """
@@ -63,7 +64,6 @@ class ThreePointTracker_Synchronizer:
 
         # Subscribe to raw tracking pts topics
         self.tracking_pts_sub = {}
-        
         for camera, topic in self.camera_to_tracking.iteritems():
             handler = functools.partial(self.tracking_pts_handler, camera)
             self.tracking_pts_sub[camera] = rospy.Subscriber(
@@ -72,16 +72,22 @@ class ThreePointTracker_Synchronizer:
                     handler
                     )
 
+
         # Create publishers
         self.tracking_pts_pub = rospy.Publisher('tracking_pts', ThreePointTracker)
         self.image_tracking_pts = None
         self.image_tracking_pts_pub = rospy.Publisher('image_tracking_pts', Image)
         self.image_tracking_info_pub = rospy.Publisher('image_tracking_info', Image)
 
+        # Setup rand sync service
+        rospy.wait_for_service('/get_rand_sync_signal')
+        self.rand_sync_srv = rospy.ServiceProxy('/get_rand_sync_signal',GetRandSyncSignal)
+
         # Setup reset service - needs to be called anytime the camera trigger is  
         # stopped - before it is restarted. Empties buffers of images and sequences. 
         self.reset_srv = rospy.Service('reset_tracker_synchronizer', Empty, self.reset_handler)
         self.ready = True
+
         
     def create_camera_to_tracking_dict(self):
         """
@@ -283,6 +289,13 @@ class ThreePointTracker_Synchronizer:
         # Convert to a rosimage and publish
         info_rosimage = self.bridge.cv_to_imgmsg(cv_info_image,'rgb8')
         self.image_tracking_info_pub.publish(info_rosimage)
+
+        # Get sync signal
+        sync_rsp = self.rand_sync_srv(tracking_pts_msg.seq)
+        if sync_rsp.status:
+            tracking_pts_msg.sync_signal = sync_rsp.signal
+        else:
+            tracking_pts_msg.sync_signal = [0,0,0]
 
         # Publish messages
         self.tracking_pts_pub.publish(tracking_pts_msg)

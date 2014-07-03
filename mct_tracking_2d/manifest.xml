@@ -20,7 +20,6 @@
   <depend package="mct_xml_tools"/>
   <depend package="mct_transform_2d"/>
   <depend package="mct_introspection"/>
-
   <depend package="dynamic_reconfigure"/>
       
 </package>

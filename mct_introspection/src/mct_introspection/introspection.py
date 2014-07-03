@@ -852,7 +852,7 @@ if __name__ == '__main__':
         node_list = get_image_proc_nodes()
         print(node_list)
 
-    if 1:
+    if 0:
         flag = image_proc_nodes_ready()
         print(flag)
 
@@ -924,11 +924,11 @@ if __name__ == '__main__':
         ready = stitched_images_ready()
         print(ready)
 
-    if 0:
+    if 1:
         ready = three_point_trackers_ready()
         print(ready)
 
-    if 0:
+    if 1:
         ready = three_point_tracker_synchronizers_ready()
         print(ready)
 

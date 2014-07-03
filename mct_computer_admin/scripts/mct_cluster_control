@@ -1,3 +1,4 @@
 #!/bin/bash
+export PYTHONWARNINGS="ignore"
 source $MCT_PYTHON_VIRTUALENV/bin/activate
 rosrun mct_computer_admin mct_cluster_control.py $@

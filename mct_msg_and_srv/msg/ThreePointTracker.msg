@@ -11,3 +11,4 @@ Point2d[] pts_anchor_plane
 Point2d[] pts_stitching_plane
 Point2d[] bndry_anchor_plane
 Point2d[] bndry_stitching_plane
+uint32[3] sync_signal 
