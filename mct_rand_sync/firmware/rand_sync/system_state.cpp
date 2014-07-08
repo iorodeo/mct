@@ -107,7 +107,7 @@ void SystemState::updateSyncSignal()
     }
 
     // Get random synchronization signals 
-    syncSignal_ = 0xff & uint8_t(random(0,8));
+    syncSignal_ = 0xff & uint8_t(random(0,1<<constants::numSyncSignal));
     for (uint8_t i=0; i<constants::numSyncSignal; i++)
     {
         uint8_t syncBit = 0x1 & (syncSignal_ >> i);
