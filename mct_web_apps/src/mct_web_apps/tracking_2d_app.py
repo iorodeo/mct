@@ -30,6 +30,7 @@ from tracking_2d_node_startup import tracking_2d_node_startup
 from mct_tracking_2d import three_point_tracker_synchronizer
 from mct_frame_drop_corrector import frame_drop_corrector
 from mct_image_stitcher import image_stitcher
+from mct_rand_sync import reset_rand_sync
 
 DEVELOP = True 
 DEBUG = True 
@@ -218,6 +219,7 @@ def mode_change_handler(obj_response, new_mode):
     # Stop camera triggers
     camera_trigger.stop()
     time.sleep(0.5) # wait for all frames to pass throught the system
+    reset_rand_sync()
 
     if old_mode == 'recording' or new_mode == 'recording': 
 

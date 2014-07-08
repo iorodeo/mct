@@ -27,6 +27,7 @@
   <depend package="mct_logging" />
   <depend package="mct_avi_writer" />
   <depend package="mct_light_control" />
+  <depend package="mct_rand_sync" />
 
   <rosdep name="setuptools"/>
   <rosdep name="werkzeug"/>

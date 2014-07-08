@@ -20,6 +20,7 @@ from mct_tracking_2d import three_point_tracker_master
 from mct_tracking_2d import stitched_image_labeler_master
 from mct_avi_writer import avi_writer_master
 from mct_logging import tracking_pts_logger_master
+from mct_rand_sync import reset_rand_sync
 
 # Startup parameters
 ready_poll_dt = 0.2      # Sleep time for polling loop when waiting for node or topic to start
@@ -64,6 +65,14 @@ def tracking_2d_node_startup(debug=False):
     sys.stdout.flush()
     time.sleep(camera_startup_t)
     debug_print('done',debug=debug)
+
+    # Reset rand sync
+    debug_print(' * resetting rand sync ... ', end='',debug=debug)
+    sys.stdout.flush()
+    status = reset_rand_sync()
+    if not status:
+        raise RuntimeError, 'unable to reset rand_sync device'
+    debug_print('done', debug=debug)
     
     # Restart camera triggers
     debug_print(' * starting camera triggers ... ', end='',debug=debug)
