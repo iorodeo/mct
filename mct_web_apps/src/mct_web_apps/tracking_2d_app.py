@@ -32,8 +32,8 @@ from mct_frame_drop_corrector import frame_drop_corrector
 from mct_image_stitcher import image_stitcher
 from mct_rand_sync import reset_rand_sync
 
-DEVELOP = True 
-DEBUG = True 
+DEVELOP = False 
+DEBUG = False 
 
 OPERATING_MODES = ('standby', 'preview', 'recording')
 

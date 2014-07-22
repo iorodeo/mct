@@ -42,7 +42,7 @@ void SystemState::resetTrigCnt()
 {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        trigCnt_ = 0;
+        trigCnt_ = 1;
         syncDataBuf_.empty();
     }
 }
