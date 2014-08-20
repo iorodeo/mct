@@ -10,7 +10,7 @@ namespace constants
 
     // IO Pins
     enum {numSyncSignal=3};
-    enum {numGndPin=4};
+    enum {numGndPin=5};
     extern const int trigIntPin;
     extern const int trigIntNum;
     extern const int signalChangePin;

@@ -14,7 +14,7 @@ namespace constants
     // IO Pins
     const int trigIntPin = 2;
     const int trigIntNum = 0;
-    const int gndPin[numGndPin] = {6,8,10,12};
+    const int gndPin[numGndPin] = {5,6,7,10,12};
     const int randomSeedAI = A7;
 
     // Change and sync signal pins - must all be on the same physical port
